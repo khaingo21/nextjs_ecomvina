@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reset Password | My‑T</title>
+  <style>
+    :root{ --green:#2db400; --text:#111827; --muted:#6b7280; --border:#e5e7eb; --field:#f3f4f6; --radius:14px; }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; color:var(--text); background:#fff}
+
+    .bar{background:var(--green); color:#fff; text-align:center; font-weight:900; letter-spacing:.3px; padding:10px 14px}
+
+    .wrap{min-height:calc(100svh - 44px); display:grid; place-items:start center; padding:28px}
+    .center{max-width:640px; width:100%; text-align:center}
+
+    .card{margin:10px auto 0; width:min(520px,100%); border:1px solid var(--border); border-radius:18px; box-shadow:0 10px 30px rgba(17,24,39,.06);}
+
+    .head{padding:16px 18px; font-weight:800;}
+    .sub{color:var(--muted); font-size:13px; margin-bottom:8px}
+
+    .tabs{display:grid; grid-template-columns:1fr 1fr; border-top:1px solid var(--border); border-bottom:1px solid var(--border);}
+    .tab{padding:10px 12px; background:#f9fafb; cursor:pointer; font-weight:700; color:#475569}
+    .tab.active{background:#fff; color:#111}
+
+    .panel{padding:16px; display:none}
+    .panel.active{display:block}
+
+    .input{display:flex; align-items:center; gap:10px; background:var(--field); border:1px solid var(--border); border-radius:var(--radius); height:46px; padding:0 12px}
+    .input input, .input select{border:0; outline:none; background:transparent; width:100%; font:inherit}
+
+    .row{display:grid; gap:10px}
+
+    .captcha{display:grid; grid-template-columns:1fr 140px; gap:10px; align-items:center}
+    .captcha-box{height:46px; border-radius:12px; border:1px dashed var(--border); background:repeating-linear-gradient(45deg,#f8fafc,#f8fafc 8px,#f1f5f9 8px,#f1f5f9 16px); display:flex; align-items:center; justify-content:center; font-weight:800; letter-spacing:6px; color:#334155; user-select:none}
+    .captcha-actions{display:grid; gap:6px}
+    .small{font-size:12px; color:var(--muted)}
+
+    .btn{height:44px; border:none; border-radius:12px; cursor:pointer; font-weight:800}
+    .btn-ghost{background:#fff; border:1px solid var(--border)}
+    .btn-primary{background:var(--green); color:#fff}
+    .btn-primary:disabled{opacity:.6; cursor:not-allowed}
+
+    .actions{display:flex; gap:10px; justify-content:center; margin-top:8px}
+
+    .foot{margin-top:16px; color:#94a3b8; font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="bar">Reset Password</div>
+  <main class="wrap">
+    <div class="center">
+      <div class="sub">Vui lòng nhập <strong>tài khoản</strong> và chọn hình thức nhận mã xác minh.</div>
+
+      <section class="card">
+        <div class="head">Thông tin tài khoản</div>
+        <div class="panel active" id="panel-common" style="padding:0 16px 8px">
+          <label class="input" aria-label="Tên đăng nhập">
+            <span>👤</span>
+            <input id="username" placeholder="UserName" />
+          </label>
+        </div>
+
+        <div class="tabs">
+          <div class="tab active" data-tab="email">Email Address</div>
+          <div class="tab" data-tab="phone">Mobile Phone</div>
+        </div>
+
+        <!-- EMAIL MODE -->
+        <div class="panel active" id="panel-email">
+          <form id="formEmail" class="row" novalidate>
+            <label class="input" aria-label="Email">
+              <span>✉️</span>
+              <input id="email" type="email" placeholder="example@my-t.com" required />
+            </label>
+
+            <div class="small">Vui lòng nhập mã trong hình để xác minh bạn không phải robot.</div>
+            <div class="captcha">
+              <div class="captcha-box" id="captchaImg" role="img" aria-label="Mã xác minh minh họa"></div>
+              <div class="captcha-actions">
+                <button type="button" class="btn btn-ghost" id="newCaptcha">🔄 Try a new code</button>
+                <button type="button" class="btn btn-ghost" id="audioCaptcha">🔊 Audio code</button>
+              </div>
+            </div>
+            <label class="input" aria-label="Mã xác minh">
+              <span>🔑</span>
+              <input id="captcha" placeholder="Code" required />
+            </label>
+
+            <div class="actions">
+              <button type="button" class="btn btn-ghost" id="cancel1">Cancel</button>
+              <button class="btn btn-primary" id="continue1" disabled>Continue</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- PHONE MODE -->
+        <div class="panel" id="panel-phone">
+          <form id="formPhone" class="row" novalidate>
+            <div class="input">
+              <select id="cc">
+                <option value="+84" selected>+84</option>
+                <option value="+82">+82</option>
+                <option value="+1">+1</option>
+                <option value="+81">+81</option>
+              </select>
+              <input id="phone" type="tel" placeholder="Mobile Phone" required />
+            </div>
+
+            <div class="actions">
+              <button type="button" class="btn btn-ghost" id="cancel2">Cancel</button>
+              <button class="btn btn-primary" id="continue2" disabled>Continue</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <div class="foot">© 2025 My‑T • <a href="#" onclick="alert('Trợ giúp (demo)'); return false;">Help</a></div>
+    </div>
+  </main>
+
+  <script>
+    // Tabs
+    const tabs = document.querySelectorAll('.tab');
+    const pEmail = document.getElementById('panel-email');
+    const pPhone = document.getElementById('panel-phone');
+    tabs.forEach(t=>t.addEventListener('click', ()=>{
+      tabs.forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      const mode = t.dataset.tab;
+      pEmail.classList.toggle('active', mode==='email');
+      pPhone.classList.toggle('active', mode==='phone');
+    }));
+
+    // EMAIL form enable
+    const email = document.getElementById('email');
+    const captcha = document.getElementById('captcha');
+    const cont1 = document.getElementById('continue1');
+    function vEmail(){ cont1.disabled = !(email.value.trim() && captcha.value.trim()); }
+    email.addEventListener('input', vEmail); captcha.addEventListener('input', vEmail);
+
+    // PHONE form enable
+    const phone = document.getElementById('phone');
+    const cont2 = document.getElementById('continue2');
+    function vPhone(){ cont2.disabled = !(phone.value.trim().length>=6); }
+    phone.addEventListener('input', vPhone);
+
+    // Submits (demo)
+    document.getElementById('formEmail').addEventListener('submit', (e)=>{ 
+      e.preventDefault();
+      const val = (document.getElementById('captcha').value || '').trim().toUpperCase();
+      if(!email.value.trim()) return alert('Vui lòng nhập email');
+      if(val !== captchaCode){ alert('Mã xác minh không đúng. Vui lòng thử lại.'); regen(); document.getElementById('captcha').value=''; document.getElementById('captcha').focus(); return; }
+      // (Demo) captcha đúng -> điều hướng bước tiếp
+      window.location.href = 'capnhatmkmoi.html';
+    }); alert('Đã gửi mã tới email: '+ email.value); 
+    document.getElementById('formPhone').addEventListener('submit', (e)=>{ e.preventDefault(); alert('Đã gửi mã tới số: '+ document.getElementById('cc').value + ' ' + phone.value); });
+
+    // Buttons
+    document.getElementById('cancel1').onclick = document.getElementById('cancel2').onclick = ()=>{ window.history.length>1 ? history.back() : location.href = '/'; };
+
+    // Captcha demo (regenerate pattern)
+    const box = document.getElementById('captchaImg');
+    let captchaCode = '';
+    function makeCode(n=6){
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let s = ''; for(let i=0;i<n;i++){ s += chars[Math.floor(Math.random()*chars.length)]; } return s; }
+    function regen(){
+      // nền sọc + text mã
+      box.style.background = 'repeating-linear-gradient(45deg,#f8fafc,#f8fafc '+(6+Math.random()*4)+'px,#f1f5f9 '+(6+Math.random()*4)+'px,#f1f5f9 '+(12+Math.random()*8)+'px)';
+      captchaCode = makeCode();
+      box.textContent = captchaCode;
+      box.setAttribute('aria-label', 'Captcha code: '+captchaCode.split('').join(' '));
+    }
+    document.getElementById('newCaptcha').onclick = ()=>{ regen(); document.getElementById('captcha').value=''; document.getElementById('captcha').focus(); };
+    document.getElementById('audioCaptcha').onclick = ()=> alert('Mã của bạn là: '+captchaCode);
+    regen();
+  </script>
+</body>
+</html>
