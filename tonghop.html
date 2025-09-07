@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Naver Shopping - Trang mua sắm trực tuyến</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Reset CSS */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+        }
+        
+        body {
+            background-color: #f7f7f7;
+            color: #333;
+        }
+        
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        ul {
+            list-style: none;
+        }
+        
+        button {
+            cursor: pointer;
+        }
+        
+        /* Header Styles */
+        header {
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #03c75a;
+        }
+        
+        .search-bar {
+            flex-grow: 1;
+            max-width: 600px;
+            margin: 0 20px;
+            position: relative;
+        }
+        
+        .search-bar input {
+            width: 100%;
+            padding: 10px 45px 10px 15px;
+            border: 2px solid #03c75a;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+        }
+        
+        .search-bar button {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #03c75a;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        
+        .user-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .user-actions a {
+            font-size: 14px;
+            color: #555;
+        }
+        
+        .nav-menu {
+            display: flex;
+            justify-content: center;
+            padding: 15px 0;
+        }
+        
+        .nav-menu a {
+            margin: 0 15px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .nav-menu a:hover {
+            color: #03c75a;
+        }
+        
+        /* Main Content Styles */
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+        
+        .banner-slider {
+            position: relative;
+            height: 300px;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: linear-gradient(45deg, #03c75a, #00a8ff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+        
+        .category-section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .view-all {
+            font-size: 14px;
+            color: #777;
+        }
+        
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+        }
+        
+        .category-item {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+        }
+        
+        .category-item:hover {
+            transform: translateY(-5px);
+        }
+        
+        .category-icon {
+            font-size: 24px;
+            color: #03c75a;
+            margin-bottom: 10px;
+        }
+        
+        .category-name {
+            font-size: 14px;
+        }
+        
+        .product-section {
+            margin-bottom: 30px;
+        }
+        
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+        }
+        
+        .product-card {
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .product-image {
+            height: 180px;
+            background-color: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+        }
+        
+        .product-info {
+            padding: 15px;
+        }
+        
+        .product-name {
+            font-size: 14px;
+            margin-bottom: 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .product-price {
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        .product-rating {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+            color: #ff792a;
+            font-size: 14px;
+        }
+        
+        .deal-badge {
+            background-color: #ff6b00;
+            color: white;
+            font-size: 12px;
+            padding: 3px 6px;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+        
+        /* Product Detail Styles */
+        .product-detail-page {
+            display: none;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .breadcrumb {
+            font-size: 14px;
+            color: #777;
+            margin-bottom: 20px;
+        }
+        
+        .breadcrumb a:hover {
+            color: #03c75a;
+        }
+        
+        .product-container {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .product-gallery {
+            flex: 1;
+        }
+        
+        .main-image {
+            width: 100%;
+            height: 400px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        
+        .main-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .thumbnail-container {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .thumbnail {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #eee;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f9f9f9;
+        }
+        
+        .thumbnail.active {
+            border-color: #03c75a;
+        }
+        
+        .thumbnail img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .product-info-detail {
+            flex: 1;
+        }
+        
+        .product-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .product-rating-detail {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            color: #ff792a;
+        }
+        
+        .product-rating-detail span {
+            margin-left: 5px;
+            color: #777;
+        }
+        
+        .product-price-detail {
+            margin-bottom: 20px;
+        }
+        
+        .current-price {
+            font-size: 28px;
+            font-weight: bold;
+            color: #e22;
+        }
+        
+        .original-price {
+            font-size: 18px;
+            color: #777;
+            text-decoration: line-through;
+            margin-left: 10px;
+        }
+        
+        .discount-percent {
+            background-color: #ff6b00;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+        
+        .shipping-info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+        
+        .shipping-info div {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .shipping-info i {
+            color: #03c75a;
+            margin-right: 5px;
+        }
+        
+        .product-options {
+            margin-bottom: 20px;
+        }
+        
+        .option-group {
+            margin-bottom: 15px;
+        }
+        
+        .option-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .option-select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+        }
+        
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .quantity-label {
+            margin-right: 15px;
+            font-weight: 500;
+        }
+        
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            background: none;
+            border: none;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .quantity-input {
+            width: 50px;
+            height: 30px;
+            text-align: center;
+            border: none;
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border-radius: 5px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-cart {
+            background-color: white;
+            border: 1px solid #03c75a;
+            color: #03c75a;
+            flex: 1;
+        }
+        
+        .btn-buy {
+            background-color: #03c75a;
+            border: 1px solid #03c75a;
+            color: white;
+            flex: 2;
+        }
+        
+        .product-tabs {
+            margin-top: 40px;
+        }
+        
+        .tab-headers {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab-header {
+            padding: 15px 20px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .tab-header.active {
+            color: #03c75a;
+            border-bottom: 2px solid #03c75a;
+        }
+        
+        .tab-content {
+            padding: 20px 0;
+        }
+        
+        .tab-panel {
+            display: none;
+        }
+        
+        .tab-panel.active {
+            display: block;
+        }
+        
+        .review-item {
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .review-author {
+            font-weight: 500;
+        }
+        
+        .review-date {
+            color: #777;
+        }
+        
+        .review-rating {
+            color: #ff792a;
+            margin-bottom: 10px;
+        }
+        
+        .review-content {
+            color: #555;
+        }
+        
+        .back-to-home {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 8px 15px;
+            background-color: #03c75a;
+            color: white;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+        
+        /* Footer Styles */
+        footer {
+            background-color: #f8f8f8;
+            padding: 40px 0;
+            border-top: 1px solid #eee;
+        }
+        
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+        
+        .footer-links {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .footer-column h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .footer-column ul li {
+            margin-bottom: 8px;
+        }
+        
+        .footer-column ul li a {
+            font-size: 14px;
+            color: #777;
+        }
+        
+        .footer-column ul li a:hover {
+            color: #03c75a;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #999;
+            font-size: 14px;
+        }
+        
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .category-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .product-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .product-container {
+                flex-direction: column;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header-top {
+                flex-direction: column;
+                padding: 10px;
+            }
+            
+            .search-bar {
+                width: 100%;
+                margin: 10px 0;
+                max-width: none;
+            }
+            
+            .category-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .footer-links {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .category-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .product-grid {
+                grid-template-columns: repeat(1, 1fr);
+            }
+            
+            .footer-links {
+                grid-template-columns: repeat(1, 1fr);
+            }
+            
+            .nav-menu {
+                overflow-x: auto;
+                white-space: nowrap;
+                padding: 10px 0;
+                justify-content: flex-start;
+            }
+            
+            .nav-menu a {
+                margin: 0 10px;
+            }
+            
+            .thumbnail-container {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-top">
+            <div class="logo" id="logo">NAVER SHOPPING</div>
+            <div class="search-bar">
+                <input type="text" placeholder="Tìm kiếm sản phẩm...">
+                <button><i class="fas fa-search"></i></button>
+            </div>
+            <div class="user-actions">
+                <a href="#"><i class="fas fa-user"></i> Đăng nhập</a>
+                <a href="cart.html"><i class="fas fa-shopping-cart"></i> Giỏ hàng</a>
+            </div>
+        </div>
+        <nav class="nav-menu">
+            <a href="#" data-page="home">Trang chủ</a>
+            <a href="#">Sản phẩm mới</a>
+            <a href="#">Khuyến mãi</a>
+            <a href="#">Thời trang</a>
+            <a href="#">Điện tử</a>
+            <a href="#">Gia dụng</a>
+            <a href="#">Làm đẹp</a>
+            <a href="#">Sức khỏe</a>
+        </nav>
+    </header>
+
+    <!-- Home Page -->
+    <div id="home-page" class="container">
+        <!-- Banner Slider -->
+        <div class="banner-slider">
+            <div>SIÊU KHUYẾN MÃI - GIẢM GIÁ LÊN ĐẾN 50%</div>
+        </div>
+
+        <!-- Categories Section -->
+        <div class="category-section">
+            <div class="section-title">
+                <span>Danh mục sản phẩm</span>
+                <a href="#" class="view-all">Xem tất cả</a>
+            </div>
+            <div class="category-grid">
+                <div class="category-item">
+                    <div class="category-icon"><i class="fas fa-tshirt"></i></div>
+                    <div class="category-name">Thời trang</div>
+                </div>
+                <div class="category-item">
+                    <div class="category-icon"><i class="fas fa-mobile-alt"></i></div>
+                    <div class="category-name">Điện thoại</div>
+                </div>
+                <div class="category-item">
+                    <div class="category-icon"><i class="fas fa-laptop"></i></div>
+                    <div class="category-name">Máy tính</div>
+                </div>
+                <div class="category-item">
+                    <div class="category-icon"><i class="fas fa-tv"></i></div>
+                    <div class="category-name">Điện tử</div>
+                </div>
+                <div class="category-item">
+                    <div class="category-icon"><i class="fas fa-home"></i></div>
+                    <div class="category-name">Gia dụng</div>
+                </div>
+                <div class="category-item">
+                    <div class="category-icon"><i class="fas fa-heart"></i></div>
+                    <div class="category-name">Sức khỏe</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Popular Products -->
+        <div class="product-section">
+            <div class="section-title">
+                <span>Sản phẩm phổ biến</span>
+                <a href="#" class="view-all">Xem tất cả</a>
+            </div>
+            <div class="product-grid">
+                <div class="product-card" data-product="1">
+                    <div class="product-image">Hình sản phẩm</div>
+                    <div class="product-info">
+                        <div class="product-name">Áo thun nam chất liệu cotton thoáng mát</div>
+                        <div class="product-price">249.000₫</div>
+                        <div class="product-rating">
+                            <span class="deal-badge">DEAL</span>
+                            <i class="fas fa-star"></i> 4.8 (1.2k)
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card" data-product="2">
+                    <div class="product-image">Hình sản phẩm</div>
+                    <div class="product-info">
+                        <div class="product-name">Điện thoại Samsung Galaxy A53 5G</div>
+                        <div class="product-price">8.990.000₫</div>
+                        <div class="product-rating">
+                            <span class="deal-badge">DEAL</span>
+                            <i class="fas fa-star"></i> 4.7 (3.5k)
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card" data-product="3">
+                    <div class="product-image">Hình sản phẩm</div>
+                    <div class="product-info">
+                        <div class="product-name">Máy tính xách tay Dell Inspiron 15</div>
+                        <div class="product-price">18.500.000₫</div>
+                        <div class="product-rating">
+                            <i class="fas fa-star"></i> 4.9 (2.1k)
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card" data-product="4">
+                    <div class="product-image">Hình sản phẩm</div>
+                    <div class="product-info">
+                        <div class="product-name">Tai nghe Bluetooth Sony WH-1000XM4</div>
+                        <div class="product-price">5.990.000₫</div>
+                        <div class="product-rating">
+                            <span class="deal-badge">DEAL</span>
+                            <i class="fas fa-star"></i> 4.8 (4.2k)
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card" data-product="5">
+                    <div class="product-image">Hình sản phẩm</div>
+                    <div class="product-info">
+                        <div class="product-name">Nồi chiên không dầu Lock&Lock 5.5L</div>
+                        <div class="product-price">1.890.000₫</div>
+                        <div class="product-rating">
+                            <i class="fas fa-star"></i> 4.6 (1.7k)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Special Offers -->
+        <div class="product-section">
+            <div class="section-title">
+                <span>Khuyến mãi đặc biệt</span>
+                <a href="#" class="view-all">Xem tất cả</a>
+            </div>
+            <div class="product-grid">
+                <div class="product-card" data-product="6">
+                    <div class="product-image">Hình sản phẩm</div>
+                    <div class="product-info">
+                        <div class="product-name">Túi xách nữ đeo chéo da thật</div>
+                        <div class="product-price">550.000₫ <span style="text-decoration: line-through; color: #999; font-size: 14px;">790.000₫</span></div>
+                        <div class="product-rating">
+                            <span class="deal-badge">-30%</span>
+                            <i class="fas fa-star"></i> 4.5 (890)
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card" data-product="7">
+                    <div class="product-image">Hình sản phẩm</div>
+                    <div class="product-info">
+                        <div class="product-name">Set 5 son kem lì không trôi</div>
+                        <div class="product-price">299.000₫ <span style="text-decoration: line-through; color: #999; font-size: 14px;">500.000₫</span></div>
+                        <div class="product-rating">
+                            <span class="deal-badge">-40%</span>
+                            <i class="fas fa-star"></i> 4.7 (2.3k)
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card" data-product="8">
+                    <div class="product-image">Hình sản phẩm</div>
+                    <div class="product-info">
+                        <div class="product-name">Bộ chăn ga gối cao cấp</div>
+                        <div class="product-price">1.200.000₫ <span style="text-decoration: line-through; color: #999; font-size: 14px;">1.800.000₫</span></div>
+                        <div class="product-rating">
+                            <span class="deal-badge">-33%</span>
+                            <i class="fas fa-star"></i> 4.8 (1.5k)
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card" data-product="9">
+                    <div class="product-image">Hình sản phẩm</div>
+                    <div class="product-info">
+                        <div class="product-name">Máy lọc không khí Xiaomi</div>
+                        <div class="product-price">2.490.000₫ <span style="text-decoration: line-through; color: #999; font-size: 14px;">3.200.000₫</span></div>
+                        <div class="product-rating">
+                            <span class="deal-badge">-22%</span>
+                            <i class="fas fa-star"></i> 4.6 (980)
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card" data-product="10">
+                    <div class="product-image">Hình sản phẩm</div>
+                    <div class="product-info">
+                        <div class="product-name">Ghế văn phòng ergonomic</div>
+                        <div class="product-price">1.590.000₫ <span style="text-decoration: line-through; color: #999; font-size: 14px;">2.500.000₫</span></div>
+                        <div class="product-rating">
+                            <span class="deal-badge">-36%</span>
+                            <i class="fas fa-star"></i> 4.9 (1.8k)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Detail Page -->
+    <div id="product-detail-page" class="product-detail-page">
+        <a href="#" class="back-to-home" id="back-to-home"><i class="fas fa-arrow-left"></i> Quay lại trang chủ</a>
+        
+        <div class="breadcrumb">
+            <a href="#" data-page="home">Trang chủ</a> > <a href="#">Điện thoại</a> > <a href="#">Samsung</a> > <span id="product-breadcrumb-name">Điện thoại Samsung Galaxy A53 5G</span>
+        </div>
+        
+        <div class="product-container">
+            <div class="product-gallery">
+                <div class="main-image">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNDAwIDQwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI0MDAiIGZpbGw9IiNmNWY1ZjUiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiBmaWxsPSIjOTk5Ij5I4buTIOWNoeS6pua1qei+vuWMujwvdGV4dD48L3N2Zz4=" alt="Điện thoại Samsung Galaxy A53 5G">
+                </div>
+                <div class="thumbnail-container">
+                    <div class="thumbnail active">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iODAiIGZpbGw9IiNmNWY1ZjUiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiBmaWxsPSIjOTk5Ij7huZM8L3RleHQ+PC9zdmc+" alt="Ảnh 1">
+                    </div>
+                    <div class="thumbnail">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iODAiIGZpbGw9IiNmOWY5ZjkiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiBmaWxsPSIjOTk5Ij7huZI8L3RleHQ+PC9zdmc+" alt="Ảnh 2">
+                    </div>
+                    <div class="thumbnail">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iODAiIGZpbGw9IiNmOWY5ZjkiLz><dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiBmaWxsPSIjOTk5Ij7huZM8L3RleHQ+PC9zdmc+" alt="Ảnh 3">
+                    </div>
+                    <div class="thumbnail">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iODAiIGZpbGw9IiNmOWY5ZjkiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiBmaWxsPSIjOTk5Ij7huZI8L3RleHQ+PC9zdmc+" alt="Ảnh 4">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="product-info-detail">
+                <h1 class="product-title" id="product-detail-title">Điện thoại Samsung Galaxy A53 5G (8GB/128GB) - Chính hãng</h1>
+                
+                <div class="product-rating-detail">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star-half-alt"></i>
+                    <span id="product-rating-text">4.5 (1,238 đánh giá)</span>
+                </div>
+                
+                <div class="product-price-detail">
+                    <span class="current-price" id="product-current-price">8.990.000₫</span>
+                    <span class="original-price" id="product-original-price">10.990.000₫</span>
+                    <span class="discount-percent" id="product-discount">-18%</span>
+                </div>
+                
+                <div class="shipping-info">
+                    <div><i class="fas fa-truck"></i> Miễn phí vận chuyển cho đơn hàng từ 500.000₫</div>
+                    <div><i class="fas fa-undo"></i> Đổi trả trong 30 ngày nếu có lỗi từ nhà sản xuất</div>
+                    <div><i class="fas fa-gift"></i> Nhận ngay quà tặng trị giá 300.000₫ khi mua sản phẩm</div>
+                </div>
+                
+                <div class="product-options">
+                    <div class="option-group">
+                        <label class="option-label">Màu sắc</label>
+                        <select class="option-select">
+                            <option>Đen</option>
+                            <option>Trắng</option>
+                            <option>Xanh</option>
+                            <option>Tím</option>
+                        </select>
+                    </div>
+                    
+                    <div class="option-group">
+                        <label class="option-label">Bộ nhớ</label>
+                        <select class="option-select">
+                            <option>128GB</option>
+                            <option>256GB (+1.000.000₫)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="quantity-selector">
+                    <span class="quantity-label">Số lượng:</span>
+                    <div class="quantity-control">
+                        <button class="quantity-btn" id="decrease">-</button>
+                        <input type="text" class="quantity-input" value="1" min="1">
+                        <button class="quantity-btn" id="increase">+</button>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-cart"><i class="fas fa-shopping-cart"></i> Thêm vào giỏ</button>
+                    <button class="btn btn-buy"><i class="fas fa-credit-card"></i> Mua ngay</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="product-tabs">
+            <div class="tab-headers">
+                <div class="tab-header active" data-tab="description">Mô tả sản phẩm</div>
+                <div class="tab-header" data-tab="specs">Thông số kỹ thuật</div>
+                <div class="tab-header" data-tab="reviews">Đánh giá (<span id="review-count">1,238</span>)</div>
+                <div class="tab-header" data-tab="qna">Hỏi đáp</div>
+            </div>
+            
+            <div class="tab-content">
+                <div class="tab-panel active" id="description">
+                    <p>Samsung Galaxy A53 5G là chiếc điện thoại tầm trung đáng chú ý với nhiều tính năng cao cấp. Sản phẩm sở hữu màn hình Super AMOLED 6.5 inch, vi xử lý Exynos 1280 8 nhân mạnh mẽ, đi kèm camera 64MP và pin 5000mAh thoải mái sử dụng cả ngày.</p>
+                    <p><br></p>
+                    <p><strong>Đặc điểm nổi bật:</strong></p>
+                    <ul>
+                        <li>Màn hình Super AMOLED 6.5 inch, tần số quét 120Hz</li>
+                        <li>Camera chính 64MP, chụp ảnh sắc nét</li>
+                        <li>Hỗ trợ 5G, kết nối mạng siêu tốc</li>
+                        <li>Pin 5000mAh, sạc nhanh 25W</li>
+                        <li>Bộ nhớ 128GB, RAM 8GB</li>
+                    </ul>
+                </div>
+                
+                <div class="tab-panel" id="specs">
+                    <table style="width:100%; border-collapse: collapse;">
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px; width: 30%; font-weight: bold;">Màn hình</td>
+                            <td style="padding: 10px;">6.5 inch, Super AMOLED, 120Hz</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px; font-weight: bold;">Hệ điều hành</td>
+                            <td style="padding: 10px;">Android 12, One UI 4.1</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px; font-weight: bold;">Camera sau</td>
+                            <td style="padding: 10px;">Chính 64MP, góc rộng 12MP, macro 5MP, xóa phông 5MP</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px; font-weight: bold;">Camera trước</td>
+                            <td style="padding: 10px;">32MP</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px; font-weight: bold;">Chip</td>
+                            <td style="padding: 10px;">Exynos 1280 8 nhân</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px; font-weight: bold;">RAM</td>
+                            <td style="padding: 10px;">8GB</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px; font-weight: bold;">Bộ nhớ</td>
+                            <td style="padding: 10px;">128GB</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px; font-weight: bold;">SIM</td>
+                            <td style="padding: 10px;">2 Nano SIM</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px; font-weight: bold;">Pin</td>
+                            <td style="padding: 10px;">5000mAh, sạc nhanh 25W</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="tab-panel" id="reviews">
+                    <div class="review-item">
+                        <div class="review-header">
+                            <span class="review-author">Nguyễn Văn A</span>
+                            <span class="review-date">20/10/2023</span>
+                        </div>
+                        <div class="review-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="review-content">
+                            Sản phẩm tốt, màn hình đẹp, pin trâu. Camera chụp ảnh rất đẹp, đặc biệt là chụp đêm. Nhân viên giao hàng nhiệt tình, đóng gói cẩn thận.
+                        </div>
+                    </div>
+                    
+                    <div class="review-item">
+                        <div class="review-header">
+                            <span class="review-author">Trần Thị B</span>
+                            <span class="review-date">18/10/2023</span>
+                        </div>
+                        <div class="review-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="far fa-star"></i>
+                        </div>
+                        <div class="review-content">
+                            Sản phẩm tốt, nhưng cảm thấy hơi nặng so với các dòng điện thoại khác. Pin dùng được khoảng 1 ngày với nhu cầu sử dụng thông thường.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-panel" id="qna">
+                    <p style="padding: 20px; text-align: center; color: #777;">Chưa có câu hỏi nào. Hãy là người đầu tiên đặt câu hỏi về sản phẩm này.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <div class="footer-column">
+                    <h3>Về chúng tôi</h3>
+                    <ul>
+                        <li><a href="#">Giới thiệu</a></li>
+                        <li><a href="#">Tuyển dụng</a></li>
+                        <li><a href="#">Điều khoản</a></li>
+                        <li><a href="#">Chính sách bảo mật</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Dịch vụ khách hàng</h3>
+                    <ul>
+                        <li><a href="#">Trung tâm hỗ trợ</a></li>
+                        <li><a href="#">Hướng dẫn mua hàng</a></li>
+                        <li><a href="#">Chính sách đổi trả</a></li>
+                        <li><a href="#">Chăm sóc khách hàng</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Liên kết hữu ích</h3>
+                    <ul>
+                        <li><a href="#">Sản phẩm bán chạy</a></li>
+                        <li><a href="#">Sản phẩm khuyến mãi</a></li>
+                        <li><a href="#">Sản phẩm mới</a></li>
+                        <li><a href="#">Danh mục sản phẩm</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Theo dõi chúng tôi</h3>
+                    <ul>
+                        <li><a href="#"><i class="fab fa-facebook"></i> Facebook</a></li>
+                        <li><a href="#"><i class="fab fa-instagram"></i> Instagram</a></li>
+                        <li><a href="#"><i class="fab fa-youtube"></i> YouTube</a></li>
+                        <li><a href="#"><i class="fab fa-tiktok"></i> TikTok</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2023 NAVER SHOPPING. Tất cả quyền được bảo lưu.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Dữ liệu sản phẩm mẫu
+        const products = {
+            1: {
+                name: "Áo thun nam chất liệu cotton thoáng mát",
+                price: "249.000₫",
+                originalPrice: "",
+                discount: "",
+                rating: "4.8 (1.2k)",
+                reviewCount: "1,238"
+            },
+            2: {
+                name: "Điện thoại Samsung Galaxy A53 5G (8GB/128GB) - Chính hãng",
+                price: "8.990.000₫",
+                originalPrice: "10.990.000₫",
+                discount: "-18%",
+                rating: "4.5 (1,238)",
+                reviewCount: "1,238"
+            },
+            3: {
+                name: "Máy tính xách tay Dell Inspiron 15",
+                price: "18.500.000₫",
+                originalPrice: "",
+                discount: "",
+                rating: "4.9 (2.1k)",
+                reviewCount: "2,100"
+            },
+            4: {
+                name: "Tai nghe Bluetooth Sony WH-1000XM4",
+                price: "5.990.000₫",
+                originalPrice: "7.500.000₫",
+                discount: "-20%",
+                rating: "4.8 (4.2k)",
+                reviewCount: "4,200"
+            },
+            5: {
+                name: "Nồi chiên không dầu Lock&Lock 5.5L",
+                price: "1.890.000₫",
+                originalPrice: "2.200.000₫",
+                discount: "-14%",
+                rating: "4.6 (1.7k)",
+                reviewCount: "1,700"
+            }
+        };
+
+        // JavaScript cho hệ thống liên kết trang
+        document.addEventListener('DOMContentLoaded', function() {
+            const homePage = document.getElementById('home-page');
+            const productDetailPage = document.getElementById('product-detail-page');
+            const logo = document.getElementById('logo');
+            const backToHome = document.getElementById('back-to-home');
+            const productCards = document.querySelectorAll('.product-card');
+            
+            // Ẩn trang chi tiết sản phẩm ban đầu
+            productDetailPage.style.display = 'none';
+            
+            // Xử lý click vào logo để về trang chủ
+            logo.addEventListener('click', function(e) {
+                e.preventDefault();
+                showHomePage();
+            });
+            
+            // Xử lý nút quay lại trang chủ
+            backToHome.addEventListener('click', function(e) {
+                e.preventDefault();
+                showHomePage();
+            });
+            
+            // Xử lý click vào sản phẩm
+            productCards.forEach(card => {
+                card.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const productId = this.getAttribute('data-product');
+                    showProductDetail(productId);
+                });
+            });
+            
+            // Hiển thị trang chủ
+            function showHomePage() {
+                homePage.style.display = 'block';
+                productDetailPage.style.display = 'none';
+                window.scrollTo(0, 0);
+            }
+            
+            // Hiển thị trang chi tiết sản phẩm
+            function showProductDetail(productId) {
+                homePage.style.display = 'none';
+                productDetailPage.style.display = 'block';
+                
+                // Cập nhật thông tin sản phẩm
+                const product = products[productId];
+                if (product) {
+                    document.getElementById('product-detail-title').textContent = product.name;
+                    document.getElementById('product-current-price').textContent = product.price;
+                    document.getElementById('product-breadcrumb-name').textContent = product.name;
+                    document.getElementById('product-rating-text').textContent = product.rating;
+                    document.getElementById('review-count').textContent = product.reviewCount;
+                    
+                    // Xử lý giá gốc và khuyến mãi
+                    if (product.originalPrice) {
+                        document.getElementById('product-original-price').textContent = product.originalPrice;
+                        document.getElementById('product-original-price').style.display = 'inline';
+                        document.getElementById('product-discount').textContent = product.discount;
+                        document.getElementById('product-discount').style.display = 'inline';
+                    } else {
+                        document.getElementById('product-original-price').style.display = 'none';
+                        document.getElementById('product-discount').style.display = 'none';
+                    }
+                }
+                
+                window.scrollTo(0, 0);
+            }
+            
+            // Xử lý tìm kiếm
+            const searchInput = document.querySelector('.search-bar input');
+            const searchButton = document.querySelector('.search-bar button');
+            
+            searchButton.addEventListener('click', function() {
+                performSearch();
+            });
+            
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+            
+            function performSearch() {
+                const query = searchInput.value.trim();
+                if (query) {
+                    alert(`Tìm kiếm: ${query}`);
+                }
+            }
+            
+            // Xử lý thay đổi ảnh sản phẩm
+            const thumbnails = document.querySelectorAll('.thumbnail');
+            const mainImage = document.querySelector('.main-image img');
+            
+            thumbnails.forEach(thumb => {
+                thumb.addEventListener('click', function() {
+                    thumbnails.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    mainImage.style.opacity = '0';
+                    setTimeout(() => {
+                        mainImage.style.opacity = '1';
+                    }, 300);
+                });
+            });
+            
+            // Xử lý tăng giảm số lượng
+            const decreaseBtn = document.getElementById('decrease');
+            const increaseBtn = document.getElementById('increase');
+            const quantityInput = document.querySelector('.quantity-input');
+            
+            decreaseBtn.addEventListener('click', function() {
+                let value = parseInt(quantityInput.value);
+                if (value > 1) {
+                    quantityInput.value = value - 1;
+                }
+            });
+            
+            increaseBtn.addEventListener('click', function() {
+                let value = parseInt(quantityInput.value);
+                quantityInput.value = value + 1;
+            });
+            
+            // Xử lý tab sản phẩm
+            const tabHeaders = document.querySelectorAll('.tab-header');
+            const tabPanels = document.querySelectorAll('.tab-panel');
+            
+            tabHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    tabHeaders.forEach(h => h.classList.remove('active'));
+                    tabPanels.forEach(p => p.classList.remove('active'));
+                    
+                    this.classList.add('active');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+            
+            // Xử lý nút thêm vào giỏ hàng
+            const addToCartBtn = document.querySelector('.btn-cart');
+            addToCartBtn.addEventListener('click', function() {
+                const quantity = parseInt(quantityInput.value);
+                alert(`Đã thêm ${quantity} sản phẩm vào giỏ hàng!`);
+            });
+            
+            // Xử lý nút mua ngay
+            const buyNowBtn = document.querySelector('.btn-buy');
+            buyNowBtn.addEventListener('click', function() {
+                const quantity = parseInt(quantityInput.value);
+                alert(`Chuyển đến trang thanh toán cho ${quantity} sản phẩm!`);
+            });
+        });
+    </script>
+</body>
+</html>
