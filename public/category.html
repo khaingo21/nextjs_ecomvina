@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Naver Shopping - Danh mục sản phẩm</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="category.css">
+</head>
+<body>
+<header>
+  <div class="header-top">
+    <div class="logo" onclick="location.href='index.html'">NAVER SHOPPING</div>
+    <div class="search-bar">
+      <input id="q" type="text" placeholder="Tìm kiếm trong danh mục...">
+      <button id="btnSearch"><i class="fas fa-search"></i></button>
+    </div>
+    <div class="user-actions">
+      <a href="dangnhap.html"><i class="fas fa-user"></i> Đăng nhập</a>
+      &nbsp;&nbsp;
+      <a href="cart.html"><i class="fas fa-shopping-cart"></i> Giỏ hàng</a>
+    </div>
+  </div>
+  <nav class="nav-menu">
+    <a href="index.html">Trang chủ</a>
+    <a href="category.html?cat=new">Sản phẩm mới</a>
+    <a href="category.html?cat=deals">Khuyến mãi</a>
+    <a href="category.html?cat=fashion">Thời trang</a>
+    <a href="category.html?cat=electronics">Điện tử</a>
+    <a href="category.html?cat=home">Gia dụng</a>
+    <a href="category.html?cat=beauty">Làm đẹp</a>
+    <a href="category.html?cat=health">Sức khỏe</a>
+  </nav>
+</header>
+
+<main class="container">
+  <div class="breadcrumb"><a href="index.html">Trang chủ</a> › <span id="crumbCat">Danh mục</span></div>
+
+  <!-- chips chuyển nhanh danh mục -->
+  <div class="chips" id="chips">
+    <span class="chip" data-cat="all">Tất cả</span>
+    <span class="chip" data-cat="electronics">Điện tử</span>
+    <span class="chip" data-cat="phones">Điện thoại</span>
+    <span class="chip" data-cat="laptop">Laptop</span>
+    <span class="chip" data-cat="audio">Tai nghe/Âm thanh</span>
+    <span class="chip" data-cat="home">Gia dụng</span>
+    <span class="chip" data-cat="fashion">Thời trang</span>
+    <span class="chip" data-cat="beauty">Làm đẹp</span>
+  </div>
+
+  <div class="layout">
+    <!-- sidebar filter -->
+    <aside class="sidebar">
+      <div class="filter-group">
+        <div class="s-title">Khoảng giá</div>
+        <div class="price-row">
+          <input id="min" type="number" placeholder="Từ">
+          <input id="max" type="number" placeholder="Đến">
+        </div>
+      </div>
+      <div class="filter-group">
+        <div class="s-title">Thương hiệu</div>
+        <label><input type="checkbox" class="brand" value="Samsung"> Samsung</label><br>
+        <label><input type="checkbox" class="brand" value="Apple"> Apple</label><br>
+        <label><input type="checkbox" class="brand" value="Sony"> Sony</label><br>
+        <label><input type="checkbox" class="brand" value="Lock&Lock"> Lock&Lock</label>
+      </div>
+      <div class="filter-group">
+        <div class="s-title">Đánh giá</div>
+        <label class="rating-row"><input type="radio" name="rate" value="4"> &nbsp;<i class="fas fa-star"></i> 4.0+</label><br>
+        <label class="rating-row"><input type="radio" name="rate" value="3"> &nbsp;<i class="fas fa-star"></i> 3.0+</label><br>
+        <label class="rating-row"><input type="radio" name="rate" value="0" checked> &nbsp;Bất kỳ</label>
+      </div>
+      <button id="apply" style="width:100%;padding:10px;border-radius:10px;border:1px solid #03c75a;background:#03c75a;color:#fff;font-weight:700">
+        Áp dụng lọc
+      </button>
+    </aside>
+
+    <!-- content -->
+    <section>
+      <div class="toolbar">
+        <h2 id="title">Danh mục</h2>
+        <div class="sort">
+          <span>Sắp xếp:</span>
+          <select id="sort">
+            <option value="pop">Phổ biến</option>
+            <option value="price_asc">Giá tăng dần</option>
+            <option value="price_desc">Giá giảm dần</option>
+            <option value="rating">Đánh giá cao</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="grid" class="grid"></div>
+      <div id="pagination" class="pagination"></div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-bottom">© 2025 NAVER SHOPPING</div>
+</footer>
+
+
+<script type="module" src="/src/category.js" defer></script>
+</body>
+</html>

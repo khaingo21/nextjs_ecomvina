@@ -4,68 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Đăng nhập | My‑T</title>
-  <style>
-    :root{
-      --green:#2db400;           /* màu nhấn như NAVER */
-      --text:#111827;            /* #1f2937 */
-      --muted:#6b7280;           /* #6b7280 */
-      --border:#e5e7eb;          /* #e5e7eb */
-      --field-bg:#f3f4f6;        /* xám nhạt cho ô nhập */
-      --radius:14px;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);background:#fff;}
-
-    .lang{position:absolute; right:24px; top:16px}
-    select{appearance:auto}
-
-    .wrap{min-height:100svh; display:grid; place-items:center; padding:24px}
-
-    .brand{color:var(--green); font-weight:900; font-size:40px; letter-spacing:.5px; text-align:center; margin-bottom:16px}
-
-    .card{width:min(520px,92vw); border:1px solid var(--border); border-radius:18px; box-shadow:0 12px 36px rgba(17,24,39,.06); background:#fff}
-
-    .tabs{display:grid; grid-template-columns:1fr 1fr; background:#f9fafb; border-bottom:1px solid var(--border); border-radius:18px 18px 0 0; overflow:hidden}
-    .tab{padding:14px 16px; text-align:center; font-weight:700; cursor:pointer; user-select:none; color:#475569}
-    .tab.active{background:#fff; color:#111;}
-
-    .panel{padding:18px; display:none}
-    .panel.active{display:block}
-
-    .input{display:flex; align-items:center; gap:10px; background:var(--field-bg); border:1px solid var(--border); border-radius:var(--radius); height:50px; padding:0 14px}
-    .input input{border:0; outline:none; background:transparent; width:100%; font:inherit; color:#374151}
-    .input input::placeholder{color:#9ca3af}
-
-    .row{display:grid; gap:10px}
-
-    .options{display:flex; justify-content:space-between; align-items:center; margin:6px 2px 0}
-    .switch{display:inline-flex; align-items:center; gap:8px; font-size:12px; color:#4b5563}
-    .switch input{appearance:none; width:36px; height:20px; background:#e5e7eb; border-radius:999px; position:relative; outline:none; cursor:pointer}
-    .switch input:checked{background:#bbf7d0}
-    .switch input::after{content:""; position:absolute; width:16px; height:16px; top:2px; left:2px; background:#fff; border-radius:999px; box-shadow:0 1px 2px rgba(0,0,0,.15); transition:all .18s}
-    .switch input:checked::after{left:18px}
-
-    .btn{height:48px; border:none; border-radius:12px; cursor:pointer; font-weight:800}
-    .btn-primary{background:#9ca3af; color:#fff}
-    .btn-primary.enabled{background:#4b5563}
-
-    .divider{display:flex; align-items:center; gap:10px; color:#94a3b8; font-size:12px; margin:8px 0}
-    .divider::before,.divider::after{content:""; height:1px; background:#e5e7eb; flex:1}
-
-    .btn-outline{background:#fff; color:#0b7a00; border:2px solid var(--green)}
-
-    .links{display:flex; gap:14px; justify-content:center; font-size:12px; color:#64748b; margin-top:8px}
-    .links a{color:#0b7a00; text-decoration:none}
-
-    .social{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px}
-    .social button{height:44px; border:1px solid var(--border); border-radius:12px; background:#fff; font-weight:700; cursor:pointer}
-
-    .footer{margin-top:18px; text-align:center; color:#94a3b8; font-size:12px}
-
-    @media (max-width:480px){
-      .brand{font-size:32px}
-    }
-  </style>
+  <link rel="stylesheet" href="dangnhap.css">
 </head>
 <body>
   <div class="lang">

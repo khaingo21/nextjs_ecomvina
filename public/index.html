@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Naver Shopping - Trang mua sắm trực tuyến</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/src/index.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-top">
+            <div class="logo" id="logo">NAVER SHOPPING</div>
+            <div class="search-bar">
+                <input type="text" placeholder="Tìm kiếm sản phẩm...">
+                <button><i class="fas fa-search"></i></button>
+            </div>
+            <div class="user-actions">
+                <a href="dangnhap.html"><i class="fas fa-user"></i> Đăng nhập</a>
+                <a href="cart.html"><i class="fas fa-shopping-cart"></i> Giỏ hàng</a>
+            </div>
+        </div>
+        <nav class="nav-menu">
+            <a href="index.html" data-page="home">Trang chủ</a>
+            <a href="#">Sản phẩm mới</a>
+            <a href="#">Khuyến mãi</a>
+            <a href="#">Thời trang</a>
+            <a href="#">Điện tử</a>
+            <a href="#">Gia dụng</a>
+            <a href="#">Làm đẹp</a>
+            <a href="#">Sức khỏe</a>
+        </nav>
+    </header>
+
+    <!-- Home Page -->
+    <div id="home-page" class="container">
+        <!-- Banner Slider -->
+        <div class="banner-slider">
+            <div>SIÊU KHUYẾN MÃI - GIẢM GIÁ LÊN ĐẾN 50%</div>
+        </div>
+
+        <!-- Categories Section -->
+        <div class="category-section">
+            <div class="section-title">
+                <span>Danh mục sản phẩm</span>
+                <a href="category.html" class="view-all">Xem tất cả</a>
+            </div>
+            <div class="category-grid">
+                <div class="category-item">
+                    <div class="category-icon"><i class="fas fa-tshirt"></i></div>
+                    <div class="category-name">Thời trang</div>
+                </div>
+                <div class="category-item">
+                    <div class="category-icon"><i class="fas fa-mobile-alt"></i></div>
+                    <div class="category-name">Điện thoại</div>
+                </div>
+                <div class="category-item">
+                    <div class="category-icon"><i class="fas fa-laptop"></i></div>
+                    <div class="category-name">Máy tính</div>
+                </div>
+                <div class="category-item">
+                    <div class="category-icon"><i class="fas fa-tv"></i></div>
+                    <div class="category-name">Điện tử</div>
+                </div>
+                <div class="category-item">
+                    <div class="category-icon"><i class="fas fa-home"></i></div>
+                    <div class="category-name">Gia dụng</div>
+                </div>
+                <div class="category-item">
+                    <div class="category-icon"><i class="fas fa-heart"></i></div>
+                    <div class="category-name">Sức khỏe</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Popular Products đang import data-products vào thẻ div-->
+        <div class="product-section">
+            <div class="section-title">
+                <span>Sản phẩm phổ biến</span>
+                <a href="#" class="view-all">Xem tất cả</a>
+            </div>
+            <div class="product-grid">
+                <div class="product-card" data-product="101">
+                    <div class="product-image">Hình sản phẩm</div>
+                    <div class="product-info">
+                        <div class="product-name">Samsung Galaxy A53 5G</div>
+                        <div class="product-price">8.990.000₫</div>
+                        <div class="product-rating">
+                            <span class="deal-badge">DEAL</span>
+                            <i class="fas fa-star"></i> 4.8 (1.2k)
+                            <button class="mini-add">Thêm</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card" data-product="102">
+                    <div class="product-image">Hình sản phẩm</div>
+                    <div class="product-info">
+                        <div class="product-name">Tai nghe Sony WH-1000XM4</div>
+                        <div class="product-price">5.990.000₫</div>
+                        <div class="product-rating">
+                            <span class="deal-badge">DEAL</span>
+                            <i class="fas fa-star"></i> 4.7 (3.5k)
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card" data-product="103">
+                    <div class="product-image">Hình sản phẩm</div>
+                    <div class="product-info">
+                        <div class="product-name">Nồi chiên không dầu Lock&Lock 5.5L</div>
+                        <div class="product-price">1.890.000₫</div>
+                        <div class="product-rating">
+                            <i class="fas fa-star"></i> 4.9 (2.1k)
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card" data-product="104">
+                    <div class="product-image">Hình sản phẩm</div>
+                    <div class="product-info">
+                        <div class="product-name">iPhone 13 128GB</div>
+                        <div class="product-price">14.990.000₫</div>
+                        <div class="product-rating">
+                            <span class="deal-badge">DEAL</span>
+                            <i class="fas fa-star"></i> 4.8 (4.2k)
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card" data-product="105">
+                    <div class="product-image">Hình sản phẩm</div>
+                    <div class="product-info">
+                        <div class="product-name">Laptop Dell Inspiron 15</div>
+                        <div class="product-price">18.500.000₫</div>
+                        <div class="product-rating">
+                            <i class="fas fa-star"></i> 4.6 (1.7k)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Special Offers -->
+        <div class="product-section">
+            <div class="section-title">
+                <span>Khuyến mãi đặc biệt</span>
+                <a href="#" class="view-all">Xem tất cả</a>
+            </div>
+            <div class="product-grid">
+                <div class="product-card" data-product="6">
+                    <div class="product-image">Hình sản phẩm</div>
+                    <div class="product-info">
+                        <div class="product-name">Túi xách nữ đeo chéo da thật</div>
+                        <div class="product-price">550.000₫ <span style="text-decoration: line-through; color: #999; font-size: 14px;">790.000₫</span></div>
+                        <div class="product-rating">
+                            <span class="deal-badge">-30%</span>
+                            <i class="fas fa-star"></i> 4.5 (890)
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card" data-product="7">
+                    <div class="product-image">Hình sản phẩm</div>
+                    <div class="product-info">
+                        <div class="product-name">Set 5 son kem lì không trôi</div>
+                        <div class="product-price">299.000₫ <span style="text-decoration: line-through; color: #999; font-size: 14px;">500.000₫</span></div>
+                        <div class="product-rating">
+                            <span class="deal-badge">-40%</span>
+                            <i class="fas fa-star"></i> 4.7 (2.3k)
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card" data-product="8">
+                    <div class="product-image">Hình sản phẩm</div>
+                    <div class="product-info">
+                        <div class="product-name">Bộ chăn ga gối cao cấp</div>
+                        <div class="product-price">1.200.000₫ <span style="text-decoration: line-through; color: #999; font-size: 14px;">1.800.000₫</span></div>
+                        <div class="product-rating">
+                            <span class="deal-badge">-33%</span>
+                            <i class="fas fa-star"></i> 4.8 (1.5k)
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card" data-product="9">
+                    <div class="product-image">Hình sản phẩm</div>
+                    <div class="product-info">
+                        <div class="product-name">Máy lọc không khí Xiaomi</div>
+                        <div class="product-price">2.490.000₫ <span style="text-decoration: line-through; color: #999; font-size: 14px;">3.200.000₫</span></div>
+                        <div class="product-rating">
+                            <span class="deal-badge">-22%</span>
+                            <i class="fas fa-star"></i> 4.6 (980)
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card" data-product="10">
+                    <div class="product-image">Hình sản phẩm</div>
+                    <div class="product-info">
+                        <div class="product-name">Ghế văn phòng ergonomic</div>
+                        <div class="product-price">1.590.000₫ <span style="text-decoration: line-through; color: #999; font-size: 14px;">2.500.000₫</span></div>
+                        <div class="product-rating">
+                            <span class="deal-badge">-36%</span>
+                            <i class="fas fa-star"></i> 4.9 (1.8k)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Detail Page -->
+    <div id="product-detail-page" class="product-detail-page">
+        <a href="#" class="back-to-home" id="back-to-home"><i class="fas fa-arrow-left"></i> Quay lại trang chủ</a>
+        
+        <div class="breadcrumb">
+            <a href="#" data-page="home">Trang chủ</a> > <a href="#">Điện thoại</a> > <a href="#">Samsung</a> > <span id="product-breadcrumb-name">Điện thoại Samsung Galaxy A53 5G</span>
+        </div>
+        
+        <div class="product-container">
+            <div class="product-gallery">
+                <div class="main-image">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNDAwIDQwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI0MDAiIGZpbGw9IiNmNWY1ZjUiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiBmaWxsPSIjOTk5Ij5I4buTIOWNoeS6pua1qei+vuWMujwvdGV4dD48L3N2Zz4=" alt="Điện thoại Samsung Galaxy A53 5G">
+                </div>
+                <div class="thumbnail-container">
+                    <div class="thumbnail active">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iODAiIGZpbGw9IiNmNWY1ZjUiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiBmaWxsPSIjOTk5Ij7huZM8L3RleHQ+PC9zdmc+" alt="Ảnh 1">
+                    </div>
+                    <div class="thumbnail">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iODAiIGZpbGw9IiNmOWY5ZjkiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiBmaWxsPSIjOTk5Ij7huZI8L3RleHQ+PC9zdmc+" alt="Ảnh 2">
+                    </div>
+                    <div class="thumbnail">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iODAiIGZpbGw9IiNmOWY5ZjkiLz><dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiBmaWxsPSIjOTk5Ij7huZM8L3RleHQ+PC9zdmc+" alt="Ảnh 3">
+                    </div>
+                    <div class="thumbnail">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iODAiIGZpbGw9IiNmOWY5ZjkiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiBmaWxsPSIjOTk5Ij7huZI8L3RleHQ+PC9zdmc+" alt="Ảnh 4">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="product-info-detail">
+                <h1 class="product-title" id="product-detail-title">Điện thoại Samsung Galaxy A53 5G (8GB/128GB) - Chính hãng</h1>
+                
+                <div class="product-rating-detail">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star-half-alt"></i>
+                    <span id="product-rating-text">4.5 (1,238 đánh giá)</span>
+                </div>
+                
+                <div class="product-price-detail">
+                    <span class="current-price" id="product-current-price">8.990.000₫</span>
+                    <span class="original-price" id="product-original-price">10.990.000₫</span>
+                    <span class="discount-percent" id="product-discount">-18%</span>
+                </div>
+                
+                <div class="shipping-info">
+                    <div><i class="fas fa-truck"></i> Miễn phí vận chuyển cho đơn hàng từ 500.000₫</div>
+                    <div><i class="fas fa-undo"></i> Đổi trả trong 30 ngày nếu có lỗi từ nhà sản xuất</div>
+                    <div><i class="fas fa-gift"></i> Nhận ngay quà tặng trị giá 300.000₫ khi mua sản phẩm</div>
+                </div>
+                
+                <div class="product-options">
+                    <div class="option-group">
+                        <label class="option-label">Màu sắc</label>
+                        <select class="option-select">
+                            <option>Đen</option>
+                            <option>Trắng</option>
+                            <option>Xanh</option>
+                            <option>Tím</option>
+                        </select>
+                    </div>
+                    
+                    <div class="option-group">
+                        <label class="option-label">Bộ nhớ</label>
+                        <select class="option-select">
+                            <option>128GB</option>
+                            <option>256GB (+1.000.000₫)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="quantity-selector">
+                    <span class="quantity-label">Số lượng:</span>
+                    <div class="quantity-control">
+                        <button class="quantity-btn" id="decrease">-</button>
+                        <input type="text" class="quantity-input" value="1" min="1">
+                        <button class="quantity-btn" id="increase">+</button>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-cart"><i class="fas fa-shopping-cart"></i> Thêm vào giỏ</button>
+                    <button class="btn btn-buy"><i class="fas fa-credit-card"></i> Mua ngay</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="product-tabs">
+            <div class="tab-headers">
+                <div class="tab-header active" data-tab="description">Mô tả sản phẩm</div>
+                <div class="tab-header" data-tab="specs">Thông số kỹ thuật</div>
+                <div class="tab-header" data-tab="reviews">Đánh giá (<span id="review-count">1,238</span>)</div>
+                <div class="tab-header" data-tab="qna">Hỏi đáp</div>
+            </div>
+            
+            <div class="tab-content">
+                <div class="tab-panel active" id="description">
+                    <p>Samsung Galaxy A53 5G là chiếc điện thoại tầm trung đáng chú ý với nhiều tính năng cao cấp. Sản phẩm sở hữu màn hình Super AMOLED 6.5 inch, vi xử lý Exynos 1280 8 nhân mạnh mẽ, đi kèm camera 64MP và pin 5000mAh thoải mái sử dụng cả ngày.</p>
+                    <p><br></p>
+                    <p><strong>Đặc điểm nổi bật:</strong></p>
+                    <ul>
+                        <li>Màn hình Super AMOLED 6.5 inch, tần số quét 120Hz</li>
+                        <li>Camera chính 64MP, chụp ảnh sắc nét</li>
+                        <li>Hỗ trợ 5G, kết nối mạng siêu tốc</li>
+                        <li>Pin 5000mAh, sạc nhanh 25W</li>
+                        <li>Bộ nhớ 128GB, RAM 8GB</li>
+                    </ul>
+                </div>
+                
+                <div class="tab-panel" id="specs">
+                    <table style="width:100%; border-collapse: collapse;">
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px; width: 30%; font-weight: bold;">Màn hình</td>
+                            <td style="padding: 10px;">6.5 inch, Super AMOLED, 120Hz</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px; font-weight: bold;">Hệ điều hành</td>
+                            <td style="padding: 10px;">Android 12, One UI 4.1</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px; font-weight: bold;">Camera sau</td>
+                            <td style="padding: 10px;">Chính 64MP, góc rộng 12MP, macro 5MP, xóa phông 5MP</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px; font-weight: bold;">Camera trước</td>
+                            <td style="padding: 10px;">32MP</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px; font-weight: bold;">Chip</td>
+                            <td style="padding: 10px;">Exynos 1280 8 nhân</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px; font-weight: bold;">RAM</td>
+                            <td style="padding: 10px;">8GB</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px; font-weight: bold;">Bộ nhớ</td>
+                            <td style="padding: 10px;">128GB</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px; font-weight: bold;">SIM</td>
+                            <td style="padding: 10px;">2 Nano SIM</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px; font-weight: bold;">Pin</td>
+                            <td style="padding: 10px;">5000mAh, sạc nhanh 25W</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="tab-panel" id="reviews">
+                    <div class="review-item">
+                        <div class="review-header">
+                            <span class="review-author">Nguyễn Văn A</span>
+                            <span class="review-date">20/10/2023</span>
+                        </div>
+                        <div class="review-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="review-content">
+                            Sản phẩm tốt, màn hình đẹp, pin trâu. Camera chụp ảnh rất đẹp, đặc biệt là chụp đêm. Nhân viên giao hàng nhiệt tình, đóng gói cẩn thận.
+                        </div>
+                    </div>
+                    
+                    <div class="review-item">
+                        <div class="review-header">
+                            <span class="review-author">Trần Thị B</span>
+                            <span class="review-date">18/10/2023</span>
+                        </div>
+                        <div class="review-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="far fa-star"></i>
+                        </div>
+                        <div class="review-content">
+                            Sản phẩm tốt, nhưng cảm thấy hơi nặng so với các dòng điện thoại khác. Pin dùng được khoảng 1 ngày với nhu cầu sử dụng thông thường.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-panel" id="qna">
+                    <p style="padding: 20px; text-align: center; color: #777;">Chưa có câu hỏi nào. Hãy là người đầu tiên đặt câu hỏi về sản phẩm này.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <div class="footer-column">
+                    <h3>Về chúng tôi</h3>
+                    <ul>
+                        <li><a href="#">Giới thiệu</a></li>
+                        <li><a href="#">Tuyển dụng</a></li>
+                        <li><a href="#">Điều khoản</a></li>
+                        <li><a href="#">Chính sách bảo mật</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Dịch vụ khách hàng</h3>
+                    <ul>
+                        <li><a href="#">Trung tâm hỗ trợ</a></li>
+                        <li><a href="#">Hướng dẫn mua hàng</a></li>
+                        <li><a href="#">Chính sách đổi trả</a></li>
+                        <li><a href="#">Chăm sóc khách hàng</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Liên kết hữu ích</h3>
+                    <ul>
+                        <li><a href="#">Sản phẩm bán chạy</a></li>
+                        <li><a href="#">Sản phẩm khuyến mãi</a></li>
+                        <li><a href="#">Sản phẩm mới</a></li>
+                        <li><a href="#">Danh mục sản phẩm</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Theo dõi chúng tôi</h3>
+                    <ul>
+                        <li><a href="#"><i class="fab fa-facebook"></i> Facebook</a></li>
+                        <li><a href="#"><i class="fab fa-instagram"></i> Instagram</a></li>
+                        <li><a href="#"><i class="fab fa-youtube"></i> YouTube</a></li>
+                        <li><a href="#"><i class="fab fa-tiktok"></i> TikTok</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2023 NAVER SHOPPING. Tất cả quyền được bảo lưu.</p>
+            </div>
+        </div>
+    </footer>
+
+
+    <script type="module" src="/src/index.js" defer></script>
+
+</body>
+</html>

@@ -1,0 +1,89 @@
+:root{
+      --green:#2db400;
+      --green-soft:#eaf7e4;     /* legacy var (not used for fields now) */
+      --text:#222;
+      --muted:#6b7280;
+      --border:#d7e5d0;
+      --danger:#e11d48;
+      --radius:14px;
+      --input-text:#4b5563;
+      --placeholder:#9ca3af;
+      --field-bg:#f3f4f6;       /* nền xám nhạt cho ô nhập */
+      --field-border:#e5e7eb;   /* viền xám nhạt */
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; color:var(--text);
+      background:#fff; 
+      display:grid; place-items:center; min-height:100svh;
+    }
+
+    .wrap{width:min(880px,92vw);}
+
+    .brand{font-weight:800; letter-spacing:.5px; color:var(--green); font-size:32px; margin:16px 0 24px}
+
+    .card{
+      background:#fff; border:1px solid var(--border); border-radius:20px; padding:28px; 
+      box-shadow:0 10px 30px rgba(45,180,0,.06);
+    }
+
+    form{
+      display:grid; gap:10px;
+      grid-template-columns:1fr;
+    }
+
+    .input, .select, .btn, .segmented{
+      height:50px; border-radius:var(--radius); border:1px solid var(--field-border); background:var(--field-bg);
+      padding:0 14px; display:flex; align-items:center; gap:10px;
+    }
+
+    .input input, .select select{border:0; outline:none; background:transparent; width:100%; font:inherit; color:var(--input-text);}
+    /* make input flex and allow suffix stay fixed */
+    .input{display:flex; align-items:center}
+    .input input{flex:1 1 auto; min-width:0}
+    .suffix-in{flex:0 0 auto}
+
+    .muted{font-size:12px; color:var(--muted);}
+
+    .inline{display:grid; grid-template-columns:1fr 180px; gap:0;}
+
+    .suffix{color:var(--input-text); white-space:nowrap; font-weight:600; background:var(--field-bg); border-left:1px solid var(--field-border); display:flex; align-items:center; justify-content:center; position:relative;}
+    .suffix::before{content:"|"; position:relative; left:-8px; color:#cbd5e1;}
+
+    .segmented{
+      background:#fff; padding:4px; gap:6px; border-color:var(--border);
+    }
+
+    .segmented button{
+      flex:1; height:44px; border-radius:12px; border:1px solid transparent; background:#f7fbf5; cursor:pointer; font-weight:600;
+    }
+    .segmented button.active{ background:var(--green-soft); border-color:var(--green); color:#0b6e00 }
+
+    .group{display:grid; gap:10px}
+
+    .phone{display:grid; grid-template-columns:200px 1fr; gap:8px}
+
+    .btn{
+      background:var(--green); color:#fff; border-color:var(--green); cursor:pointer; height:56px; font-weight:800; letter-spacing:.2px;
+    }
+    .btn:disabled{opacity:.6; cursor:not-allowed}
+
+    .row{display:grid; gap:10px}
+
+    .hint{font-size:12px; color:#0b6e00}
+
+    .eye{cursor:pointer; user-select:none}
+
+    .error{color:var(--danger); font-size:12px; display:none}
+    /* placeholder color */
+    .input input::placeholder{ color:var(--placeholder); }
+
+    /* responsive */
+    /* inline suffix inside same field */
+    .suffix-in{ margin-left:auto; padding-left:12px; border-left:1px solid var(--field-border); height:100%; display:flex; align-items:center; white-space:nowrap; color:var(--muted); font-weight:600; }
+
+    @media (max-width:600px){
+      .phone{grid-template-columns:1fr;}
+      .inline{grid-template-columns:1fr;}
+    }
