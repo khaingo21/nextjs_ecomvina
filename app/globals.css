@@ -128,3 +128,40 @@
     width: auto;
   }
 }
+
+/* ====================================================================
+   Quick overrides to align header/dropdown behaviors with template
+   ==================================================================== */
+/* Remove bullets for nav lists */
+.nav-menu,
+.nav-submenu,
+.common-dropdown,
+.header-top__right,
+.nav-menu__item,
+.nav-submenu__item {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+/* Hide dropdowns by default; show on hover of parent */
+.on-hover-dropdown {
+  display: none;
+}
+.on-hover-item:hover > .on-hover-dropdown,
+.has-submenu:hover > .on-hover-dropdown {
+  display: block;
+}
+
+/* Ensure dropdown floats above and does not push layout */
+.common-dropdown.nav-submenu {
+  position: absolute;
+  z-index: 1000;
+}
+
+/* Basic reset to avoid unexpected anchor underlines in menus */
+.nav-menu a,
+.nav-submenu a,
+.common-dropdown a {
+  text-decoration: none;
+}

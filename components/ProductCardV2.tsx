@@ -3,22 +3,78 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 
+type BadgeColor = "primary" | "danger" | "warning";
+
+type SoldInfo =
+  | string                    // ví dụ "18/35" (giữ tương thích)
+  | { current: number; total: number } // sẽ tính % = current/total
+  | number;                   // % đã bán (0..100)
+
 type Props = {
-  href?: string; // <-- NEW: link đích cho thumb + title
+  /** Link đích cho thumb + title (fallback: /product-details) */
+  href?: string;
+
+  /** Ảnh hiển thị (absolute/relative) */
   img: string;
+
+  /** Tiêu đề sản phẩm */
   title: string;
-  price: string;
-  oldPrice?: string;
-  sold?: string;
-  rating?: string;
-  reviews?: string;
-  badge?: { text: string; color: "primary" | "danger" | "warning" };
+
+  /** Giá hiển thị: có thể truyền number (tự format VND) hoặc string đã format */
+  price: number | string;
+
+  /** Giá gốc (tuỳ chọn): number (tự format) hoặc string */
+  oldPrice?: number | string;
+
+  /** Thông tin đã bán: "18/35" | {current,total} | number(%) */
+  sold?: SoldInfo;
+
+  /** Đánh giá: ưu tiên dùng dạng số; fallback: chuỗi cũ */
+  ratingAverage?: number; // ví dụ 4.8
+  ratingCount?: number;   // ví dụ 17000
+  rating?: string;        // fallback cũ: "4.8"
+  reviews?: string;       // fallback cũ: "(17k)"
+
+  /** Badge trạng thái (giảm giá/miễn phí/v.v.) */
+  badge?: { text: string; color: BadgeColor };
 };
 
-const colorMap: Record<"primary" | "danger" | "warning", string> = {
+const colorMap: Record<BadgeColor, string> = {
   primary: "bg-primary-600",
   danger: "bg-danger-600",
   warning: "bg-warning-600",
+};
+
+/** Format VND khi nhận giá dạng number */
+const fmtVND = (v: number | string | undefined): string | undefined => {
+  if (typeof v === "number") return v.toLocaleString("vi-VN") + " đ";
+  return v;
+};
+
+/** Tính phần trăm & label cho 'Sold' */
+const deriveSold = (sold?: SoldInfo): { percent: number; label: string } => {
+  if (sold == null) return { percent: 35, label: "Sold: 18/35" };
+
+  if (typeof sold === "number") {
+    const p = Math.max(0, Math.min(100, Math.round(sold)));
+    return { percent: p, label: `Sold: ${p}%` };
+  }
+  if (typeof sold === "string") {
+    // cố thử parse "a/b" -> %; nếu không parse được thì để 35%
+    const m = sold.match(/^(\d+)\s*\/\s*(\d+)$/);
+    if (m) {
+      const cur = parseInt(m[1], 10);
+      const tot = Math.max(1, parseInt(m[2], 10));
+      const p = Math.max(0, Math.min(100, Math.round((cur / tot) * 100)));
+      return { percent: p, label: `Sold: ${cur}/${tot}` };
+    }
+    return { percent: 35, label: `Sold: ${sold}` };
+  }
+  // {current,total}
+  const cur = Math.max(0, Math.round(sold.current));
+  const tot = Math.max(1, Math.round(sold.total));
+  const p = Math.max(0, Math.min(100, Math.round((cur / tot) * 100)));
+  return { percent: p, label: `Sold: ${cur}/${tot}` };
 };
 
 export default function ProductCardV2({
@@ -27,12 +83,25 @@ export default function ProductCardV2({
   title,
   price,
   oldPrice,
-  sold = "18/35",
-  rating = "4.8",
-  reviews = "(17k)",
+  sold,
+  ratingAverage,
+  ratingCount,
+  rating,
+  reviews,
   badge,
 }: Props) {
-  const dest = href || "/product-details"; // fallback nếu chưa truyền
+  const dest = href || "/product-details";
+
+  const priceText = fmtVND(price)!;
+  const oldText = fmtVND(oldPrice);
+
+  // rating/reviews: ưu tiên số -> chuỗi
+  const ratingText =
+    typeof ratingAverage === "number" ? ratingAverage.toFixed(1) : (rating ?? "4.8");
+  const reviewsText =
+    typeof ratingCount === "number" ? `(${ratingCount})` : (reviews ?? "(17k)");
+
+  const soldInfo = deriveSold(sold);
 
   return (
     <div className="p-16 border border-gray-100 product-card h-100 hover-border-main-600 rounded-16 position-relative transition-2">
@@ -43,6 +112,7 @@ export default function ProductCardV2({
           width={220}
           height={180}
           className="w-auto"
+          // hiển thị ngay ảnh ngoài domain (nếu chưa cấu hình next.config.images)
           unoptimized={/^https?:\/\//.test(img)}
         />
         {badge ? (
@@ -62,26 +132,37 @@ export default function ProductCardV2({
         </h6>
 
         <div className="gap-6 mt-16 mb-20 flex-align">
-          <span className="text-xs text-gray-500 fw-medium">{rating}</span>
+          <span className="text-xs text-gray-500 fw-medium">{ratingText}</span>
           <span className="text-xs fw-medium text-warning-600 d-flex">
             <i className="ph-fill ph-star"></i>
           </span>
-          <span className="text-xs text-gray-500 fw-medium">{reviews}</span>
+          <span className="text-xs text-gray-500 fw-medium">{reviewsText}</span>
         </div>
 
         <div className="mt-8">
-          <div className="h-4 progress w-100 bg-color-three rounded-pill" role="progressbar" aria-valuenow={35} aria-valuemin={0} aria-valuemax={100}>
-            <div className="progress-bar bg-main-two-600 rounded-pill" style={{ width: "35%" }}></div>
+          <div
+            className="h-4 progress w-100 bg-color-three rounded-pill"
+            role="progressbar"
+            aria-valuenow={soldInfo.percent}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
+            <div
+              className="progress-bar bg-main-two-600 rounded-pill"
+              style={{ width: `${soldInfo.percent}%` }}
+            />
           </div>
-          <span className="mt-8 text-xs text-gray-900 fw-medium">Sold: {sold}</span>
+          <span className="mt-8 text-xs text-gray-900 fw-medium">{soldInfo.label}</span>
         </div>
 
         <div className="my-20 product-card__price">
-          {oldPrice ? (
-            <span className="text-gray-400 text-md fw-semibold text-decoration-line-through"> {oldPrice}</span>
+          {oldText ? (
+            <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">
+              {" "}{oldText}
+            </span>
           ) : null}
           <span className="text-heading text-md fw-semibold ">
-            {price} <span className="text-gray-500 fw-normal">/Qty</span>
+            {priceText} <span className="text-gray-500 fw-normal">/Qty</span>
           </span>
         </div>
 

@@ -1,53 +1,1558 @@
 "use client";
-import React from "react";
-import FullHeader from "@/components/FullHeader";
-import BannerTwo from "@/components/BannerTwo";
-import FeatureSection from "@/components/FeatureSection";
-import TopSellingProducts from "@/components/TopSellingProducts";
-import PromoBanner from "@/components/PromoBanner";
-import TrendingProductsTabs from "@/components/TrendingProductsTabs";
-import TopBrandsSection from "@/components/TopBrandsSection";
-import FeaturedProductsSection from "@/components/FeaturedProductsSection";
-import InterestedProducts from "@/components/InterestedProducts";
-import PartnerBrands from "@/components/PartnerBrands";
-import DiscountStrip from "@/components/DiscountStrip";
+import React, { useEffect, useState } from "react";
+import TopSellingProducts from "@/components/TopSellingProducts";//hot_sales
+import TrendingProductsTabs from "@/components/TrendingProductsTabs";//top_categories
+import TopBrandsSection from "@/components/TopBrandsSection";//top_brands
+import FeaturedProductsSection from "@/components/FeaturedProductsSection";//best_products
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  // Helper: lấy biến môi trường cho client
+  const API_BASE =
+    process.env.NEXT_PUBLIC_SERVER_API ??
+    "http://127.0.0.1:8000"; // fallback
+
+  // === INIT SLIDERS (jQuery/Slick) - KHÔNG any, KHÔNG mở rộng window ===
+  useEffect(() => {
+    if (!mounted || typeof window === "undefined") return;
+
+    // Lấy $ và AOS từ window nhưng KHÔNG dùng any
+    type JQNode = {
+      length: number;
+      hasClass?: (c: string) => boolean;
+      slick?: (...args: unknown[]) => unknown;
+    };
+    type WinPick = {
+      $?: (selector: string | Element) => unknown;
+      AOS?: { init?: (...args: unknown[]) => unknown };
+    };
+    const w = window as unknown as WinPick;
+    const $ = w.$;
+    if (!$) return; // không có jQuery thì bỏ qua
+
+    // Cast 1 lần khi dùng
+    const sel = (s: string | Element) => ($!(s) as unknown) as JQNode;
+
+    try {
+      // 1) .brand-slider
+      const brand = sel(".brand-slider");
+      if (brand.length && !brand.hasClass?.("slick-initialized")) {
+        brand.slick?.({
+          slidesToShow: 8,
+          slidesToScroll: 1,
+          autoplay: true,
+          autoplaySpeed: 2000,
+          dots: false,
+          pauseOnHover: true,
+          arrows: true,
+          draggable: true,
+          rtl: document.documentElement.getAttribute("dir") === "rtl",
+          speed: 900,
+          infinite: true,
+          nextArrow: "#brand-next",
+          prevArrow: "#brand-prev",
+          responsive: [
+            { breakpoint: 1599, settings: { slidesToShow: 7, arrows: false } },
+            { breakpoint: 1399, settings: { slidesToShow: 6, arrows: false } },
+            { breakpoint: 992, settings: { slidesToShow: 5, arrows: false } },
+            { breakpoint: 575, settings: { slidesToShow: 4, arrows: false } },
+            { breakpoint: 424, settings: { slidesToShow: 3, arrows: false } },
+            { breakpoint: 359, settings: { slidesToShow: 2, arrows: false } },
+          ],
+        });
+      }
+
+      // 2) .featured-product-slider
+      const featured = sel(".featured-product-slider");
+      if (featured.length && !featured.hasClass?.("slick-initialized")) {
+        featured.slick?.({
+          slidesToShow: 2,
+          slidesToScroll: 1,
+          autoplay: true,
+          autoplaySpeed: 2000,
+          dots: false,
+          pauseOnHover: true,
+          arrows: true,
+          draggable: true,
+          rtl: document.documentElement.getAttribute("dir") === "rtl",
+          speed: 900,
+          infinite: true,
+          nextArrow: "#featured-products-next",
+          prevArrow: "#featured-products-prev",
+          responsive: [{ breakpoint: 991, settings: { slidesToShow: 1, arrows: false } }],
+        });
+      }
+
+      // 3) .top-selling-product-slider
+      const initTopSelling = () => {
+        const wrap = sel(".top-selling-product-slider");
+        if (!wrap.length) return false;
+        if (wrap.hasClass?.("slick-initialized")) return true;
+        wrap.slick?.({
+          slidesToShow: 5,
+          slidesToScroll: 1,
+          autoplay: true,
+          autoplaySpeed: 2500,
+          dots: false,
+          pauseOnHover: true,
+          arrows: true,
+          draggable: true,
+          rtl: document.documentElement.getAttribute("dir") === "rtl",
+          speed: 800,
+          infinite: true,
+          nextArrow: "#top-selling-next",
+          prevArrow: "#top-selling-prev",
+          responsive: [
+            { breakpoint: 1599, settings: { slidesToShow: 4 } },
+            { breakpoint: 1199, settings: { slidesToShow: 3 } },
+            { breakpoint: 991, settings: { slidesToShow: 2, arrows: false } },
+            { breakpoint: 575, settings: { slidesToShow: 1, arrows: false } },
+          ],
+        });
+        // setPosition an toàn
+        try {
+          (wrap.slick as unknown as (arg: string) => void)?.("setPosition");
+        } catch {}
+        return true;
+      };
+
+      if (!initTopSelling()) {
+        let tries = 0;
+        const t = setInterval(() => {
+          tries++;
+          const ok = initTopSelling();
+          if (ok || tries > 12) clearInterval(t);
+        }, 200);
+      }
+
+      // Resize -> setPosition
+      window.addEventListener("resize", () => {
+        try {
+          (sel(".top-selling-product-slider").slick as unknown as (arg: string) => void)?.(
+            "setPosition"
+          );
+        } catch {}
+      });
+
+      // AOS fallback
+      const AOS = w.AOS;
+      if (AOS?.init) {
+        AOS.init({ once: true, duration: 800, easing: "ease-out" });
+      } else {
+        document.querySelectorAll("[data-aos]").forEach((el) => {
+          el.classList.add("aos-init", "aos-animate");
+        });
+      }
+    } catch {}
+  }, [mounted]);
+
+  // === FETCH API ví dụ (dùng NEXT_PUBLIC_SERVER_API) ===
+  useEffect(() => {
+    if (!mounted) return;
+    (async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE}/api/sanphams-selection?selection=hot_sales&per_page=10`,
+          { headers: { Accept: "application/json" } }
+        );
+        const json = await res.json();
+        // TODO: setState json.data nếu cần
+        console.log("hot_sales:", json);
+      } catch (e) {
+        console.error("Fetch hot_sales failed", e);
+      }
+    })();
+  }, [mounted, API_BASE]);
+
+  if (!mounted) return null;
   return (
     <>
-      {/* Header (full template) */}
-      <FullHeader showTopNav={false} />
 
-      {/* Banner Section */}
-      <BannerTwo />
+      {/* ======================= Middle Top Mobile Start ========================= */}
+      <div className="py-10 header-top bg-main-600 flex-between d-block d-lg-none">
+        <div className="container container-lg">
+          <div className="gap-8 flex-between">
 
-      {/* Feature Categories */}
-      <FeatureSection />
+            <ul className="flex-wrap gap-16 header-top__right flex-align">
+              <li className="flex-shrink-0 d-block on-hover-item text-white-6">
+                <button className="gap-4 text-sm category__button flex-align text-white-6 rounded-top">
+                  <span className="text-sm icon "><i className="ph ph-squares-four"></i></span>
+                  <span className="">Danh mục</span>
+                </button>
 
-      {/* Top Selling Products */}
-      <TopSellingProducts />
+                <div className="p-0 responsive-dropdown on-hover-dropdown common-dropdown nav-submenu submenus-submenu-wrapper">
+                  <button
+                    className="mt-4 text-xl close-responsive-dropdown rounded-circle position-absolute inset-inline-end-0 inset-block-start-0 me-8 d-lg-none d-flex">
+                    <i className="ph ph-x"></i> </button>
+                  <div className="px-16 logo d-lg-none d-block">
+                    <a href="index.html" className="link">
+                      <img src="/assets/images/logo/logo_nguyenban.png" alt="Logo" />
+                    </a>
+                  </div>
+                  <ul className="p-0 py-8 overflow-y-auto scroll-sm w-300 max-h-400">
+                    <li className="has-submenus-submenu">
+                      <a href="product-details-two.html"
+                        className="gap-8 px-16 py-12 text-gray-500 text-15 flex-align rounded-0">
+                        <span className="text-xl d-flex"><i className="ph ph-carrot"></i></span>
+                        <span>Vegetables &amp; Fruit</span>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </li>
 
-      {/* Promo Banner */}
-      <PromoBanner />
+            </ul>
+            <ul className="flex-wrap gap-16 header-top__right flex-align justify-content-end">
 
-      {/* Trending Products with Tabs */}
+              <li className="flex-align">
+                <a href="wishlist.html" className="text-sm text-white-6 hover-text-white">
+                  <i className="ph-bold ph-shopping-cart"></i>
+                  Giỏ hàng
+                  <span className="badge bg-success-600 rounded-circle">6</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      {/* ======================= Middle Top End ========================= */}
+
+      {/* ======================= Middle Top Start ========================= */}
+      <div className="py-10 header-top bg-main-600 flex-between d-none d-lg-block pz100">
+        <div className="container container-lg">
+          <div className="flex-wrap gap-8 flex-between">
+
+            <ul className="flex-wrap gap-16 header-top__right flex-align">
+              <li className="flex-align">
+                <a href="" className="text-sm text-center text-white-6 hover-text-white"><i
+                  className="ph-bold ph-storefront text-white-6"></i> Truy cập bán hàng</a>
+              </li>
+              <li className="flex-align">
+                <a href="" className="text-sm text-white-6 hover-text-white"><i className="ph-bold ph-handshake text-white-6"></i>
+                  Đăng ký đối tác</a>
+              </li>
+              <li className="flex-align">
+                <a href="#" className="text-sm text-white-6 hover-text-white pe-1"><i className="ph-bold ph-info text-white-6"></i>
+                  Giới thiệu về Siêu Thị Vina </a>
+              </li>
+              <li className="flex-align">
+                <a href="contact.html" className="text-sm text-white-6 hover-text-white">
+                  <i className="ph-bold ph-chat-dots"></i>
+                  Liên hệ hỗ trợ
+                </a>
+              </li>
+
+            </ul>
+
+            <ul className="flex-wrap gap-16 header-top__right flex-align">
+              <li className="flex-shrink-0 d-block on-hover-item text-white-6">
+                <button className="gap-4 text-sm category__button flex-align text-white-6 rounded-top">
+                  <span className="text-sm icon d-md-flex d-none"><i className="ph ph-squares-four"></i></span>
+                  <span className="d-sm-flex d-none">Danh mục</span>
+                </button>
+
+                <div className="p-0 responsive-dropdown on-hover-dropdown common-dropdown nav-submenu submenus-submenu-wrapper">
+                  <button
+                    className="mt-4 text-xl close-responsive-dropdown rounded-circle position-absolute inset-inline-end-0 inset-block-start-0 me-8 d-lg-none d-flex">
+                    <i className="ph ph-x"></i> </button>
+                  <div className="px-16 logo d-lg-none d-block">
+                    <a href="index.html" className="link">
+                      <img src="/assets/images/logo/logo_nguyenban.png" alt="Logo" />
+                    </a>
+                  </div>
+                  <ul className="p-0 py-8 overflow-y-auto scroll-sm w-300 max-h-400">
+                    <li className="has-submenus-submenu">
+                      <a href="javascript:void(0)" className="gap-8 px-16 py-12 text-gray-500 text-15 flex-align rounded-0">
+                        <span className="text-xl d-flex"><i className="ph ph-carrot"></i></span>
+                        <span>Vegetables &amp; Fruit</span>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+
+              </li>
+
+              <li className="flex-align">
+                <a href="javascript:void(0)" className="text-sm text-white-6 hover-text-white">
+                  <i className="ph-bold ph-notepad"></i>
+                  Tra cứu đơn hàng</a>
+              </li>
+
+              <li className="flex-align">
+                <a href="wishlist.html" className="text-sm text-white-6 hover-text-white">
+                  <i className="ph-bold ph-shopping-cart"></i>
+                  Giỏ hàng
+                  <span className="badge bg-success-600 rounded-circle">6</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      {/* ======================= Middle Top End ========================= */}
+
+      {/* ======================= Middle Header Two Start ========================= */}
+      <header className="pt-16 pb-10 header border-bottom border-neutral-40 pz99">
+        <div className="container container-lg">
+          <nav className="gap-16 header-inner flex-between">
+            <div className="logo">
+              <a href="index.html" className="link">
+                <img src="/assets/images/logo/logo_nguyenban.png" alt="Logo" />
+              </a>
+            </div>
+
+            <div className="header-menu w-50 d-lg-block d-none">
+              <div className="mx-20">
+                <form action="#" className="position-relative w-100 d-md-block d-none">
+                  <input type="text"
+                    className="py-10 text-sm shadow-none form-control fw-normal placeholder-italic bg-neutral-30 placeholder-fw-normal placeholder-light ps-30 pe-60"
+                    placeholder="Thuốc giảm cân dành cho người béo...." />
+                  <button type="submit"
+                    className="text-xl position-absolute top-50 translate-middle-y text-main-600 end-0 me-36 line-height-1">
+                    <i className="ph-bold ph-magnifying-glass"></i>
+                  </button>
+                </form>
+
+                <div className="gap-12 mt-10 flex-align title">
+                  <a href="#" className="text-sm text-gray-600 link hover-text-main-600 fst-italic">Máy massage</a>
+                  <a href="#" className="text-sm text-gray-600 link hover-text-main-600 fst-italic">điện gia dụng</a>
+                  <a href="#" className="text-sm text-gray-600 link hover-text-main-600 fst-italic">mẹ và bé</a>
+                  <a href="#" className="text-sm text-gray-600 link hover-text-main-600 fst-italic">móc khóa minecraft</a>
+                  <a href="#" className="text-sm text-gray-600 link hover-text-main-600 fst-italic">điện nội thất</a>
+                </div>
+              </div>
+            </div>
+
+            <div className="header-right flex-align">
+              <div
+                className="flex-wrap on-hover-item nav-menu__item has-submenu header-top__right style-two style-three flex-align d-lg-block d-none">
+                <a href="javascript:void(0)"
+                  className="gap-10 px-10 py-5 text-center text-gray-600 d-flex justify-content-center flex-align align-content-around fw-medium rounded-pill line-height-1 hover-text-main-600">
+                  <span className="line-height-1"><img src="/assets/images/thumbs/flag2.png"
+                    className="rounded-circle object-fit-cover" style={{ width: '25px', height: '25px' }} alt="" /></span>
+                  lyhuu123
+                </a>
+                <ul className="on-hover-dropdown common-dropdown nav-submenu scroll-sm">
+                  <li className="common-dropdown__item nav-submenu__item">
+                    <a href="cart.html"
+                      className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100"><i
+                        className="ph-bold ph-heart text-main-600"></i> Yêu thích <span
+                          className="badge bg-success-600 rounded-circle">6</span></a>
+                  </li>
+                  <li className="common-dropdown__item nav-submenu__item">
+                    <a href="wishlist.html"
+                      className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100"><i
+                        className="ph-bold ph-user text-main-600"></i> Tài khoản</a>
+                  </li>
+                  <li className="common-dropdown__item nav-submenu__item">
+                    <a href="checkout.html"
+                      className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100"><i
+                        className="ph-bold ph-notepad text-main-600"></i> Đơn hàng của tôi</a>
+                  </li>
+                  <li className="common-dropdown__item nav-submenu__item">
+                    <a href="checkout.html"
+                      className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100"><i
+                        className="ph-bold ph-sign-out text-main-600"></i> Đăng xuất</a>
+                  </li>
+                </ul>
+              </div>
+              <button type="button" className="text-4xl text-gray-800 toggle-mobileMenu d-lg-none ms-3n d-flex">
+                <i className="ph ph-list"></i>
+              </button>
+            </div>
+          </nav>
+        </div>
+      </header>
+      {/* ======================= Middle Header Two End ========================= */}
+
+      {/* ============================ Banner Section start =============================== */}
+      <div className="banner-two">
+        <div className="container container-lg">
+
+          <div className="row g-20">
+            <div className="col-lg-6">
+              <div className="banner-two-wrapper d-flex align-items-start">
+                <div
+                  className="mt-20 mb-0 overflow-hidden banner-item-two-wrapper rounded-5 position-relative arrow-center flex-grow-1 ms-0">
+                  <div className="flex-align">
+                    <button type="button" id="banner-prev"
+                      className="text-xl bg-white slick-prev flex-center rounded-circle hover-bg-main-600 hover-text-white transition-1 slick-arrow">
+                      <i className="ph-bold ph-caret-left"></i>
+                    </button>
+                    <button type="button" id="banner-next"
+                      className="text-xl bg-white slick-next flex-center rounded-circle hover-bg-main-600 hover-text-white transition-1 slick-arrow">
+                      <i className="ph-bold ph-caret-right"></i>
+                    </button>
+                  </div>
+                  <div className="banner-item-two__slider">
+                    <a href="cart.html" className="flex-wrap-reverse gap-32 d-flex align-items-center justify-content-between flex-sm-nowrap">
+
+                      <img src="/assets/images/bg/shopee-06.jpg" alt="Thumb" className=" d-lg-block d-none rounded-5"
+                        style={{ width: '100%', height: '350px', objectFit: 'cover' }} />
+                      <img src="/assets/images/bg/shopee-06.jpg" alt="Thumb" className=" d-block d-lg-none rounded-5"
+                        style={{ width: '100%', height: '300px', objectFit: 'cover' }} />
+
+                    </a>
+                    <a href="checkout.html" className="flex-wrap-reverse gap-32 d-flex align-items-center justify-content-between flex-sm-nowrap">
+
+                      <img src="/assets/images/bg/shopee-07.jpg" alt="Thumb" className=" d-lg-block d-none rounded-5"
+                        style={{ width: '100%', height: '350px', objectFit: 'cover' }} />
+                      <img src="/assets/images/bg/shopee-07.jpg" alt="Thumb" className=" d-block d-lg-none rounded-5"
+                        style={{ width: '100%', height: '300px', objectFit: 'cover' }} />
+
+                    </a>
+                    <a href="product-details-two.html" className="flex-wrap-reverse gap-32 d-flex align-items-center justify-content-between flex-sm-nowrap">
+
+                      <img src="/assets/images/bg/shopee-2.jpg" alt="Thumb" className=" d-lg-block d-none rounded-5"
+                        style={{ width: '100%', height: '350px', objectFit: 'cover' }} />
+                      <img src="/assets/images/bg/shopee-2.jpg" alt="Thumb" className=" d-block d-lg-none rounded-5"
+                        style={{ width: '100%', height: '300px', objectFit: 'cover' }} />
+
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="px-10 mt-20 col-lg-3 col-sm-3">
+              <div className="row g-24 me-0">
+                <a href="#" className="p-0 m-0">
+                  <img src="/assets/images/bg/shopee-04.webp" alt="Thumb" className="p-0 d-lg-block d-none rounded-5"
+                    style={{ width: '100%', height: '163px', objectFit: 'cover' }} />
+                </a>
+              </div>
+              <div className="mt-24 row g-24 me-0">
+                <a href="#" className="p-0 m-0">
+                  <img src="/assets/images/bg/shopee-1.jpg" alt="Thumb" className="p-0 d-lg-block d-none rounded-5"
+                    style={{ width: '100%', height: '163px', objectFit: 'cover' }} />
+                </a>
+              </div>
+            </div>
+            <div className="px-10 mt-20 col-lg-3">
+              <div className="row g-24 ms-0">
+                <a href="#" className="p-0 m-0">
+                  <img src="/assets/images/bg/shopee-3.jpg" alt="Thumb" className="p-0 d-lg-block d-none rounded-5"
+                    style={{ width: '100%', height: '163px', objectFit: 'cover' }} />
+                </a>
+              </div>
+              <div className="mt-24 row g-24 ms-0">
+                <a href="#" className="p-0 m-0">
+                  <img src="/assets/images/bg/shopee-05.jpg" alt="Thumb" className="p-0 d-lg-block d-none rounded-5"
+                    style={{ width: '100%', height: '163px', objectFit: 'cover' }} />
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* ============================ Banner Section End =============================== */}
+
+      {/* ============================ promotional banner Start ========================== */}
+      <div className="feature" id="featureSection">
+        <div className="container container-lg">
+          <div className="position-relative arrow-center">
+            <div className="flex-align">
+              <button type="button" id="feature-item-wrapper-prev"
+                className="text-xl bg-white slick-prev slick-arrow flex-center rounded-circle hover-bg-main-600 hover-text-white transition-1">
+                <i className="ph ph-caret-left"></i>
+              </button>
+              <button type="button" id="feature-item-wrapper-next"
+                className="text-xl bg-white slick-next slick-arrow flex-center rounded-circle hover-bg-main-600 hover-text-white transition-1">
+                <i className="ph ph-caret-right"></i>
+              </button>
+            </div>
+            <div className="feature-item-wrapper">
+              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="400">
+                <div className="feature-item__thumb rounded-circle">
+                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
+                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
+                  </a>
+                </div>
+                <div className="mt-16 feature-item__content">
+                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Vegetables</a></h6>
+
+                </div>
+              </div>
+              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="600">
+                <div className="feature-item__thumb rounded-circle">
+                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
+                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
+                  </a>
+                </div>
+                <div className="mt-16 feature-item__content">
+                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Fish & Meats</a></h6>
+
+                </div>
+              </div>
+              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="800">
+                <div className="feature-item__thumb rounded-circle">
+                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
+                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
+                  </a>
+                </div>
+                <div className="mt-16 feature-item__content">
+                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Desserts</a></h6>
+
+                </div>
+              </div>
+              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="1000">
+                <div className="feature-item__thumb rounded-circle">
+                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
+                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
+                  </a>
+                </div>
+                <div className="mt-16 feature-item__content">
+                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Drinks & Juice</a></h6>
+
+                </div>
+              </div>
+              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="1200">
+                <div className="feature-item__thumb rounded-circle">
+                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
+                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
+                  </a>
+                </div>
+                <div className="mt-16 feature-item__content">
+                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Animals Food</a></h6>
+
+                </div>
+              </div>
+              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="1400">
+                <div className="feature-item__thumb rounded-circle">
+                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
+                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
+                  </a>
+                </div>
+                <div className="mt-16 feature-item__content">
+                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Fresh Fruits</a></h6>
+
+                </div>
+              </div>
+              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="1600">
+                <div className="feature-item__thumb rounded-circle">
+                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
+                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
+                  </a>
+                </div>
+                <div className="mt-16 feature-item__content">
+                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Yummy Candy</a></h6>
+
+                </div>
+              </div>
+              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="1800">
+                <div className="feature-item__thumb rounded-circle">
+                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
+                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
+                  </a>
+                </div>
+                <div className="mt-16 feature-item__content">
+                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Fish & Meats</a></h6>
+
+                </div>
+              </div>
+              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="2000">
+                <div className="feature-item__thumb rounded-circle">
+                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
+                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
+                  </a>
+                </div>
+                <div className="mt-16 feature-item__content">
+                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Dairy & Eggs</a></h6>
+
+                </div>
+              </div>
+              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="2200">
+                <div className="feature-item__thumb rounded-circle">
+                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
+                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
+                  </a>
+                </div>
+                <div className="mt-16 feature-item__content">
+                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Snacks</a></h6>
+
+                </div>
+              </div>
+              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="2400">
+                <div className="feature-item__thumb rounded-circle">
+                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
+                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
+                  </a>
+                </div>
+                <div className="mt-16 feature-item__content">
+                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Frozen Foods</a></h6>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* ============================ promotional banner End ========================== */}
+
+      {/* ========================= Top Selling Products Start ================================ */}
+      <section className="pt-20 overflow-hidden top-selling-products">
+        <div className="container container-lg">
+          <div className="p-24 border border-gray-100 rounded-10 bg-hotsales">
+            <div className="mb-24 section-heading">
+              <div className="flex-wrap gap-8 flex-between">
+                <h6 className="mb-0 text-white wow fadeInLeft">
+                  <img src="/assets/images/thumbs/top-deal-sieu-re.png" alt="" className="py-10 w-50" />
+                </h6>
+                <div className="gap-16 flex-align wow fadeInRight">
+                  <a href="shop.html" className="text-sm text-white fw-semibold hover-text-gray-100 hover-text-decoration-underline">Xem tất cả</a>
+                  <div className="gap-8 flex-align">
+                    <button type="button" id="top-selling-prev" className="text-xl text-white border slick-prev slick-arrow flex-center rounded-circle border-white-100 hover-border-neutral-600 hover-bg-neutral-600 hover-text-white transition-1 ">
+                      <i className="ph ph-caret-left"></i>
+                    </button>
+                    <button type="button" id="top-selling-next" className="text-xl text-white border slick-next slick-arrow flex-center rounded-circle border-white-100 hover-border-neutral-600 hover-bg-neutral-600 hover-text-white transition-1 ">
+                      <i className="ph ph-caret-right"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="row g-12">
+              <div className="col-md-12">
+                <div className="top-selling-product-slider arrow-style-two">
+                  <div data-aos="fade-up" data-aos-duration="1000">
+                    <div className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-10 position-relative transition-2">
+                      <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50" style={{ height: '180px' }}>
+                        <span className="px-8 py-4 text-sm text-white product-card__badge bg-success-600 position-absolute inset-inline-start-0 inset-block-start-0">Giảm 10%</span>
+                        <img src="/assets/images/thumbs/product-two-img7.png" alt="" className="w-auto h-100" />
+                      </a>
+                      <div className="mt-16 product-card__content w-100">
+                        <h6 className="mt-12 mb-8 text-lg title fw-semibold">
+                          <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Thuốc hoạt huyết Nhất Nhất - tăng cường lưu thông máu lên não</a>
+                        </h6>
+                        <div className="gap-4 mb-5 flex-align">
+                          <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
+                          <span className="text-xs text-gray-500">Siêu thị Vina</span>
+                        </div>
+                        <div className="gap-6 flex-align">
+                          <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
+                          <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
+                          <span className="text-xs text-gray-500 fw-medium">(17k)</span>
+                        </div>
+                        <div className="my-10 product-card__price">
+                          <span className="text-xs text-gray-400 fw-semibold text-decoration-line-through">400.000 đ</span>
+                          <span className="text-heading text-md fw-semibold">350.000 đ</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div data-aos="fade-up" data-aos-duration="1000">
+                    <div className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-10 position-relative transition-2">
+                      <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50" style={{ height: '180px' }}>
+                        <span className="px-8 py-4 text-sm text-white product-card__badge bg-success-600 position-absolute inset-inline-start-0 inset-block-start-0">Giảm 20%</span>
+                        <img src="/assets/images/thumbs/product-two-img7.png" alt="" className="w-auto h-100" />
+                      </a>
+                      <div className="mt-16 product-card__content w-100">
+                        <h6 className="mt-12 mb-8 text-lg title fw-semibold">
+                          <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Thuốc hoạt huyết Nhất Nhất - tăng cường lưu thông máu lên não</a>
+                        </h6>
+                        <div className="gap-4 mb-5 flex-align">
+                          <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
+                          <span className="text-xs text-gray-500">Siêu thị Vina</span>
+                        </div>
+                        <div className="gap-6 flex-align">
+                          <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
+                          <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
+                          <span className="text-xs text-gray-500 fw-medium">(17k)</span>
+                        </div>
+                        <div className="my-10 product-card__price">
+                          <span className="text-xs text-gray-400 fw-semibold text-decoration-line-through">400.000 đ</span>
+                          <span className="text-heading text-md fw-semibold">350.000 đ</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div data-aos="fade-up" data-aos-duration="1000">
+                    <div className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-10 position-relative transition-2">
+                      <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50" style={{ height: '180px' }}>
+                        <span className="px-8 py-4 text-sm text-white product-card__badge bg-main-600 position-absolute inset-inline-start-0 inset-block-start-0">2 tặng 1</span>
+                        <img src="/assets/images/thumbs/product-two-img7.png" alt="" className="w-auto h-100" />
+                      </a>
+                      <div className="mt-16 product-card__content w-100">
+                        <h6 className="mt-12 mb-8 text-lg title fw-semibold">
+                          <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Thuốc hoạt huyết Nhất Nhất - tăng cường lưu thông máu lên não</a>
+                        </h6>
+                        <div className="gap-4 mb-5 flex-align">
+                          <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
+                          <span className="text-xs text-gray-500">Siêu thị Vina</span>
+                        </div>
+                        <div className="gap-6 flex-align">
+                          <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
+                          <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
+                          <span className="text-xs text-gray-500 fw-medium">(17k)</span>
+                        </div>
+                        <div className="my-10 product-card__price">
+                          <span className="text-xs text-gray-400 fw-semibold text-decoration-line-through">400.000 đ</span>
+                          <span className="text-heading text-md fw-semibold">350.000 đ</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Extra items copied from public/index.html */}
+                  <div data-aos="fade-up" data-aos-duration="1000">
+                    <div className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-10 position-relative transition-2">
+                      <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50" style={{ height: '180px' }}>
+                        <span className="px-8 py-4 text-sm text-white product-card__badge bg-success-600 position-absolute inset-inline-start-0 inset-block-start-0">Sold</span>
+                        <img src="/assets/images/thumbs/product-two-img7.png" alt="" className="w-auto h-100" />
+                      </a>
+                      <div className="mt-16 product-card__content w-100">
+                        <h6 className="mt-12 mb-8 text-lg title fw-semibold">
+                          <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Thuốc hoạt huyết Nhất Nhất - tăng cường lưu thông máu lên não</a>
+                        </h6>
+                        <div className="gap-4 mb-5 flex-align">
+                          <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
+                          <span className="text-xs text-gray-500">Siêu thị Vina</span>
+                        </div>
+                        <div className="gap-6 flex-align">
+                          <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
+                          <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
+                          <span className="text-xs text-gray-500 fw-medium">(17k)</span>
+                        </div>
+                        <div className="my-10 product-card__price">
+                          <span className="text-xs text-gray-400 fw-semibold text-decoration-line-through">400.000 đ</span>
+                          <span className="text-heading text-md fw-semibold">350.000 đ</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div data-aos="fade-up" data-aos-duration="1000">
+                    <div className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-10 position-relative transition-2">
+                      <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50" style={{ height: '180px' }}>
+                        <span className="px-8 py-4 text-sm text-white product-card__badge bg-success-600 position-absolute inset-inline-start-0 inset-block-start-0">Giảm 50.000 đ</span>
+                        <img src="/assets/images/thumbs/product-two-img7.png" alt="" className="w-auto h-100" />
+                      </a>
+                      <div className="mt-16 product-card__content w-100">
+                        <h6 className="mt-12 mb-8 text-lg title fw-semibold">
+                          <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Thuốc hoạt huyết Nhất Nhất - tăng cường lưu thông máu lên não</a>
+                        </h6>
+                        <div className="gap-4 mb-5 flex-align">
+                          <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
+                          <span className="text-xs text-gray-500">Siêu thị Vina</span>
+                        </div>
+                        <div className="gap-6 flex-align">
+                          <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
+                          <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
+                          <span className="text-xs text-gray-500 fw-medium">(17k)</span>
+                        </div>
+                        <div className="my-10 product-card__price">
+                          <span className="text-xs text-gray-400 fw-semibold text-decoration-line-through">400.000 đ</span>
+                          <span className="text-heading text-md fw-semibold">350.000 đ</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div data-aos="fade-up" data-aos-duration="1000">
+                    <div className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-10 position-relative transition-2">
+                      <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50" style={{ height: '180px' }}>
+                        <span className="px-8 py-4 text-sm text-white product-card__badge bg-main-600 position-absolute inset-inline-start-0 inset-block-start-0">Miễn phí (giới hạn)</span>
+                        <img src="/assets/images/thumbs/product-two-img7.png" alt="" className="w-auto h-100" />
+                      </a>
+                      <div className="mt-16 product-card__content w-100">
+                        <h6 className="mt-12 mb-8 text-lg title fw-semibold">
+                          <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Thuốc hoạt huyết Nhất Nhất - tăng cường lưu thông máu lên não</a>
+                        </h6>
+                        <div className="gap-4 mb-5 flex-align">
+                          <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
+                          <span className="text-xs text-gray-500">Siêu thị Vina</span>
+                        </div>
+                        <div className="gap-6 flex-align">
+                          <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
+                          <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
+                          <span className="text-xs text-gray-500 fw-medium">(17k)</span>
+                          <span className="text-xs text-gray-500 fw-medium"> | </span>
+                          <span className="text-xs text-gray-500 fw-medium">Còn: 18</span>
+                        </div>
+                        <div className="my-10 product-card__price">
+                          <span className="text-xs text-gray-400 fw-semibold text-decoration-line-through">400.000 đ</span>
+                          <span className="text-heading text-md fw-semibold">Miễn phí</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div data-aos="fade-up" data-aos-duration="1000">
+                    <div className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-10 position-relative transition-2">
+                      <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50">
+                        <span className="px-8 py-4 text-sm text-white product-card__badge bg-success-600 position-absolute inset-inline-start-0 inset-block-start-0">Sold</span>
+                        <img src="/assets/images/thumbs/product-two-img7.png" alt="" className="w-auto max-w-unset" />
+                      </a>
+                      <div className="mt-16 product-card__content w-100">
+                        <h6 className="mt-12 mb-8 text-lg title fw-semibold">
+                          <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Thuốc hoạt huyết Nhất Nhất - tăng cường lưu thông máu lên não</a>
+                        </h6>
+                        <div className="gap-4 mb-5 flex-align">
+                          <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
+                          <span className="text-xs text-gray-500">Siêu thị Vina</span>
+                        </div>
+                        <div className="gap-6 flex-align">
+                          <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
+                          <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
+                          <span className="text-xs text-gray-500 fw-medium">(17k)</span>
+                        </div>
+                        <div className="my-10 product-card__price">
+                          <span className="text-xs text-gray-400 fw-semibold text-decoration-line-through">400.000 đ</span>
+                          <span className="text-heading text-md fw-semibold">350.000 đ</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div data-aos="fade-up" data-aos-duration="1000">
+                    <div className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-10 position-relative transition-2">
+                      <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50">
+                        <span className="px-8 py-4 text-sm text-white product-card__badge bg-success-600 position-absolute inset-inline-start-0 inset-block-start-0">Sold</span>
+                        <img src="/assets/images/thumbs/product-two-img7.png" alt="" className="w-auto max-w-unset" />
+                      </a>
+                      <div className="mt-16 product-card__content w-100">
+                        <h6 className="mt-12 mb-8 text-lg title fw-semibold">
+                          <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Thuốc hoạt huyết Nhất Nhất - tăng cường lưu thông máu lên não</a>
+                        </h6>
+                        <div className="gap-4 mb-5 flex-align">
+                          <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
+                          <span className="text-xs text-gray-500">Siêu thị Vina</span>
+                        </div>
+                        <div className="gap-6 flex-align">
+                          <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
+                          <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
+                          <span className="text-xs text-gray-500 fw-medium">(17k)</span>
+                        </div>
+                        <div className="my-10 product-card__price">
+                          <span className="text-xs text-gray-400 fw-semibold text-decoration-line-through">400.000 đ</span>
+                          <span className="text-heading text-md fw-semibold">350.000 đ</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <TopSellingProducts variant="hot" title="Top deal • Siêu rẻ" />
+      {/* ========================= Top Selling Products End ================================ */}
+
+      {/* ========================= 3 Small Banners Start ================================ */}
+      <div className="container mt-10 container-lg mb-70">
+        <div className="row">
+          <div className="col-lg-4">
+            <div className="rounded-5">
+              <a href="#" className="p-0 m-0">
+                <img src="/assets/images/bg/shopee-04.webp" alt="Banner 1"
+                  className="banner-img w-100 h-100 object-fit-cover rounded-10" />
+              </a>
+            </div>
+          </div>
+          <div className="col-lg-4">
+            <div className="rounded-5">
+              <a href="#" className="p-0 m-0">
+                <img src="/assets/images/bg/shopee-06.jpg" alt="Banner 2"
+                  className="banner-img w-100 h-100 object-fit-cover rounded-10" />
+              </a>
+            </div>
+          </div>
+          <div className="col-lg-4">
+            <div className="rounded-5">
+              <a href="#" className="p-0 m-0">
+                <img src="/assets/images/bg/shopee-07.jpg" alt="Banner 3"
+                  className="banner-img w-100 h-100 object-fit-cover rounded-10" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* ========================= 3 Small Banners End ================================== */}
+
+      {/* ========================= Trending Products Start ================================ */}
+      <section className="mt-40 overflow-hidden trending-productss">
+        <div className="container container-lg">
+          <div className="p-24 border border-gray-100 rounded-16">
+            <div className="mb-24 section-heading">
+              <div className="flex-wrap gap-8 flex-between">
+                <h6 className="mb-0 wow fadeInLeft"><i className="ph-bold ph-squares-four text-main-600"></i> Danh mục hàng đầu</h6>
+                <ul className="nav common-tab style-two nav-pills wow fadeInRight" id="pills-tab" role="tablist">
+                  <li className="nav-item" role="presentation">
+                    <button className="text-sm nav-link fw-medium hover-border-main-600 active" id="pills-all-tab" data-bs-toggle="pill" data-bs-target="#pills-all" type="button" role="tab" aria-controls="pills-all" aria-selected="true">All</button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button className="text-sm nav-link fw-medium hover-border-main-600" id="pills-mobile-tab" data-bs-toggle="pill" data-bs-target="#pills-mobile" type="button" role="tab" aria-controls="pills-mobile" aria-selected="false">Mobile</button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button className="text-sm nav-link fw-medium hover-border-main-600" id="pills-headphone-tab" data-bs-toggle="pill" data-bs-target="#pills-headphone" type="button" role="tab" aria-controls="pills-headphone" aria-selected="false">Headphone</button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button className="text-sm nav-link fw-medium hover-border-main-600" id="pills-usb-tab" data-bs-toggle="pill" data-bs-target="#pills-usb" type="button" role="tab" aria-controls="pills-usb" aria-selected="false">USB</button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button className="text-sm nav-link fw-medium hover-border-main-600" id="pills-camera-tab" data-bs-toggle="pill" data-bs-target="#pills-camera" type="button" role="tab" aria-controls="pills-camera" aria-selected="false">Camera</button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button className="text-sm nav-link fw-medium hover-border-main-600" id="pills-laptop-tab" data-bs-toggle="pill" data-bs-target="#pills-laptop" type="button" role="tab" aria-controls="pills-laptop" aria-selected="false">Laptop</button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button className="text-sm nav-link fw-medium hover-border-main-600" id="pills-accessories-tab" data-bs-toggle="pill" data-bs-target="#pills-accessories" type="button" role="tab" aria-controls="pills-accessories" aria-selected="false">Accessories</button>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="tab-content" id="pills-tabContent">
+              <div className="tab-pane fade show active" id="pills-all" role="tabpanel" aria-labelledby="pills-all-tab" tabIndex={0}>
+                <div className="g-12 d-grid" style={{ gridTemplateColumns: 'repeat(7, 1fr)', gap: '12px' }}>
+                  {Array.from({ length: 14 }).map((_, idx) => (
+                    <div key={idx}>
+                      <div className="p-16 border border-gray-100 product-card h-100 hover-border-main-600 rounded-16 position-relative transition-2">
+                        <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 bg-gray-50 position-relative">
+                          <img src={`/assets/images/thumbs/product-two-img${(idx%6)+1}.png`} alt="" className="w-auto max-w-unset" />
+                        </a>
+                        <div className="mt-5 product-card__content w-100">
+                          <span className="px-8 py-4 text-sm text-success-600 bg-success-50 fw-medium">19%OFF</span>
+                          <h6 className="my-16 text-lg title fw-semibold">
+                            <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Instax Mini 12 Instant Film Camera - Green</a>
+                          </h6>
+                          <div className="gap-6 flex-align">
+                            <div className="gap-2 flex-align">
+                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                            </div>
+                            <span className="text-xs text-gray-500 fw-medium">4.8</span>
+                            <span className="text-xs text-gray-500 fw-medium">(12K)</span>
+                          </div>
+                          <span className="px-8 py-2 mt-16 text-xs rounded-pill text-main-two-600 bg-main-two-50 fw-normal">Fulfilled by Marketpro</span>
+                          <div className="mt-16 product-card__price mb-30">
+                            <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">$28.99</span>
+                            <span className="text-heading text-md fw-semibold">$14.99 <span className="text-gray-500 fw-normal">/Qty</span></span>
+                          </div>
+                          <span className="text-xs text-neutral-600 fw-medium">Delivered by <span className="text-main-600">Aug 02</span></span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="tab-pane fade" id="pills-mobile" role="tabpanel" aria-labelledby="pills-mobile-tab" tabIndex={0}>
+                <div className="row g-12">
+                  {Array.from({ length: 6 }).map((_, idx) => (
+                    <div key={idx} className="col-xxl-2 col-xl-3 col-lg-4 col-sm-6">
+                      <div className="p-16 border border-gray-100 product-card h-100 hover-border-main-600 rounded-16 position-relative transition-2">
+                        <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 bg-gray-50 position-relative">
+                          <img src={`assets/images/thumbs/product-two-img${(idx%6)+1}.png`} alt="" className="w-auto max-w-unset" />
+                        </a>
+                        <div className="mt-5 product-card__content w-100">
+                          <span className="px-8 py-4 text-sm text-success-600 bg-success-50 fw-medium">19%OFF</span>
+                          <h6 className="my-16 text-lg title fw-semibold">
+                            <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Instax Mini 12 Instant Film Camera - Green</a>
+                          </h6>
+                          <div className="gap-6 flex-align">
+                            <div className="gap-2 flex-align">
+                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                            </div>
+                            <span className="text-xs text-gray-500 fw-medium">4.8</span>
+                            <span className="text-xs text-gray-500 fw-medium">(12K)</span>
+                          </div>
+                          <span className="px-8 py-2 mt-16 text-xs rounded-pill text-main-two-600 bg-main-two-50 fw-normal">Fulfilled by Marketpro</span>
+                          <div className="mt-16 product-card__price mb-30">
+                            <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">$28.99</span>
+                            <span className="text-heading text-md fw-semibold">$14.99 <span className="text-gray-500 fw-normal">/Qty</span></span>
+                          </div>
+                          <span className="text-xs text-neutral-600 fw-medium">Delivered by <span className="text-main-600">Aug 02</span></span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {["headphone","usb","camera","laptop","accessories"].map(key => (
+                <div key={key} className="tab-pane fade" id={`pills-${key}`} role="tabpanel" aria-labelledby={`pills-${key}-tab`} tabIndex={0}>
+                  <div className="row g-12">
+                    {Array.from({ length: 6 }).map((_, idx) => (
+                      <div key={idx} className="col-xxl-2 col-xl-3 col-lg-4 col-sm-6">
+                        <div className="p-16 border border-gray-100 product-card h-100 hover-border-main-600 rounded-16 position-relative transition-2">
+                          <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 bg-gray-50 position-relative">
+                            <img src={`assets/images/thumbs/product-two-img${((idx%6)+1)}.png`} alt="" className="w-auto max-w-unset" />
+                          </a>
+                          <div className="mt-5 product-card__content w-100">
+                            <span className="px-8 py-4 text-sm text-success-600 bg-success-50 fw-medium">19%OFF</span>
+                            <h6 className="my-16 text-lg title fw-semibold">
+                              <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Instax Mini 12 Instant Film Camera - Green</a>
+                            </h6>
+                            <div className="gap-6 flex-align">
+                              <div className="gap-2 flex-align">
+                                <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                                <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                                <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                                <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                                <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                              </div>
+                              <span className="text-xs text-gray-500 fw-medium">4.8</span>
+                              <span className="text-xs text-gray-500 fw-medium">(12K)</span>
+                            </div>
+                            <span className="px-8 py-2 mt-16 text-xs rounded-pill text-main-two-600 bg-main-two-50 fw-normal">Fulfilled by Marketpro</span>
+                            <div className="mt-16 product-card__price mb-30">
+                              <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">$28.99</span>
+                              <span className="text-heading text-md fw-semibold">$14.99 <span className="text-gray-500 fw-normal">/Qty</span></span>
+                            </div>
+                            <span className="text-xs text-neutral-600 fw-medium">Delivered by <span className="text-main-600">Aug 02</span></span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
       <TrendingProductsTabs />
+      {/* ========================= Trending Products End ================================ */}
 
-      {/* Top Brands */}
+      {/* ========================= Top Brands Start ===================================== */}
+      <section className="pt-20 overflow-hidden top-selling-products">
+        <div className="container container-lg">
+          <div className="p-24 border border-gray-100 rounded-16">
+            <div className="mb-24 section-heading">
+              <div className="flex-wrap gap-8 flex-between">
+                <h6 className="mb-0 wow fadeInLeft"><i className="ph-bold ph-storefront text-main-600"></i> Thương hiệu hàng đầu</h6>
+                <div className="gap-16 flex-align wow fadeInRight">
+                  <a href="shop.html" className="text-sm text-gray-700 fw-semibold hover-text-main-600 hover-text-decoration-underline">Xem đầy đủ</a>
+                  <div className="gap-8 flex-align">
+                    {/* Use brand-prev/brand-next to match main.js */}
+                    <button type="button" id="brand-prev" className="text-xl border border-gray-100 slick-prev slick-arrow flex-center rounded-circle hover-border-neutral-600 hover-bg-neutral-600 hover-text-white transition-1">
+                      <i className="ph ph-caret-left"></i>
+                    </button>
+                    <button type="button" id="brand-next" className="text-xl border border-gray-100 slick-next slick-arrow flex-center rounded-circle hover-border-neutral-600 hover-bg-neutral-600 hover-text-white transition-1">
+                      <i className="ph ph-caret-right"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="row g-12">
+              <div className="col-md-12">
+                {/* Use class 'brand-slider' to match main.js initializer */}
+                <div className="top-brand-slider brand-slider arrow-style-two">
+                  <div data-aos="fade-up" data-aos-duration="200" className="aos-init aos-animate">
+                    <div className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-16 position-relative transition-2">
+                      <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 position-relative" style={{ height: '150px' }}>
+                        <img src="/assets/images/logo/nivea-logo.jpg" alt="" className="w-50 object-fit-cover" />
+                      </a>
+                      <div className="mt-16 product-card__content w-100">
+                        <div className="gap-6 flex-align justify-content-center">
+                          <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
+                          <span className="text-xs text-gray-500">Siêu thị Vina</span>
+                        </div>
+                        <h6 className="mt-12 mb-8 text-lg text-center title fw-semibold">
+                          <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Vinamilk chính hãng EST 1997</a>
+                        </h6>
+                      </div>
+                    </div>
+                  </div>
+                  {Array.from({ length: 7 }).map((_, idx) => (
+                    <div key={idx} data-aos="fade-up" data-aos-duration="200" className="aos-init aos-animate">
+                      <div className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-16 position-relative transition-2">
+                        <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 position-relative" style={{ height: '150px' }}>
+                          <img src="/assets/images/logo/hitachi-logo.jpg" alt="" className="w-50 object-fit-cover" />
+                        </a>
+                        <div className="mt-16 product-card__content w-100">
+                          <div className="gap-6 flex-align justify-content-center">
+                            <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
+                            <span className="text-xs text-gray-500">Siêu thị Vina</span>
+                          </div>
+                          <h6 className="mt-12 mb-8 text-lg text-center title fw-semibold">
+                            <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Vinamilk chính hãng EST 1997</a>
+                          </h6>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
       <TopBrandsSection />
+      {/* ========================= Top Brands End ======================================= */}
 
-      {/* Featured Products complex section */}
+      {/* ========================= Featured Products (Sản phẩm hàng đầu) Start ============================== */}
+      <section className="overflow-hidden featured-products py-80">
+        <div className="container container-lg">
+          <div className="flex-wrap-reverse row g-4">
+            <div className="col-xxl-8">
+              <div className="p-24 border border-gray-100 rounded-16">
+                <div className="mb-24 section-heading">
+                  <div className="flex-wrap gap-8 flex-between">
+                    <h6 className="mb-0 wow fadeInLeft"><i className="ph-bold ph-package text-main-600"></i> Sản phẩm hàng đầu</h6>
+                    <div className="gap-16 flex-align wow fadeInRight">
+                      <a href="shop.html" className="text-sm text-gray-700 fw-medium hover-text-main-600 hover-text-decoration-underline">Xem đầy đủ</a>
+                      <div className="gap-8 flex-align">
+                        <button type="button" id="featured-products-prev" className="text-xl border border-gray-100 slick-prev slick-arrow flex-center rounded-circle hover-border-neutral-600 hover-bg-neutral-600 hover-text-white transition-1">
+                          <i className="ph ph-caret-left"></i>
+                        </button>
+                        <button type="button" id="featured-products-next" className="text-xl border border-gray-100 slick-next slick-arrow flex-center rounded-circle hover-border-neutral-600 hover-bg-neutral-600 hover-text-white transition-1">
+                          <i className="ph ph-caret-right"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="row gy-4 featured-product-slider">
+                  <div className="col-xxl-6">
+                    <div className="featured-products__sliders">
+                      <div>
+                        <div className="gap-16 p-16 mt-24 border border-gray-100 product-card d-flex hover-border-main-600 rounded-16 position-relative transition-2">
+                          <a href="product-details-two.html" className="flex-shrink-0 p-24 product-card__thumb flex-center h-unset rounded-8 position-relative w-unset" tabIndex={0}>
+                            <img src="/assets/images/thumbs/product-two-img2.png" alt="" className="w-auto max-w-unset" />
+                          </a>
+                          <div className="my-20 product-card__content w-100 flex-grow-1">
+                            <h6 className="mb-12 text-lg title fw-semibold">
+                              <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>iPhone 15 Pro Warp Charge 30W Power Adapter</a>
+                            </h6>
+                            <div className="gap-6 mb-12 flex-align">
+                              <span className="text-xs text-gray-500 fw-medium">4.8</span>
+                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                              <span className="text-xs text-gray-500 fw-medium">(17k)</span>
+                            </div>
+                            <div className="gap-4 flex-align">
+                              <span className="text-main-two-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
+                              <span className="text-xs text-gray-500">By Lucky Supermarket</span>
+                            </div>
+                            <div className="my-20 product-card__price">
+                              <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">$28.99</span>
+                              <span className="text-heading text-md fw-semibold">$14.99 <span className="text-gray-500 fw-normal">/Qty</span></span>
+                            </div>
+                            <a href="cart.html" className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-8 flex-center fw-medium" tabIndex={0}>
+                              Add To Cart <i className="ph ph-shopping-cart"></i>
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="gap-16 p-16 mt-24 border border-gray-100 product-card d-flex hover-border-main-600 rounded-16 position-relative transition-2">
+                          <a href="product-details-two.html" className="flex-shrink-0 p-24 product-card__thumb flex-center h-unset rounded-8 position-relative w-unset" tabIndex={0}>
+                            <span className="px-8 py-4 text-sm text-white product-card__badge bg-tertiary-600 position-absolute inset-inline-start-0 inset-block-start-0">Best seller</span>
+                            <img src="/assets/images/thumbs/product-two-img3.png" alt="" className="w-auto max-w-unset" />
+                          </a>
+                          <div className="my-20 product-card__content w-100 flex-grow-1">
+                            <h6 className="mb-12 text-lg title fw-semibold">
+                              <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>iPhone 15 Pro Warp Charge 30W Power Adapter</a>
+                            </h6>
+                            <div className="gap-6 mb-12 flex-align">
+                              <span className="text-xs text-gray-500 fw-medium">4.8</span>
+                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                              <span className="text-xs text-gray-500 fw-medium">(17k)</span>
+                            </div>
+                            <div className="gap-4 flex-align">
+                              <span className="text-main-two-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
+                              <span className="text-xs text-gray-500">By Lucky Supermarket</span>
+                            </div>
+                            <div className="my-20 product-card__price">
+                              <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">$28.99</span>
+                              <span className="text-heading text-md fw-semibold">$14.99 <span className="text-gray-500 fw-normal">/Qty</span></span>
+                            </div>
+                            <a href="cart.html" className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-8 flex-center fw-medium" tabIndex={0}>
+                              Add To Cart <i className="ph ph-shopping-cart"></i>
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-xxl-6">
+                    <div className="featured-products__sliders">
+                      <div>
+                        <div className="gap-16 p-16 mt-24 border border-gray-100 product-card d-flex hover-border-main-600 rounded-16 position-relative transition-2">
+                          <a href="product-details-two.html" className="flex-shrink-0 p-24 product-card__thumb flex-center h-unset rounded-8 position-relative w-unset" tabIndex={0}>
+                            <span className="px-8 py-4 text-sm text-white product-card__badge bg-primary-600 position-absolute inset-inline-start-0 inset-block-start-0">Best Sale</span>
+                            <img src="/assets/images/thumbs/product-two-img4.png" alt="" className="w-auto max-w-unset" />
+                          </a>
+                          <div className="my-20 product-card__content w-100 flex-grow-1">
+                            <h6 className="mb-12 text-lg title fw-semibold">
+                              <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>iPhone 15 Pro Warp Charge 30W Power Adapter</a>
+                            </h6>
+                            <div className="gap-6 mb-12 flex-align">
+                              <span className="text-xs text-gray-500 fw-medium">4.8</span>
+                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                              <span className="text-xs text-gray-500 fw-medium">(17k)</span>
+                            </div>
+                            <div className="gap-4 flex-align">
+                              <span className="text-main-two-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
+                              <span className="text-xs text-gray-500">By Lucky Supermarket</span>
+                            </div>
+                            <div className="my-20 product-card__price">
+                              <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">$28.99</span>
+                              <span className="text-heading text-md fw-semibold">$14.99 <span className="text-gray-500 fw-normal">/Qty</span></span>
+                            </div>
+                            <a href="cart.html" className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-8 flex-center fw-medium" tabIndex={0}>
+                              Add To Cart <i className="ph ph-shopping-cart"></i>
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="gap-16 p-16 mt-24 border border-gray-100 product-card d-flex hover-border-main-600 rounded-16 position-relative transition-2">
+                          <a href="product-details-two.html" className="flex-shrink-0 p-24 product-card__thumb flex-center h-unset rounded-8 position-relative w-unset" tabIndex={0}>
+                            <span className="px-8 py-4 text-sm text-white product-card__badge bg-tertiary-600 position-absolute inset-inline-start-0 inset-block-start-0">Best seller</span>
+                            <img src="/assets/images/thumbs/product-two-img3.png" alt="" className="w-auto max-w-unset" />
+                          </a>
+                          <div className="my-20 product-card__content w-100 flex-grow-1">
+                            <h6 className="mb-12 text-lg title fw-semibold">
+                              <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>iPhone 15 Pro Warp Charge 30W Power Adapter</a>
+                            </h6>
+                            <div className="gap-6 mb-12 flex-align">
+                              <span className="text-xs text-gray-500 fw-medium">4.8</span>
+                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                              <span className="text-xs text-gray-500 fw-medium">(17k)</span>
+                            </div>
+                            <div className="gap-4 flex-align">
+                              <span className="text-main-two-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
+                              <span className="text-xs text-gray-500">By Lucky Supermarket</span>
+                            </div>
+                            <div className="my-20 product-card__price">
+                              <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">$28.99</span>
+                              <span className="text-heading text-md fw-semibold">$14.99 <span className="text-gray-500 fw-normal">/Qty</span></span>
+                            </div>
+                            <a href="cart.html" className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-8 flex-center fw-medium" tabIndex={0}>
+                              Add To Cart <i className="ph ph-shopping-cart"></i>
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="col-xxl-4">
+              <div className="pb-0 overflow-hidden text-center position-relative rounded-16 bg-light-purple p-28 z-1 h-100">
+                <img src="/assets/images/bg/featured-product-bg.png" alt="" className="position-absolute inset-block-start-0 inset-inline-start-0 z-n1 w-100 h-100 cover-img" />
+                <div className="text-center py-xl-4">
+                  <span className="mb-20 text-white h6">iPhone Smart Phone - Red</span>
+                  <div className="gap-12 text-white flex-center">
+                    <span>FROM</span>
+                    <h4 className="mb-8 text-white fw-semibold">$890</h4>
+                    <span className="px-8 py-2 text-sm text-white badge-style-two position-relative me-8 bg-paste rounded-4">20% off</span>
+                  </div>
+                  <a href="shop.html" className="gap-8 px-24 py-16 mt-16 mb-24 bg-white border-white btn text-heading flex-center d-inline-flex rounded-pill fw-medium hover-bg-main-600 hover-border-main-two-600 hover-text-white box-shadow-5xl" tabIndex={0}>
+                    Shop Now <span className="text-xl icon d-flex"><i className="ph ph-arrow-right"></i></span>
+                  </a>
+                </div>
+                <img src="/assets/images/thumbs/featured-product-img.png" alt="" className="d-xxl-inline-flex d-none wow bounceInUp" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
       <FeaturedProductsSection />
+      {/* ========================= Featured Products (Sản phẩm hàng đầu) End ================================= */}
 
-      {/* Discount strip below featured products */}
-      <DiscountStrip />
+      {/* ========================= Super Discount Start ================================ */}
+      <div className="">
+        <div className="container container-lg">
+          <div className="py-20 border border-dashed border-main-500 bg-main-50 rounded-8 d-flex align-items-center justify-content-evenly">
+            <p className="h6 text-main-600 fw-normal">
+              Super discount for your{' '}
+              <a href="javascript:void(0)" className="fw-bold text-decoration-underline text-main-600 hover-text-decoration-none hover-text-primary-600">first purchase</a>
+            </p>
+            <div className="position-relative">
+              <button className="px-32 py-10 text-white border-0 copy-coupon-btn text-uppercase bg-main-600 rounded-pill hover-bg-main-800">
+                FREE25BAC
+                <i className="text-lg ph ph-file-text line-height-1"></i>
+              </button>
+              <span className="px-16 py-6 mb-8 text-xs text-white copy-text bg-main-600 fw-normal position-absolute rounded-pill bottom-100 start-50 translate-middle-x min-w-max"></span>
+            </div>
+            <p className="text-md text-main-600 fw-normal">
+              Use discount code to get <span className="fw-bold text-main-600">20% </span> discount for any item
+            </p>
+          </div>
+        </div>
+      </div>
+      {/* ========================= Super Discount End ================================== */}
 
-      {/* Interested Products */}
-      <InterestedProducts />
+      {/* ========================= Trending Products Start ================================ */}
+      <section className="overflow-hidden trending-productss pt-60">
+        <div className="container container-lg">
+          <div className="p-24 border border-gray-100 rounded-16">
+            <div className="mb-24 section-heading">
+              <div className="flex-wrap gap-8 flex-between">
+                <h6 className="mb-0 wow fadeInLeft"><i className="ph-bold ph-hand-withdraw text-main-600"></i> Có thể bạn quan tâm</h6>
+                <ul className="nav common-tab style-two nav-pills wow fadeInRight" id="pills-tab" role="tablist">
+                  <li className="nav-item" role="presentation">
+                    <button className="text-sm nav-link fw-medium hover-border-main-600 active" id="pills-all-tab" data-bs-toggle="pill" data-bs-target="#pills-all" type="button" role="tab" aria-controls="pills-all" aria-selected="true">All</button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button className="text-sm nav-link fw-medium hover-border-main-600" id="pills-mobile-tab" data-bs-toggle="pill" data-bs-target="#pills-mobile" type="button" role="tab" aria-controls="pills-mobile" aria-selected="false">Mobile</button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button className="text-sm nav-link fw-medium hover-border-main-600" id="pills-headphone-tab" data-bs-toggle="pill" data-bs-target="#pills-headphone" type="button" role="tab" aria-controls="pills-headphone" aria-selected="false">Headphone</button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button className="text-sm nav-link fw-medium hover-border-main-600" id="pills-usb-tab" data-bs-toggle="pill" data-bs-target="#pills-usb" type="button" role="tab" aria-controls="pills-usb" aria-selected="false">USB</button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button className="text-sm nav-link fw-medium hover-border-main-600" id="pills-camera-tab" data-bs-toggle="pill" data-bs-target="#pills-camera" type="button" role="tab" aria-controls="pills-camera" aria-selected="false">Camera</button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button className="text-sm nav-link fw-medium hover-border-main-600" id="pills-laptop-tab" data-bs-toggle="pill" data-bs-target="#pills-laptop" type="button" role="tab" aria-controls="pills-laptop" aria-selected="false">Laptop</button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button className="text-sm nav-link fw-medium hover-border-main-600" id="pills-accessories-tab" data-bs-toggle="pill" data-bs-target="#pills-accessories" type="button" role="tab" aria-controls="pills-accessories" aria-selected="false">Accessories</button>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div className="tab-content" id="pills-tabContent">
+              {/* All */}
+              <div className="tab-pane fade show active" id="pills-all" role="tabpanel" aria-labelledby="pills-all-tab" tabIndex={0}>
+                <div className="row g-12">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={`all-${i}`} className="col-xxl-3 col-xl-3 col-lg-4 col-sm-6">
+                      <div className="p-16 border border-gray-100 product-card h-100 hover-border-main-600 rounded-16 position-relative transition-2">
+                        <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 bg-gray-50 position-relative">
+                          <img src="/assets/images/thumbs/product-two-img1.png" alt="" className="w-auto max-w-unset" />
+                        </a>
+                        <div className="mt-16 product-card__content w-100">
+                          
+                          <h6 className="my-16 text-lg title fw-semibold">
+                            <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Instax Mini 12 Instant Film Camera - Green</a>
+                          </h6>
+                          <div className="gap-6 flex-align">
+                            <div className="gap-2 flex-align">
+                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                            </div>
+                            <span className="text-xs text-gray-500 fw-medium">4.8</span>
+                            <span className="text-xs text-gray-500 fw-medium">(12K)</span>
+                            <span className="px-8 py-2 text-xs rounded-pill text-main-two-600 bg-main-two-50 fw-normal">Apple</span>
+                          </div>
 
-      {/* Partner Brands */}
-      <PartnerBrands />
-      
+                          <div className="mt-16 mb-10 product-card__price">
+                            <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">450.000 đ</span>
+                            <span className="text-heading text-md fw-semibold">300.000 đ</span>
+                          </div>
+                          <a href="cart.html" className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-pill flex-center fw-medium" tabIndex={0}>
+                            Thêm vào giỏ hàng <i className="ph ph-shopping-cart"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Mobile */}
+              <div className="tab-pane fade" id="pills-mobile" role="tabpanel" aria-labelledby="pills-mobile-tab" tabIndex={0}>
+                <div className="row g-12">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={`mobile-${i}`} className="col-xxl-3 col-xl-3 col-lg-4 col-sm-6">
+                      <div className="p-16 border border-gray-100 product-card h-100 hover-border-main-600 rounded-16 position-relative transition-2">
+                        <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 bg-gray-50 position-relative">
+                          <img src="/assets/images/thumbs/product-two-img1.png" alt="" className="w-auto max-w-unset" />
+                        </a>
+                        <div className="mt-16 product-card__content w-100">
+                          <h6 className="my-16 text-lg title fw-semibold">
+                            <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Instax Mini 12 Instant Film Camera - Green</a>
+                          </h6>
+                          <div className="product-card__price">
+                            <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">$450.00</span>
+                            <span className="text-heading text-md fw-semibold">$300.00</span>
+                          </div>
+                          <a href="cart.html" className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-8 flex-center fw-medium" tabIndex={0}>
+                            Thêm vào giỏ hàng <i className="ph ph-shopping-cart"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Headphone */}
+              <div className="tab-pane fade" id="pills-headphone" role="tabpanel" aria-labelledby="pills-headphone-tab" tabIndex={0}>
+                <div className="row g-12">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={`headphone-${i}`} className="col-xxl-3 col-xl-3 col-lg-4 col-sm-6">
+                      <div className="p-16 border border-gray-100 product-card h-100 hover-border-main-600 rounded-16 position-relative transition-2">
+                        <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 bg-gray-50 position-relative">
+                          <img src="/assets/images/thumbs/product-two-img1.png" alt="" className="w-auto max-w-unset" />
+                        </a>
+                        <div className="mt-16 product-card__content w-100">
+                          <h6 className="my-16 text-lg title fw-semibold">
+                            <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Instax Mini 12 Instant Film Camera - Green</a>
+                          </h6>
+                          <div className="product-card__price">
+                            <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">$450.00</span>
+                            <span className="text-heading text-md fw-semibold">$300.00</span>
+                          </div>
+                          <a href="cart.html" className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-8 flex-center fw-medium" tabIndex={0}>
+                            Thêm vào giỏ hàng <i className="ph ph-shopping-cart"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* USB */}
+              <div className="tab-pane fade" id="pills-usb" role="tabpanel" aria-labelledby="pills-usb-tab" tabIndex={0}>
+                <div className="row g-12">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={`usb-${i}`} className="col-xxl-3 col-xl-3 col-lg-4 col-sm-6">
+                      <div className="p-16 border border-gray-100 product-card h-100 hover-border-main-600 rounded-16 position-relative transition-2">
+                        <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 bg-gray-50 position-relative">
+                          <img src="/assets/images/thumbs/product-two-img1.png" alt="" className="w-auto max-w-unset" />
+                        </a>
+                        <div className="mt-16 product-card__content w-100">
+                          <h6 className="my-16 text-lg title fw-semibold">
+                            <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Instax Mini 12 Instant Film Camera - Green</a>
+                          </h6>
+                          <div className="product-card__price">
+                            <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">$450.00</span>
+                            <span className="text-heading text-md fw-semibold">$300.00</span>
+                          </div>
+                          <a href="cart.html" className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-8 flex-center fw-medium" tabIndex={0}>
+                            Thêm vào giỏ hàng <i className="ph ph-shopping-cart"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Camera */}
+              <div className="tab-pane fade" id="pills-camera" role="tabpanel" aria-labelledby="pills-camera-tab" tabIndex={0}>
+                <div className="row g-12">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={`camera-${i}`} className="col-xxl-3 col-xl-3 col-lg-4 col-sm-6">
+                      <div className="p-16 border border-gray-100 product-card h-100 hover-border-main-600 rounded-16 position-relative transition-2">
+                        <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 bg-gray-50 position-relative">
+                          <img src="/assets/images/thumbs/product-two-img1.png" alt="" className="w-auto max-w-unset" />
+                        </a>
+                        <div className="mt-16 product-card__content w-100">
+                          <h6 className="my-16 text-lg title fw-semibold">
+                            <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Instax Mini 12 Instant Film Camera - Green</a>
+                          </h6>
+                          <div className="product-card__price">
+                            <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">$450.00</span>
+                            <span className="text-heading text-md fw-semibold">$300.00</span>
+                          </div>
+                          <a href="cart.html" className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-8 flex-center fw-medium" tabIndex={0}>
+                            Thêm vào giỏ hàng <i className="ph ph-shopping-cart"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Laptop */}
+              <div className="tab-pane fade" id="pills-laptop" role="tabpanel" aria-labelledby="pills-laptop-tab" tabIndex={0}>
+                <div className="row g-12">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={`laptop-${i}`} className="col-xxl-3 col-xl-3 col-lg-4 col-sm-6">
+                      <div className="p-16 border border-gray-100 product-card h-100 hover-border-main-600 rounded-16 position-relative transition-2">
+                        <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 bg-gray-50 position-relative">
+                          <img src="/assets/images/thumbs/product-two-img1.png" alt="" className="w-auto max-w-unset" />
+                        </a>
+                        <div className="mt-16 product-card__content w-100">
+                          <h6 className="my-16 text-lg title fw-semibold">
+                            <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Instax Mini 12 Instant Film Camera - Green</a>
+                          </h6>
+                          <div className="product-card__price">
+                            <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">$450.00</span>
+                            <span className="text-heading text-md fw-semibold">$300.00</span>
+                          </div>
+                          <a href="cart.html" className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-8 flex-center fw-medium" tabIndex={0}>
+                            Thêm vào giỏ hàng <i className="ph ph-shopping-cart"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Accessories */}
+              <div className="tab-pane fade" id="pills-accessories" role="tabpanel" aria-labelledby="pills-accessories-tab" tabIndex={0}>
+                <div className="row g-12">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={`accessories-${i}`} className="col-xxl-3 col-xl-3 col-lg-4 col-sm-6">
+                      <div className="p-16 border border-gray-100 product-card h-100 hover-border-main-600 rounded-16 position-relative transition-2">
+                        <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 bg-gray-50 position-relative">
+                          <img src="/assets/images/thumbs/product-two-img1.png" alt="" className="w-auto max-w-unset" />
+                        </a>
+                        <div className="mt-16 product-card__content w-100">
+                          <h6 className="my-16 text-lg title fw-semibold">
+                            <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Instax Mini 12 Instant Film Camera - Green</a>
+                          </h6>
+                          <div className="product-card__price">
+                            <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">$450.00</span>
+                            <span className="text-heading text-md fw-semibold">$300.00</span>
+                          </div>
+                          <a href="cart.html" className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-8 flex-center fw-medium" tabIndex={0}>
+                            Thêm vào giỏ hàng <i className="ph ph-shopping-cart"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <TopSellingProducts variant="recommend" title="Có thể bạn quan tâm" perPage={8} />
+      {/* ========================= Trending Products End ================================== */}
+
+      {/* ============================== Top Brand Section Start ==================================== */}
+      <div className="py-40 top-brand">
+        <div className="container container-lg">
+          <div className="p-24 border border-gray-50 rounded-16">
+            <div className="mb-24 section-heading">
+              <div className="flex-wrap gap-8 flex-between">
+                <h6 className="mb-0">Các thương hiệu đối tác</h6>
+                <div className="gap-8 flex-align">
+                  <button type="button" id="topBrand-prev" className="text-xl border border-gray-100 slick-prev slick-arrow flex-center rounded-circle hover-border-main-two-600 hover-bg-main-two-600 hover-text-white transition-1">
+                    <i className="ph ph-caret-left"></i>
+                  </button>
+                  <button type="button" id="topBrand-next" className="text-xl border border-gray-100 slick-next slick-arrow flex-center rounded-circle hover-border-main-two-600 hover-bg-main-two-600 hover-text-white transition-1">
+                    <i className="ph ph-caret-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="top-brand__slider">
+              {Array.from({ length: 9 }).map((_, idx) => (
+                <div key={idx} className="wow bounceIn">
+                  <div className="px-8 my-4 top-brand__item flex-center rounded-8 hover-border-main-600 transition-1 box-shadow-7xl">
+                    <img src={`assets/images/thumbs/top-brand-img${Math.min(idx + 1, 8)}.png`} alt="" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* ============================== Top Brand Section End ==================================== */}
+
+      {/* Footer removed as requested */}
     </>
   );
 }

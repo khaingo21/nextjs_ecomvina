@@ -6,9 +6,9 @@ import Image from "next/image";
 export default function Footer() {
   return (
     <>
-      <footer className="footer py-120 overflow-hidden">
-        <div className="container">
-          <div className="footer-item-two-wrapper d-flex align-items-start flex-wrap">
+      <footer className="footer py-40 overflow-hidden">
+        <div className="container container-lg">
+          <div className="footer-item-two-wrapper d-flex align-items-start justify-content-center flex-wrap gap-48">
             {/* Brand & contact */}
             <div className="footer-item max-w-275" data-aos="fade-up" data-aos-duration="200">
               <div className="footer-item__logo mb-16">
@@ -97,10 +97,10 @@ export default function Footer() {
 
       {/* bottom Footer */}
       <div className="bottom-footer bg-color-three py-8">
-        <div className="container">
-          <div className="bottom-footer__inner flex-between flex-wrap gap-16 py-16">
+        <div className="container container-lg">
+          <div className="bottom-footer__inner d-flex justify-content-center align-items-center flex-wrap gap-16 py-16 text-center">
             <p className="bottom-footer__text">Siêu Thị Vina © 2024. All Rights Reserved</p>
-            <div className="flex-align gap-8 flex-wrap">
+            <div className="flex-align gap-8 flex-wrap justify-content-center">
               <span className="text-heading text-sm">Chấp nhận thanh toán</span>
               <Image src="/assets/images/thumbs/payment-method.png" alt="Payment methods" width={220} height={28} />
             </div>

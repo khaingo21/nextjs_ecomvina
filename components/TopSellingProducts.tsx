@@ -1,228 +1,221 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
+import React from "react";
 
-/** ==== Types khớp API hot_sales ==== */
-type DanhGia = { id: number; diem: number };
-type BienThe = { gia: string; giagiam: string; soluong?: number };
-type AnhSP = { media: string };
-type ApiProduct = {
+/** ==== Kiểu chung cho UI card ==== */
+type UIProduct = {
+  id: number;
+  name: string;
+  slug: string;
+  img: string;
+  price: number | null;
+  priceBefore?: number | null;
+  ratingAvg?: number | null;
+  ratingCount?: number | null;
+  isFree?: boolean;
+};
+
+/** ==== Kiểu hot_sales_v2 (những field cần) ==== */
+type HotSalesItem = {
   id: number;
   ten: string;
+  slug?: string;
   mediaurl?: string | null;
-  danhgias?: DanhGia[];
-  bienthes?: BienThe[];
-  anhsanphams?: AnhSP[];
-  thuonghieu?: { ten?: string };
-  xuatxu?: string;
+
+  // các trường normalize sẵn trong v2:
+  original_price?: number | null;
+  discount_amount?: number | null;
+  selling_price?: number | null;
+  discount_type?: string | null; // "Miễn phí"
+  is_free?: boolean;
+
+  rating_average?: number | null;
+  rating_count?: number | null;
 };
 
-/** ==== UI type sau khi chuẩn hoá ==== */
-type UIProduct = ApiProduct & {
+/** ==== Kiểu recommend_v2 (những field cần) ==== */
+type RecommendItem = {
+  id: number;
+  ten: string;
   slug: string;
-  original_price: number;
-  discount_amount: number;
-  selling_price: number;
-  discount_type: "Giảm tiền" | "Miễn phí" | "Sold" | null;
-  is_free: boolean;
-  is_sold: boolean;
-  rating_average: number;
-  rating_count: number;
-  image_url: string;
-  product_meta?: string;
+  mediaurl?: string | null;
+  gia?: {
+    current: number;
+    before_discount: number | null;
+    discount_percent: number;
+  } | null;
+  rating?: { average: number; count: number } | null;
 };
 
-/** ==== Helpers ==== */
-const toVND = (n: number) => n.toLocaleString("vi-VN") + " đ";
-const num = (v?: string) => {
-  const n = parseFloat(v || "0");
-  return Number.isFinite(n) ? n : 0;
-};
-const slugify = (s: string) =>
-  s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-
-const firstImage = (p: ApiProduct) =>
-  p.mediaurl || p.anhsanphams?.[0]?.media || "/assets/images/thumbs/product-two-img7.png";
-
-const mapToUI = (p: ApiProduct): UIProduct => {
-  const gia = num(p.bienthes?.[0]?.gia);
-  const giagiam = num(p.bienthes?.[0]?.giagiam);
-  const selling_price = giagiam > 0 ? giagiam : gia;
-
-  const rating_count = p.danhgias?.length || 0;
-  const rating_sum = (p.danhgias || []).reduce((s, r) => s + (Number(r.diem) || 0), 0);
-  const rating_average = rating_count ? Math.round((rating_sum / rating_count) * 10) / 10 : 0;
-
-  const is_sold = (p.bienthes?.[0]?.soluong ?? 0) <= 0;
-  const is_free = selling_price === 0;
-
-  let discount_type: UIProduct["discount_type"] = null;
-  if (is_sold) discount_type = "Sold";
-  else if (is_free) discount_type = "Miễn phí";
-  else if (giagiam > 0 && giagiam < gia) discount_type = "Giảm tiền";
-
+/** ==== 2 mapper về UI chung ==== */
+const mapHotToUI = (p: HotSalesItem): UIProduct => {
+  const img = p.mediaurl || "/assets/images/thumbs/product-two-img1.png";
+  const isFree = Boolean(p.is_free) || p.discount_type === "Miễn phí" || p.selling_price === 0;
   return {
-    ...p,
-    slug: slugify(p.ten || `sp-${p.id}`),
-    original_price: gia,
-    discount_amount: giagiam,
-    selling_price,
-    discount_type,
-    is_free,
-    is_sold,
-    rating_average,
-    rating_count,
-    image_url: firstImage(p),
-    product_meta: [p.thuonghieu?.ten, p.xuatxu].filter(Boolean).join(" • "),
+    id: p.id,
+    name: p.ten,
+    slug: p.slug || String(p.id),
+    img,
+    isFree,
+    price: isFree ? 0 : (p.selling_price ?? null),
+    priceBefore: p.original_price ?? null,
+    ratingAvg: p.rating_average ?? null,
+    ratingCount: p.rating_count ?? null,
   };
 };
 
-export default function TopSellingProducts() {
-  const [items, setItems] = useState<UIProduct[]>([]);
-  const [loading, setLoading] = useState(true);
+const mapRecommendToUI = (p: RecommendItem): UIProduct => {
+  const img = p.mediaurl || "/assets/images/thumbs/product-two-img1.png";
+  const cur = p.gia?.current ?? null;
+  const before = p.gia?.before_discount ?? null;
+  const isFree = cur === 0;
+  return {
+    id: p.id,
+    name: p.ten,
+    slug: p.slug || String(p.id),
+    img,
+    isFree,
+    price: cur,
+    priceBefore: before,
+    ratingAvg: p.rating?.average ?? null,
+    ratingCount: p.rating?.count ?? null,
+  };
+};
 
-  useEffect(() => {
-    let mounted = true;
-    // có thể đổi per_page theo nhu cầu
-    fetch("http://localhost:8000/api/sanphams-selection?selection=hot_sales&per_page=8")
-      .then((res) => res.json())
-      .then((res: { status: boolean; data: ApiProduct[] }) => {
-        if (mounted && res?.status && Array.isArray(res.data)) {
-          setItems(res.data.map(mapToUI));
+/** ==== props cho TopSellingProducts ==== */
+type Props =
+  | { variant: "hot"; title?: string; perPage?: number }
+  | { variant: "recommend"; title?: string; perPage?: number };
+
+/** ==== Component chính ==== */
+export default function TopSellingProducts(props: Props) {
+  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://127.0.0.1:8000";
+  const title =
+    props.title ?? (props.variant === "hot" ? "Top deal • Siêu rẻ" : "Có thể bạn quan tâm");
+  const perPage = props.perPage ?? (props.variant === "hot" ? 10 : 8);
+
+  const url =
+    props.variant === "hot"
+      ? `${API}/api/sanphams-selection?selection=hot_sales&per_page=${perPage}`
+      : `${API}/api/sanphams-selection?selection=recommend&per_page=${perPage}`;
+
+  const [loading, setLoading] = React.useState(true);
+  const [items, setItems] = React.useState<UIProduct[]>([]);
+
+  React.useEffect(() => {
+    let alive = true;
+    fetch(url, { headers: { Accept: "application/json" } })
+      .then((r) => r.json() as Promise<{ status: boolean; data: unknown[] }>)
+      .then((res) => {
+        if (!alive) return;
+        if (res?.status && Array.isArray(res.data)) {
+          const mapped =
+            props.variant === "hot"
+              ? (res.data as HotSalesItem[]).map(mapHotToUI)
+              : (res.data as RecommendItem[]).map(mapRecommendToUI);
+          setItems(mapped);
+        } else {
+          setItems([]);
         }
       })
-      .catch(() => {})
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
+      .catch(() => alive && setItems([]))
+      .finally(() => alive && setLoading(false));
     return () => {
-      mounted = false;
+      alive = false;
     };
-  }, []);
+  }, [url, props.variant]);
 
   return (
-    <section className="overflow-hidden top-selling-products pt-80">
-      <div className="container">
-        <div className="mb-24 section-heading">
-          <div className="flex-wrap gap-8 flex-between">
-            <h6 className="mb-0">
-              <i className="text-2xl ph-bold ph-fire text-main-600"></i> HOT SALES !
-            </h6>
-            <div className="gap-16 flex-align">
-              <Link
-                href="/shop?view=hot"
-                className="text-sm text-gray-700 fw-semibold hover-text-main-600 hover-text-decoration-underline"
-              >
-                Xem đầy đủ
-              </Link>
+    <section className="pt-20 overflow-hidden top-selling-products">
+      <div className="container container-lg">
+        <div className="p-24 border border-gray-100 rounded-10 bg-hotsales">
+          <div className="mb-12 section-heading">
+            <div className="flex-wrap gap-8 flex-between">
+              <h6 className="mb-0">
+                <i className="ph-bold ph-fire text-main-600" /> {title}
+              </h6>
               <div className="gap-8 flex-align">
-                <button
-                  type="button"
-                  id="top-selling-prev"
-                  className="text-xl border border-gray-100 slick-prev slick-arrow flex-center rounded-circle hover-border-neutral-600 hover-bg-neutral-600 hover-text-white transition-1"
-                >
+                <button type="button" id="top-selling-prev" className="slick-prev slick-arrow">
                   <i className="ph ph-caret-left"></i>
                 </button>
-                <button
-                  type="button"
-                  id="top-selling-next"
-                  className="text-xl border border-gray-100 slick-next slick-arrow flex-center rounded-circle hover-border-neutral-600 hover-bg-neutral-600 hover-text-white transition-1"
-                >
+                <button type="button" id="top-selling-next" className="slick-next slick-arrow">
                   <i className="ph ph-caret-right"></i>
                 </button>
               </div>
             </div>
           </div>
-        </div>
 
-        {loading ? (
-          <div className="py-24 text-center text-gray-500">Đang tải HOT SALES…</div>
-        ) : (
-          <div className="row g-12">
-            {items.map((p) => {
-              const percent =
-                p.original_price > 0
-                  ? Math.round(((p.original_price - p.selling_price) / p.original_price) * 100)
-                  : 0;
-              const showDiscount = p.discount_type === "Giảm tiền";
-
-              return (
-                <div className="col-xxl-3 col-xl-3 col-lg-4 col-sm-6" key={p.id}>
-                  <div className="p-16 border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-16 position-relative transition-2">
-                    <a
-                      href={`/product/${p.slug}-${p.id}`}
-                      className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50"
-                    >
-                      {showDiscount && (
-                        <span className="px-8 py-4 text-sm text-white product-card__badge bg-success-600 position-absolute inset-inline-start-0 inset-block-start-0">
-                          Giảm {percent}%
-                        </span>
-                      )}
-                      {p.discount_type === "Miễn phí" && (
-                        <span className="px-8 py-4 text-sm text-white product-card__badge bg-primary-600 position-absolute inset-inline-start-0 inset-block-start-0">
-                          Miễn phí
-                        </span>
-                      )}
-                      {p.discount_type === "Sold" && (
-                        <span className="px-8 py-4 text-sm text-white bg-gray-600 product-card__badge position-absolute inset-inline-start-0 inset-block-start-0">
-                          Hết hàng
-                        </span>
-                      )}
-
-                      {/* Dùng next/image, cho phép chạy ngay với ảnh ngoài domain */}
-                      <Image
-                        src={p.image_url}
-                        alt={p.ten}
-                        width={320}
-                        height={320}
-                        className="w-auto max-w-unset"
-                        unoptimized={/^https?:\/\//.test(p.image_url)}
-                      />
-                    </a>
-
-                    <div className="mt-16 product-card__content w-100">
-                      <h6 className="mt-12 mb-8 text-lg title fw-semibold">
-                        <a href={`/product/${p.slug}-${p.id}`} className="link text-line-2">
-                          {p.ten}
-                        </a>
-                      </h6>
-
-                      <div className="gap-6 flex-align">
-                        <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
-                        <span className="text-xs text-gray-500 fw-medium">
-                          {p.rating_average.toFixed(1)} <i className="ph-fill ph-star text-warning-600"></i>
-                        </span>
-                        <span className="text-xs text-gray-500 fw-medium">({p.rating_count})</span>
-                      </div>
-
-                      <div className="my-10 product-card__price">
-                        {showDiscount && (
-                          <span className="text-xs text-gray-400 fw-semibold text-decoration-line-through me-8">
-                            {toVND(p.original_price)}
+          {loading ? (
+            <div className="p-12 text-white">Đang tải…</div>
+          ) : items.length === 0 ? (
+            <div className="p-12 text-white">Không có sản phẩm.</div>
+          ) : (
+            <div className="row g-12 top-selling-product-slider arrow-style-two">
+              {items.map((p) => {
+                const hasSale =
+                  p.isFree ||
+                  (typeof p.priceBefore === "number" &&
+                    typeof p.price === "number" &&
+                    p.priceBefore > p.price);
+                return (
+                  <div key={p.id} data-aos="fade-up" data-aos-duration={1000}>
+                    <div className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-10 position-relative transition-2">
+                      <a
+                        href={`/product/${p.slug}`}
+                        className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50"
+                        style={{ height: "180px" }}
+                      >
+                        {p.isFree && (
+                          <span className="px-8 py-4 text-sm text-white product-card__badge bg-success-600 position-absolute inset-inline-start-0 inset-block-start-0">
+                            Miễn phí
                           </span>
                         )}
-                        <span className="text-heading text-md fw-semibold">{toVND(p.selling_price)}</span>
-                      </div>
-
-                      <a
-                        href="/cart"
-                        className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-pill flex-center fw-medium"
-                      >
-                        Thêm <i className="ph ph-shopping-cart"></i>
+                        <img src={p.img} alt={p.name} className="w-auto h-100" />
                       </a>
+                      <div className="mt-16 product-card__content w-100">
+                        <h6 className="mt-12 mb-8 text-lg title fw-semibold">
+                          <a href={`/product/${p.slug}`} className="link text-line-2">
+                            {p.name}
+                          </a>
+                        </h6>
+
+                        <div className="gap-6 flex-align">
+                          <span className="text-xs text-gray-500 fw-medium">
+                            {p.ratingAvg ?? "—"}
+                          </span>
+                          <span className="text-xs text-gray-500 fw-medium">
+                            <i className="ph-fill ph-star text-warning-600"></i>
+                          </span>
+                          <span className="text-xs text-gray-500 fw-medium">
+                            ({p.ratingCount ?? 0})
+                          </span>
+                        </div>
+
+                        <div className="my-10 product-card__price">
+                          {p.isFree ? (
+                            <span className="text-heading text-md fw-semibold">Miễn phí</span>
+                          ) : hasSale ? (
+                            <>
+                              <span className="text-xs text-gray-400 fw-semibold text-decoration-line-through">
+                                {p.priceBefore?.toLocaleString("vi-VN")} đ
+                              </span>
+                              <span className="text-heading text-md fw-semibold ms-8">
+                                {p.price?.toLocaleString("vi-VN")} đ
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-heading text-md fw-semibold">
+                              {p.price != null ? `${p.price.toLocaleString("vi-VN")} đ` : "Liên hệ"}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );

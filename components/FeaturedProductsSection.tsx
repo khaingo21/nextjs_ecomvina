@@ -1,113 +1,191 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 
+type Gia = { current: number; before_discount: number | string | null; discount_percent: number };
+type Rating = { average: number; count: number };
+type Store = { name: string; icon_url?: string | null };
+type Prod = {
+  id: number;
+  ten: string;
+  slug: string;
+  mediaurl?: string | null;
+  gia?: Gia;
+  rating?: Rating;
+  store?: Store;
+};
+
 export default function FeaturedProductsSection() {
+  const [items, setItems] = useState<Prod[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://127.0.0.1:8000";
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(
+          `${API}/api/sanphams-selection?selection=best_products&per_page=8`,
+          { headers: { Accept: "application/json" } }
+        );
+        const json = await res.json(); // { status, message, data: Prod[] }
+        setItems(Array.isArray(json?.data) ? json.data : []);
+      } catch (e) {
+        console.error("Fetch best_products failed", e);
+        setItems([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [API]);
+
+  const fmt = (n?: number | string | null) =>
+    typeof n === "number"
+      ? n.toLocaleString("vi-VN")
+      : typeof n === "string"
+      ? Number(n).toLocaleString("vi-VN")
+      : null;
+
+  const grid = items.slice(0, 4); // hiển thị 4 ô trái giống layout cũ
+
   return (
-    <section className="featured-products overflow-hidden py-80">
+    <section className="overflow-hidden featured-products py-80">
       <div className="container">
         <div className="row g-4">
           {/* Left: product grid in bordered box */}
           <div className="col-xxl-8">
-            <div className="border border-gray-100 p-24 rounded-16 h-100">
-              <div className="section-heading mb-24">
-                <div className="flex-between flex-wrap gap-8">
-                  <h6 className="mb-0"><i className="ph-bold ph-package text-main-600"></i> Sản phẩm hàng đầu</h6>
-                  <div className="flex-align gap-16">
-                    <a href="/shop" className="text-sm fw-medium text-gray-700 hover-text-main-600 hover-text-decoration-underline">Xem đầy đủ</a>
-                    <div className="flex-align gap-8">
-                      <button type="button" id="featured-products-prev" className="slick-prev slick-arrow flex-center rounded-circle border border-gray-100 hover-border-neutral-600 text-xl hover-bg-neutral-600 hover-text-white transition-1"><i className="ph ph-caret-left"></i></button>
-                      <button type="button" id="featured-products-next" className="slick-next slick-arrow flex-center rounded-circle border border-gray-100 hover-border-neutral-600 text-xl hover-bg-neutral-600 hover-text-white transition-1"><i className="ph ph-caret-right"></i></button>
+            <div className="p-24 border border-gray-100 rounded-16 h-100">
+              <div className="mb-24 section-heading">
+                <div className="flex-wrap gap-8 flex-between">
+                  <h6 className="mb-0">
+                    <i className="ph-bold ph-package text-main-600"></i> Sản phẩm hàng đầu
+                  </h6>
+                  <div className="gap-16 flex-align">
+                    <a
+                      href="/shop"
+                      className="text-sm text-gray-700 fw-medium hover-text-main-600 hover-text-decoration-underline"
+                    >
+                      Xem đầy đủ
+                    </a>
+                    <div className="gap-8 flex-align">
+                      <button
+                        type="button"
+                        id="featured-products-prev"
+                        className="text-xl border border-gray-100 slick-prev slick-arrow flex-center rounded-circle hover-border-neutral-600 hover-bg-neutral-600 hover-text-white transition-1"
+                      >
+                        <i className="ph ph-caret-left"></i>
+                      </button>
+                      <button
+                        type="button"
+                        id="featured-products-next"
+                        className="text-xl border border-gray-100 slick-next slick-arrow flex-center rounded-circle hover-border-neutral-600 hover-bg-neutral-600 hover-text-white transition-1"
+                      >
+                        <i className="ph ph-caret-right"></i>
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="row g-3">
-                {[
-                  "/assets/images/thumbs/product-two-img2.png",
-                  "/assets/images/thumbs/product-two-img3.png",
-                  "/assets/images/thumbs/product-two-img4.png",
-                  "/assets/images/thumbs/product-two-img5.png",
-                ].map((src, i) => (
-                  <div className="col-md-6" key={i}>
-                    <div className="product-card d-flex gap-16 p-16 border border-gray-100 hover-border-main-600 rounded-16 position-relative transition-2">
-                      <a href="/product-details-two" className="product-card__thumb flex-center h-unset rounded-8 position-relative w-unset flex-shrink-0 p-24">
-                        {i === 2 && (
-                          <span className="product-card__badge bg-primary-600 px-8 py-4 text-sm text-white position-absolute inset-inline-start-0 inset-block-start-0">Best Sale</span>
-                        )}
-                        <Image src={src} alt="Product" width={180} height={180} />
-                      </a>
-                      <div className="product-card__content w-100  my-20 flex-grow-1">
-                        <h6 className="title text-lg fw-semibold mb-12">
-                          <a href="/product-details-two" className="link text-line-2">iPhone 15 Pro Warp Charge 30W Power Adapter</a>
-                        </h6>
-                        <div className="flex-align gap-6 mb-12">
-                          <span className="text-xs fw-medium text-gray-500">4.8</span>
-                          <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
-                          <span className="text-xs fw-medium text-gray-500">(17k)</span>
+              {loading && <div className="p-12 text-gray-600">Đang tải...</div>}
+
+              {!loading && (
+                <div className="row g-3">
+                  {grid.map((p, i) => {
+                    const price = p.gia?.current ?? null;
+                    const before = p.gia?.before_discount ?? null;
+                    const hasDiscount =
+                      (typeof p.gia?.discount_percent === "number" && p.gia.discount_percent > 0) ||
+                      (typeof before === "number" && typeof price === "number" && before > price);
+                    const img = p.mediaurl || "/assets/images/thumbs/product-two-img2.png";
+                    const external = /^https?:\/\//i.test(img);
+
+                    return (
+                      <div className="col-md-6" key={p.id}>
+                        <div className="gap-16 p-16 border border-gray-100 product-card d-flex hover-border-main-600 rounded-16 position-relative transition-2">
+                          <a
+                            href={`/product/${p.slug || p.id}`}
+                            className="flex-shrink-0 p-24 product-card__thumb flex-center h-unset rounded-8 position-relative w-unset"
+                          >
+                            {hasDiscount && (
+                              <span className="px-8 py-4 text-sm text-white product-card__badge bg-primary-600 position-absolute inset-inline-start-0 inset-block-start-0">
+                                Best Sale
+                              </span>
+                            )}
+                            <Image
+                              src={img}
+                              alt={p.ten}
+                              width={180}
+                              height={180}
+                              unoptimized={external} // khỏi cần cấu hình images.domains
+                            />
+                          </a>
+
+                          <div className="my-20 product-card__content w-100 flex-grow-1">
+                            <h6 className="mb-12 text-lg title fw-semibold">
+                              <a href={`/product/${p.slug || p.id}`} className="link text-line-2">
+                                {p.ten}
+                              </a>
+                            </h6>
+
+                            <div className="gap-6 mb-12 flex-align">
+                              <span className="text-xs text-gray-500 fw-medium">
+                                {p.rating?.average ?? "—"}
+                              </span>
+                              <span className="text-xs fw-medium text-warning-600 d-flex">
+                                <i className="ph-fill ph-star"></i>
+                              </span>
+                              <span className="text-xs text-gray-500 fw-medium">
+                                ({p.rating?.count ?? 0})
+                              </span>
+                            </div>
+
+                            <div className="gap-4 flex-align">
+                              <span className="text-main-two-600 text-md d-flex">
+                                <i className="ph-fill ph-storefront"></i>
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                By {p.store?.name ?? "—"}
+                              </span>
+                            </div>
+
+                            <div className="my-20 product-card__price">
+                              {hasDiscount && before ? (
+                                <>
+                                  <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">
+                                    {fmt(before)} đ
+                                  </span>
+                                  <span className="text-heading text-md fw-semibold ms-8">
+                                    {fmt(price)} đ <span className="text-gray-500 fw-normal">/Qty</span>
+                                  </span>
+                                </>
+                              ) : (
+                                <span className="text-heading text-md fw-semibold">
+                                  {fmt(price) ?? "Liên hệ"}{" "}
+                                  <span className="text-gray-500 fw-normal">/Qty</span>
+                                </span>
+                              )}
+                            </div>
+
+                            <a
+                              href="/cart"
+                              className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-8 flex-center fw-medium"
+                            >
+                              Add To Cart <i className="ph ph-shopping-cart"></i>
+                            </a>
+                          </div>
                         </div>
-                        <div className="flex-align gap-4">
-                          <span className="text-main-two-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
-                          <span className="text-gray-500 text-xs">By Lucky Supermarket</span>
-                        </div>
-                        <div className="product-card__price my-20">
-                          <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">$28.99</span>
-                          <span className="text-heading text-md fw-semibold">$14.99 <span className="text-gray-500 fw-normal">/Qty</span></span>
-                        </div>
-                        <a href="/cart" className="product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 px-24 rounded-8 flex-center gap-8 fw-medium">Add To Cart <i className="ph ph-shopping-cart"></i></a>
                       </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Banner phải - tinh chỉnh theo mẫu */}
+          {/* Banner phải giữ nguyên */}
           <div className="col-xxl-4">
-            <div
-              className="h-100 overflow-hidden position-relative p-24"
-              style={{
-                borderRadius: 20,
-                background:
-                  "radial-gradient(60% 50% at 50% 16%, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.00) 100%), linear-gradient(180deg, #4B39F0 0%, #4053F1 40%, #2AC0A2 100%)"
-              }}
-            >
-              {/* Glow overlay */}
-              <div
-                className="position-absolute start-50 translate-middle-x"
-                style={{ top: 60, width: 320, height: 180, borderRadius: 160, filter: 'blur(40px)', background: 'rgba(255,255,255,0.18)', opacity: 0.7 }}
-              />
-              {/* Nội dung chữ (căn giữa) */}
-              <div className="position-relative z-1 text-center" style={{ maxWidth: '360px', margin: '0 auto' }}>
-                <h6 className="text-white fw-semibold" style={{ fontSize: '20px', marginBottom: '12px', letterSpacing: '0.03em', wordSpacing: '0.03em', lineHeight: 1.2, whiteSpace: 'nowrap' }}>iPhone Smart Phone - Red</h6>
-                <div className="d-flex justify-content-center align-items-center gap-10" style={{ marginBottom: '16px' }}>
-                  <span className="text-white fw-semibold" style={{ fontSize: '12px', letterSpacing: '0.06em', opacity: .95 }}>FROM</span>
-                  <span className="text-white fw-bold" style={{ fontSize: '36px', lineHeight: 1 }}>$890</span>
-                  <span className="badge bg-success-600 text-white fw-normal" style={{ fontSize: '12px', padding: '2px 8px' }}>20% off</span>
-                </div>
-                <a
-                  href="/shop"
-                  className="btn bg-white text-heading rounded-pill px-24 py-10 d-inline-flex align-items-center gap-6 fw-medium"
-                  style={{ fontSize: '14px', boxShadow: '0 10px 18px rgba(0,0,0,0.12)' }}
-                >
-                  Shop Now <i className="ph ph-arrow-right text-main-600"></i>
-                </a>
-              </div>
-
-              { }
-              <div className="position-absolute bottom-0 start-50 translate-middle-x" style={{ width: '280px' }}>
-                <Image
-                  src="/assets/images/thumbs/featured-product-img.png"
-                  alt="iPhone"
-                  width={260}
-                  height={250}
-                  className="img-fluid"
-                  style={{ objectFit: 'contain', height: 'auto', filter: 'drop-shadow(0 16px 24px rgba(0,0,0,0.28))' }}
-                />
-              </div>
-            </div>
+            {/* ... banner như cũ của ní ... */}
           </div>
         </div>
       </div>

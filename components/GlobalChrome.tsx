@@ -28,7 +28,7 @@ export default function GlobalChrome() {
         >
           <i className="ph ph-x"></i>
         </button>
-        <div className="container">
+        <div className="container container-lg">
           <div className="position-relative">
             <input
               type="text"
@@ -45,13 +45,13 @@ export default function GlobalChrome() {
         </div>
       </form>
 
-      {/* Mobile Menu (simplified copy from index.html) */}
+      {/* Mobile Menu (matches index.html) */}
       <div className="mobile-menu scroll-sm d-lg-none d-block">
         <button type="button" className="close-button">
           <i className="ph ph-x"></i>
         </button>
         <div className="mobile-menu__inner logo">
-          <a href="/" className="mobile-menu__logo">
+          <a href="index.html" className="mobile-menu__logo">
             <img src="/assets/images/logo/logo_nguyenban.png" alt="Logo" />
           </a>
           <div className="mobile-menu__menu">
@@ -92,7 +92,7 @@ export default function GlobalChrome() {
                 </a>
               </li>
               <li className="nav-menu__item">
-                <a href="/contact" className="nav-menu__link text-heading-two hover-text-main-600">
+                <a href="contact.html" className="nav-menu__link text-heading-two hover-text-main-600">
                   <i className="ph-bold ph-chat-dots text-main-600"></i> Liên hệ hỗ trợ
                 </a>
               </li>
@@ -107,48 +107,50 @@ export default function GlobalChrome() {
                   Đăng nhập / Đăng ký
                 </a>
               </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Top Header (category button area) */}
-      <div className="header-top bg-main-600 flex-between py-10 d-block d-lg-none">
-        <div className="container">
-          <div className="flex-between gap-8">
-            <ul className="header-top__right flex-align flex-wrap gap-16">
-              <li className=" d-block on-hover-item text-white-6 flex-shrink-0">
-                <button className="category__button flex-align gap-4 text-sm text-white-6 rounded-top">
-                  <span className="icon text-sm ">
-                    <i className="ph ph-squares-four"></i>
+              <li className="on-hover-item nav-menu__item has-submenu pt-10">
+                <a
+                  href="javascript:void(0)"
+                  className="d-flex justify-content-center flex-align align-content-around text-center gap-10 fw-medium text-white py-10 px-20 bg-success-600 rounded-pill line-height-1 hover-bg-success-500"
+                >
+                  <span className="d-lg-none d-flex line-height-1">
+                    <img
+                      src="/assets/images/thumbs/method.png"
+                      className="rounded-circle object-fit-cover"
+                      style={{ width: '25px', height: '25px' }}
+                      alt=""
+                    />
                   </span>
-                  <span className="">Danh mục</span>
-                </button>
-                <div className="responsive-dropdown on-hover-dropdown common-dropdown nav-submenu p-0 submenus-submenu-wrapper">
-                  <button className="close-responsive-dropdown rounded-circle text-xl position-absolute inset-inline-end-0 inset-block-start-0 mt-4 me-8 d-lg-none d-flex">
-                    <i className="ph ph-x"></i>
-                  </button>
-                  <div className="logo px-16 d-lg-none d-block">
-                    <a href="/" className="link">
-                      <img src="/assets/images/logo/logo_nguyenban.png" alt="Logo" />
+                  lyhuu123
+                </a>
+                <ul className="on-hover-dropdown common-dropdown nav-submenu scroll-sm">
+                  <li className="common-dropdown__item nav-submenu__item">
+                    <a href="cart.html" className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100">
+                      <i className="ph-bold ph-heart text-main-600"></i> Yêu thích <span className="badge bg-success-600 rounded-circle">6</span>
                     </a>
-                  </div>
-                  <ul className="scroll-sm p-0 py-8 w-300 max-h-400 overflow-y-auto">
-                    <li className="has-submenus-submenu">
-                      <a href="/product-details-two" className="text-gray-500 text-15 py-12 px-16 flex-align gap-8 rounded-0">
-                        <span className="text-xl d-flex">
-                          <i className="ph ph-carrot"></i>
-                        </span>
-                        <span>Vegetables &amp; Fruit</span>
-                      </a>
-                    </li>
-                  </ul>
-                </div>
+                  </li>
+                  <li className="common-dropdown__item nav-submenu__item">
+                    <a href="wishlist.html" className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100">
+                      <i className="ph-bold ph-user text-main-600"></i> Tài khoản
+                    </a>
+                  </li>
+                  <li className="common-dropdown__item nav-submenu__item">
+                    <a href="checkout.html" className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100">
+                      <i className="ph-bold ph-notepad text-main-600"></i> Đơn hàng của tôi
+                    </a>
+                  </li>
+                  <li className="common-dropdown__item nav-submenu__item">
+                    <a href="checkout.html" className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100">
+                      <i className="ph-bold ph-sign-out text-main-600"></i> Đăng xuất
+                    </a>
+                  </li>
+                </ul>
               </li>
             </ul>
           </div>
         </div>
       </div>
+
+      {/* Mobile Top Header removed (handled in page) */}
     </>
   );
 }

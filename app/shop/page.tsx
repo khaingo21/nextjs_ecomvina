@@ -1,5 +1,7 @@
 "use client";
+
 import React, { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 
@@ -7,75 +9,89 @@ import ProductCardV2 from "@/components/ProductCardV2";
 import FullHeader from "@/components/FullHeader";
 import BenefitsStrip from "@/components/BenefitsStrip";
 
-// ==== Types khớp API hot_sales ====
+/* =======================
+   Types khớp API
+======================= */
 type DanhGia = { id: number; diem: number };
 type BienThe = { gia: string; giagiam: string; soluong?: number };
 type AnhSP = { media: string };
+type Brand = { ten?: string };
 
 type ApiProduct = {
   id: number;
   ten: string;
+  slug?: string | null;
   mediaurl?: string | null;
   danhgias?: DanhGia[];
   bienthes?: BienThe[];
   anhsanphams?: AnhSP[];
-  thuonghieu?: { ten?: string };
+  thuonghieu?: Brand;
   xuatxu?: string;
   luotxem?: number;
 };
 
-// ==== Helpers ====
-const toVND = (n: number) => n.toLocaleString("vi-VN") + " đ";
-const num = (v?: string) => {
-  const n = parseFloat(v || "0");
+/* =======================
+   Helpers
+======================= */
+const num = (v?: string): number => {
+  const n = parseFloat(v ?? "0");
   return Number.isFinite(n) ? n : 0;
 };
+
+const slugify = (s: string, fallback: string) =>
+  (s || fallback)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "") || fallback;
+
 const firstImage = (p: ApiProduct) =>
   p.mediaurl || p.anhsanphams?.[0]?.media || "/assets/images/thumbs/product-two-img7.png";
 
 const firstPrice = (p: ApiProduct) => {
   const gia = num(p.bienthes?.[0]?.gia);
   const giagiam = num(p.bienthes?.[0]?.giagiam);
-  const selling = giagiam > 0 ? giagiam : gia;
+
+  // Heuristic: giagiam < gia => giagiam là GIÁ BÁN; ngược lại là SỐ TIỀN GIẢM
+  const selling = giagiam > 0 && giagiam < gia ? giagiam : Math.max(gia - giagiam, 0);
   return { gia, giagiam, selling };
 };
 
 const avgRating = (p: ApiProduct) => {
   const arr = p.danhgias || [];
-  if (!arr.length) return 0;
+  if (!arr.length) return { avg: 0, count: 0 };
   const sum = arr.reduce((s, r) => s + (Number(r.diem) || 0), 0);
-  return Math.round((sum / arr.length) * 10) / 10;
+  return { avg: Math.round((sum / arr.length) * 10) / 10, count: arr.length };
 };
 
-const slugify = (s: string) =>
-  s
-    .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+const toHref = (p: ApiProduct) => `/product/${slugify(p.ten, `sp-${p.id}`)}-${p.id}`;
 
+/* =======================
+   Page
+======================= */
 export default function Page() {
   const searchParams = useSearchParams();
-  const view = searchParams.get("view"); // "hot" nếu bấm từ HOT SALES
+  const view = searchParams.get("view"); // "hot" nếu đi từ HOT SALES
+  const perPage = 20;
+
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<ApiProduct[]>([]);
 
   useEffect(() => {
     let mounted = true;
 
-    // Nếu view=hot, lấy danh sách HOT SALES lớn hơn để fill toàn trang
+    // Nếu view=hot, lấy nhiều hot_sales để đổ; nếu chưa có API "all", tạm dùng hot_sales cho cả 2
     const url =
       view === "hot"
-        ? "http://localhost:8000/api/sanphams-selection?selection=hot_sales&per_page=60"
-        : // TODO: thay = API all products của bạn khi có
-          "http://localhost:8000/api/sanphams-selection?selection=hot_sales&per_page=60";
+        ? `http://localhost:8000/api/sanphams-selection?selection=hot_sales&per_page=${perPage}`
+        : `http://localhost:8000/api/sanphams-selection?selection=hot_sales&per_page=${perPage}`;
 
     fetch(url)
-      .then((r) => r.json())
-      .then((res: { status: boolean; data: ApiProduct[] }) => {
-        if (mounted && res?.status && Array.isArray(res.data)) {
-          setItems(res.data);
-        }
+      .then((r) => r.json() as Promise<{ status: boolean; data: ApiProduct[] }>)
+      .then((res) => {
+        if (!mounted) return;
+        if (res?.status && Array.isArray(res.data)) setItems(res.data);
       })
       .finally(() => mounted && setLoading(false));
 
@@ -84,26 +100,27 @@ export default function Page() {
     };
   }, [view]);
 
-  // ====== SORT logic cho "Xem đầy đủ" (view=hot):
-  // Ưu tiên: (1) giảm giá % cao -> (2) luotxem cao -> (3) rating cao
+  // Sort cho chế độ "Xem đầy đủ" từ HOT SALES:
+  // Ưu tiên: (1) % giảm cao -> (2) lượt xem -> (3) rating
   const sorted = useMemo(() => {
-    const cloned = [...items];
+    const arr = [...items];
     if (view === "hot") {
-      cloned.sort((a, b) => {
+      arr.sort((a, b) => {
         const pa = firstPrice(a);
         const pb = firstPrice(b);
         const discA = pa.gia > 0 ? (pa.gia - pa.selling) / pa.gia : 0;
         const discB = pb.gia > 0 ? (pb.gia - pb.selling) / pb.gia : 0;
         const viewsA = a.luotxem || 0;
         const viewsB = b.luotxem || 0;
-        const rateA = avgRating(a);
-        const rateB = avgRating(b);
+        const rateA = avgRating(a).avg;
+        const rateB = avgRating(b).avg;
+
         if (discB !== discA) return discB - discA;
         if (viewsB !== viewsA) return viewsB - viewsA;
         return rateB - rateA;
       });
     }
-    return cloned;
+    return arr;
   }, [items, view]);
 
   return (
@@ -125,9 +142,140 @@ export default function Page() {
       <section className="py-40 shop">
         <div className="container">
           <div className="row">
-            {/* Sidebar giữ nguyên UI mẫu của bạn, có thể nối API sau */}
+            {/* Sidebar Start (UI giữ nguyên) */}
             <div className="col-lg-3 d-lg-block d-none">
               <div className="shop-sidebar position-relative">
+                {/* Categories */}
+                <div className="p-32 mb-32 border border-gray-100 shop-sidebar__box rounded-8">
+                  <h6 className="pb-24 mb-24 text-xl border-gray-100 border-bottom">Product Category</h6>
+                  <ul className="overflow-y-auto max-h-540 scroll-sm">
+                    {[
+                      "Mobile & Accessories (12)",
+                      "Laptop (12)",
+                      "Electronics (12)",
+                      "Smart Watch (12)",
+                      "Storage (12)",
+                      "Portable Devices (12)",
+                      "Action Camera (12)",
+                      "Smart Gadget (12)",
+                      "Monitor  (12)",
+                      "Smart TV (12)",
+                      "Camera (12)",
+                      "Monitor Stand (12)",
+                      "Headphone (12)",
+                    ].map((label, i) => (
+                      <li key={i} className={i === 12 ? "mb-0" : "mb-24"}>
+                        <Link href="/product-details-two" className="text-gray-900 hover-text-main-600">
+                          {label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Filter by Price (static UI) */}
+                <div className="p-32 mb-32 border border-gray-100 shop-sidebar__box rounded-8">
+                  <h6 className="pb-24 mb-24 text-xl border-gray-100 border-bottom">Filter by Price</h6>
+                  <div className="custom--range">
+                    <div id="slider-range" />
+                    <div className="flex-wrap-reverse gap-8 mt-24 flex-between ">
+                      <button type="button" className="h-40 btn btn-main flex-align">Filter </button>
+                      <div className="gap-8 custom--range__content flex-align">
+                        <span className="flex-shrink-0 text-gray-500 text-md">Price:</span>
+                        <input
+                          type="text"
+                          className="custom--range__prices text-neutral-600 text-start text-md fw-medium"
+                          readOnly
+                          defaultValue="$0 - $999"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Filter by Rating (static UI) */}
+                <div className="p-32 mb-32 border border-gray-100 shop-sidebar__box rounded-8">
+                  <h6 className="pb-24 mb-24 text-xl border-gray-100 border-bottom">Filter by Rating</h6>
+                  {[
+                    { w: 70, c: 124, stars: [1, 1, 1, 1, 1] },
+                    { w: 50, c: 52, stars: [1, 1, 1, 1, 0] },
+                    { w: 30, c: 31, stars: [1, 1, 1, 0, 0] },
+                  ].map((it, idx) => (
+                    <div className="gap-8 mb-20 flex-align position-relative" key={idx}>
+                      <div className="mb-0 common-check common-radio">
+                        <input className="form-check-input" type="radio" name="ratingFilter" />
+                      </div>
+                      <div
+                        className="h-8 bg-gray-100 progress w-100 rounded-pill"
+                        role="progressbar"
+                        aria-valuenow={it.w}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                      >
+                        <div className="progress-bar bg-main-600 rounded-pill" style={{ width: `${it.w}%` }} />
+                      </div>
+                      <div className="gap-4 flex-align">
+                        {it.stars.map((s, i) => (
+                          <span
+                            key={i}
+                            className={`text-xs fw-medium ${s ? "text-warning-600" : "text-gray-400"} d-flex`}
+                          >
+                            <i className="ph-fill ph-star"></i>
+                          </span>
+                        ))}
+                      </div>
+                      <span className="flex-shrink-0 text-gray-900">{it.c}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Filter by Color */}
+                <div className="p-32 mb-32 border border-gray-100 shop-sidebar__box rounded-8">
+                  <h6 className="pb-24 mb-24 text-xl border-gray-100 border-bottom">Filter by Color</h6>
+                  <ul className="overflow-y-auto max-h-540 scroll-sm">
+                    {[
+                      { id: "color1", label: "Black (12)", extra: "checked-black" },
+                      { id: "color2", label: "Blue (12)", extra: "checked-primary" },
+                      { id: "color3", label: "Gray (12)", extra: "checked-gray" },
+                      { id: "color4", label: "Green (12)", extra: "checked-success" },
+                      { id: "color5", label: "Red (12)", extra: "checked-danger" },
+                      { id: "color6", label: "White (12)", extra: "checked-white" },
+                      { id: "color7", label: "Purple (12)", extra: "checked-purple", last: true },
+                    ].map((c) => (
+                      <li key={c.id} className={c.last ? "mb-0" : "mb-24"}>
+                        <div className={`form-check common-check common-radio ${c.extra}`}>
+                          <input className="form-check-input" type="radio" name="color" id={c.id} />
+                          <label className="form-check-label" htmlFor={c.id}>{c.label}</label>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Filter by Brand */}
+                <div className="p-32 mb-32 border border-gray-100 shop-sidebar__box rounded-8">
+                  <h6 className="pb-24 mb-24 text-xl border-gray-100 border-bottom">Filter by Brand</h6>
+                  <ul className="overflow-y-auto max-h-540 scroll-sm">
+                    {[
+                      { id: "brand1", label: "Apple" },
+                      { id: "brand2", label: "Samsung" },
+                      { id: "brand3", label: "Microsoft" },
+                      { id: "brand4", label: "Apple" },
+                      { id: "brand5", label: "HP" },
+                      { id: "DELL", label: "DELL" },
+                      { id: "Redmi", label: "Redmi", last: true },
+                    ].map((b) => (
+                      <li key={b.id} className={b.last ? "mb-0" : "mb-24"}>
+                        <div className="form-check common-check common-radio">
+                          <input className="form-check-input" type="radio" name="brand" id={b.id} />
+                          <label className="form-check-label" htmlFor={b.id}>{b.label}</label>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Advertise image */}
                 <div className="shop-sidebar__box rounded-8">
                   <Image
                     src="/assets/images/thumbs/advertise-img1.png"
@@ -142,10 +290,12 @@ export default function Page() {
 
             {/* Product grid */}
             <div className="col-lg-9">
-              {/* Toolbar đơn giản */}
+              {/* Top toolbar */}
               <div className="flex-wrap gap-16 mb-40 flex-between">
                 <span className="text-gray-900">
-                  {view === "hot" ? "Ưu tiên: giảm giá cao • bán chạy • đánh giá cao" : "Tất cả sản phẩm"}
+                  {loading
+                    ? "Loading…"
+                    : `Showing 1-${Math.min(sorted.length, perPage)} of ${sorted.length} result`}
                 </span>
                 <div className="flex-wrap gap-16 position-relative flex-align">
                   <div className="gap-16 list-grid-btns flex-align">
@@ -156,27 +306,42 @@ export default function Page() {
                       <i className="ph ph-squares-four"></i>
                     </button>
                   </div>
+                  <div className="gap-4 text-gray-500 position-relative flex-align text-14">
+                    <label htmlFor="sorting" className="flex-shrink-0 text-inherit">Sort by: </label>
+                    <select className="w-auto form-control common-input px-14 py-14 text-inherit rounded-6" id="sorting" defaultValue="Popular">
+                      <option value="Popular">Popular</option>
+                      <option value="Latest">Latest</option>
+                      <option value="Trending">Trending</option>
+                      <option value="Matches">Matches</option>
+                    </select>
+                  </div>
+                  <button type="button" className="text-2xl border border-gray-100 w-44 h-44 d-lg-none d-flex flex-center rounded-6 sidebar-btn">
+                    <i className="ph-bold ph-funnel"></i>
+                  </button>
                 </div>
               </div>
 
+              {/* GRID: dùng dữ liệu thật thay mock */}
               {loading ? (
                 <div className="py-24 text-center text-gray-500">Đang tải sản phẩm…</div>
               ) : (
                 <div className="row g-3">
                   {sorted.map((p) => {
                     const { gia, selling } = firstPrice(p);
+                    const { avg, count } = avgRating(p);
                     const showDiscount = selling < gia;
                     const percent = gia > 0 ? Math.round(((gia - selling) / gia) * 100) : 0;
-                    const href = `/product/${slugify(p.ten)}-${p.id}`;
 
                     return (
                       <div className="col-sm-6 col-md-4" key={p.id}>
                         <ProductCardV2
-                          href={href}
+                          href={toHref(p)}
                           img={firstImage(p)}
                           title={p.ten}
-                          price={toVND(selling)}
-                          oldPrice={showDiscount ? toVND(gia) : undefined}
+                          price={selling}                        // number → tự format VND
+                          oldPrice={showDiscount ? gia : undefined}
+                          ratingAverage={avg}
+                          ratingCount={count}
                           badge={showDiscount ? { text: `Sale ${percent}%`, color: "danger" } : undefined}
                         />
                       </div>
@@ -186,9 +351,38 @@ export default function Page() {
               )}
             </div>
           </div>
+
+          {/* Pagination (giữ UI như file mới, chưa nối API phân trang) */}
+          <div className="mt-40 d-flex justify-content-center w-100">
+            <ul className="flex-wrap gap-16 pagination flex-center">
+              <li className="page-item">
+                <a className="text-xl border border-gray-100 page-link h-44 w-44 flex-center rounded-8 fw-medium text-neutral-600" href="#">
+                  <i className="ph-bold ph-arrow-left"></i>
+                </a>
+              </li>
+              {Array.from({ length: 7 }).map((_, i) => (
+                <li key={i} className={`page-item ${i === 0 ? "active" : ""}`}>
+                  <a
+                    className={`page-link h-44 w-44 flex-center rounded-8 fw-medium ${
+                      i === 0 ? "bg-main-600 text-white" : "border border-gray-100 text-gray-900"
+                    }`}
+                    href="#"
+                  >
+                    {i === 0 ? "01" : String(i + 1)}
+                  </a>
+                </li>
+              ))}
+              <li className="page-item">
+                <a className="text-xl border border-gray-100 page-link h-44 w-44 flex-center rounded-8 fw-medium text-neutral-600" href="#">
+                  <i className="ph-bold ph-arrow-right"></i>
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
       </section>
 
+      {/* Benefits strip */}
       <BenefitsStrip />
     </>
   );

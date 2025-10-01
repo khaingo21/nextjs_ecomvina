@@ -241,6 +241,8 @@
 /* Media Breakpoint for Each Device End */
 /* ============================ Mixins Css End ============================ */
 /* =========================== Accordion Css start ============================= */
+
+
 .common-accordion .accordion-item {
     border: 1px solid var(--border-color);
     background-color: hsl(var(--white)) !important;
@@ -1637,7 +1639,7 @@ body {
 }
 
 html, body {
-    overflow-x: hidden;
+    /* overflow-x: hidden; */
 }
 
 p {
@@ -4322,6 +4324,14 @@ input:focus-visible {
 }
 /* ================================= Padding Css End =========================== */
 /* ================================= Classes Css Start =========================== */
+.bg-hotsales{
+    background-image: url('../images/bg/bg-hotsale.png');
+    background-size: cover;
+    height: 100%;
+    /* color: white; */
+    background-position: center center;
+}
+
 /* Section Background */
 .bg-color-one {
     background-color: var(--bg-color-one) !important;
@@ -4338,10 +4348,23 @@ input:focus-visible {
 .bg-color-neutral {
     background-color: var(--neutral) !important;
 }
+@media (min-width: 1200px){
+    .container-lg {
+    transform: scale(0.9);
+    transform-origin: top center;
+    
 
-.container-lg {
-    max-width: 1680px;
 }
+    .pz99{
+        position: relative;
+        z-index: 99;
+    }
+    .pz100{
+        position: relative;
+        z-index: 100;
+    }
+}
+
 
 /* Column Extra Small Screen */
 @media screen and (min-width: 425px) and (max-width: 575px) {
@@ -8443,7 +8466,7 @@ input:focus-visible {
 }
 
 .header.fixed-header {
-    position: fixed;
+    position: fixed !important; 
     inset-inline-start: 0;
     inset-block-start: 0;
     inset-inline-end: 0;
@@ -9577,7 +9600,7 @@ input:focus-visible {
 /* ============================== Banner Css End ========================== */
 /* ============================ Feature Section Css start =============================== */
 .feature {
-    margin-top: 32px;
+    /* margin-top: 10px; */
 }
 
 .feature .arrow-center:hover .slick-arrow {
@@ -9658,8 +9681,8 @@ input:focus-visible {
 }
 
 .feature-item__thumb {
-    max-width: 153px;
-    max-height: 153px;
+    max-width: 120px;
+    max-height: 120px;
     background-color: var(--main-50);
     aspect-ratio: 1;
     margin: 0 auto;
