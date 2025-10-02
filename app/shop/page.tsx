@@ -72,56 +72,126 @@ const toHref = (p: ApiProduct) => `/product/${slugify(p.ten, `sp-${p.id}`)}-${p.
 ======================= */
 export default function Page() {
   const searchParams = useSearchParams();
-  const view = searchParams.get("view"); // "hot" nếu đi từ HOT SALES
-  const perPage = 20;
+
+  // ===== ADDED: base API & đọc mọi tham số query =====
+  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://127.0.0.1:8000";
+
+  // GIỮ TƯƠNG THÍCH CŨ: view=hot  → source=hot_sales (không phá link cũ)
+  const source   = (searchParams.get("source") || (searchParams.get("view") === "hot" ? "hot_sales" : "")).toLowerCase(); // ADDED
+  const category = (searchParams.get("category") || "").toLowerCase();   // ADDED
+  const brand    = (searchParams.get("brand") || "").toLowerCase();      // ADDED
+  const q        = searchParams.get("q") || "";                          // ADDED
+  const sort     = (searchParams.get("sort") || "popular").toLowerCase();// ADDED
+
+  const page     = Number(searchParams.get("page") || 1) || 1;           // ADDED
+  const perPage  = Number(searchParams.get("per_page") || 20) || 20;     // CHANGED (giữ default 20 nhưng hỗ trợ query)
+
+  // ADDED: hàm dựng URL theo ngữ cảnh (selection hoặc all)
+  const buildUrl = () => {
+    if (source === "hot_sales" || source === "recommend" || source === "best_products") {
+      const p = new URLSearchParams({
+        selection: source,
+        per_page: String(perPage),
+        page: String(page),
+        sort,
+      });
+      return `${API}/api/sanphams-selection?${p.toString()}`;
+    }
+    const p = new URLSearchParams({ per_page: String(perPage), page: String(page), sort });
+    if (q)        p.set("q", q);
+    if (category) p.set("category", category);
+    if (brand)    p.set("brand", brand);
+    return `${API}/api/sanphams?${p.toString()}`;
+  };
+
+  // ADDED: tiêu đề breadcrumb theo ngữ cảnh
+  const pageTitle =
+    source === "hot_sales" || searchParams.get("view") === "hot"
+      ? "Sản phẩm HOT (bán chạy & giảm giá)"
+      : source === "recommend"
+      ? "Có thể bạn quan tâm"
+      : category
+      ? `Danh mục: ${category}`
+      : brand
+      ? `Thương hiệu: ${brand}`
+      : q
+      ? `Kết quả cho “${q}”`
+      : "Danh sách sản phẩm";
+  // ===== /ADDED =====
 
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<ApiProduct[]>([]);
 
+  // ===== CHANGED: fetch theo buildUrl() (không đụng URL cũ) =====
   useEffect(() => {
     let mounted = true;
+    const url = buildUrl();
 
-    // Nếu view=hot, lấy nhiều hot_sales để đổ; nếu chưa có API "all", tạm dùng hot_sales cho cả 2
-    const url =
-      view === "hot"
-        ? `http://localhost:8000/api/sanphams-selection?selection=hot_sales&per_page=${perPage}`
-        : `http://localhost:8000/api/sanphams-selection?selection=hot_sales&per_page=${perPage}`;
-
-    fetch(url)
-      .then((r) => r.json() as Promise<{ status: boolean; data: ApiProduct[] }>)
+    fetch(url, { headers: { Accept: "application/json" } })
+      .then((r) => r.json())
       .then((res) => {
         if (!mounted) return;
-        if (res?.status && Array.isArray(res.data)) setItems(res.data);
+        // dữ liệu có thể nằm ở data[] hoặc data.data[] (paginate)
+        const data = Array.isArray(res?.data) ? res.data : res?.data?.data;
+        if (Array.isArray(data)) setItems(data as ApiProduct[]);
       })
       .finally(() => mounted && setLoading(false));
 
     return () => {
       mounted = false;
     };
-  }, [view]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source, category, brand, q, sort, page, perPage]);
+  // ===== /CHANGED =====
 
-  // Sort cho chế độ "Xem đầy đủ" từ HOT SALES:
-  // Ưu tiên: (1) % giảm cao -> (2) lượt xem -> (3) rating
+  // ===== CHANGED: sort hiểu 4 tiêu chí + giữ logic HOT cũ =====
   const sorted = useMemo(() => {
     const arr = [...items];
-    if (view === "hot") {
-      arr.sort((a, b) => {
-        const pa = firstPrice(a);
-        const pb = firstPrice(b);
-        const discA = pa.gia > 0 ? (pa.gia - pa.selling) / pa.gia : 0;
-        const discB = pb.gia > 0 ? (pb.gia - pb.selling) / pb.gia : 0;
-        const viewsA = a.luotxem || 0;
-        const viewsB = b.luotxem || 0;
-        const rateA = avgRating(a).avg;
-        const rateB = avgRating(b).avg;
 
-        if (discB !== discA) return discB - discA;
-        if (viewsB !== viewsA) return viewsB - viewsA;
-        return rateB - rateA;
-      });
+    const discountPct = (p: ApiProduct) => {
+      const { gia, selling } = firstPrice(p);
+      return gia > 0 ? (gia - selling) / gia : 0;
+    };
+
+    const cmpHot = (a: ApiProduct, b: ApiProduct) => {
+      const discA = discountPct(a);
+      const discB = discountPct(b);
+      if (discB !== discA) return discB - discA;
+      const viewsA = a.luotxem || 0;
+      const viewsB = b.luotxem || 0;
+      if (viewsB !== viewsA) return viewsB - viewsA;
+      return avgRating(b).avg - avgRating(a).avg;
+    };
+
+    const cmpPopular  = (a: ApiProduct, b: ApiProduct) => (b.luotxem || 0) - (a.luotxem || 0);
+    const cmpLatest   = (a: ApiProduct, b: ApiProduct) => (b as any).id - (a as any).id; // tạm coi id ~ mới nhất
+    const cmpTrending = (a: ApiProduct, b: ApiProduct) => (b.luotxem || 0) - (a.luotxem || 0);
+    const cmpMatches  = (a: ApiProduct, b: ApiProduct) => {
+      const d = discountPct(b) - discountPct(a);
+      if (d !== 0) return d;
+      return avgRating(b).avg - avgRating(a).avg;
+    };
+
+    // Nếu là HOT (giữ tương thích cũ): sort=popular => cmpHot
+    if (source === "hot_sales" || searchParams.get("view") === "hot") {
+      if (sort === "popular") arr.sort(cmpHot);
+      else if (sort === "latest") arr.sort(cmpLatest);
+      else if (sort === "trending") arr.sort(cmpTrending);
+      else if (sort === "matches") arr.sort(cmpMatches);
+      return arr;
+    }
+
+    // Các trường hợp khác theo sort chung
+    switch (sort) {
+      case "latest":   arr.sort(cmpLatest); break;
+      case "trending": arr.sort(cmpTrending); break;
+      case "matches":  arr.sort(cmpMatches); break;
+      default:         arr.sort(cmpPopular); break;
     }
     return arr;
-  }, [items, view]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, source, sort]);
+  // ===== /CHANGED =====
 
   return (
     <>
@@ -132,9 +202,8 @@ export default function Page() {
       <div className="pt-40 mb-0 breadcrumb bg-main-two-60">
         <div className="container">
           <div className="flex-wrap gap-16 breadcrumb-wrapper flex-between">
-            <h6 className="mb-0">
-              {view === "hot" ? "Sản phẩm HOT (bán chạy & giảm giá)" : "Danh sách sản phẩm"}
-            </h6>
+            {/* CHANGED: dùng pageTitle thay vì view === 'hot' */}
+            <h6 className="mb-0">{pageTitle}</h6>
           </div>
         </div>
       </div>
@@ -308,6 +377,7 @@ export default function Page() {
                   </div>
                   <div className="gap-4 text-gray-500 position-relative flex-align text-14">
                     <label htmlFor="sorting" className="flex-shrink-0 text-inherit">Sort by: </label>
+                    {/* NOTE: dropdown này hiện chưa nối state sort; nếu muốn đồng bộ URL, có thể đọc/ghi searchParams */}
                     <select className="w-auto form-control common-input px-14 py-14 text-inherit rounded-6" id="sorting" defaultValue="Popular">
                       <option value="Popular">Popular</option>
                       <option value="Latest">Latest</option>
@@ -352,7 +422,7 @@ export default function Page() {
             </div>
           </div>
 
-          {/* Pagination (giữ UI như file mới, chưa nối API phân trang) */}
+          {/* Pagination (giữ UI như file cũ, chưa nối API phân trang) */}
           <div className="mt-40 d-flex justify-content-center w-100">
             <ul className="flex-wrap gap-16 pagination flex-center">
               <li className="page-item">

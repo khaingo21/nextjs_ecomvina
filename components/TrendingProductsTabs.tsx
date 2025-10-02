@@ -207,6 +207,12 @@ export default function TrendingProductsTabs() {
   // Sản phẩm của tab hiện tại
   const products: UIProduct[] = useMemo(() => byTab[active] || [], [byTab, active]);
 
+  // Link "Xem tất cả" tương ứng tab hiện tại
+  const viewAllHref =
+  active === "all"
+    ? "/products?sort=trending"
+    : `/products?category=${encodeURIComponent(active)}&sort=trending`;
+
   // Giới hạn hiển thị (giống bố cục bên trái: 6/12 card)
   const visibleCats: ApiCategory[] = topCategories.slice(0, 12);
   const visibleProds: UIProduct[] = products.slice(0, 12);
@@ -227,8 +233,13 @@ export default function TrendingProductsTabs() {
                 <i className="ph-bold ph-squares-four text-main-600" /> {THEME.sectionTitle}
               </h6>
 
-              <ul className={THEME.tabsVariantClass} role="tablist">
-                {tabs.map((t) => (
+              <div className="gap-16 flex-align">
+                <a href={viewAllHref} className="text-sm fw-semibold hover-text-decoration-underline">
+                  Xem tất cả
+                </a>
+
+                <ul className={THEME.tabsVariantClass} role="tablist">
+                  {tabs.map((t) => (
                   <li className="nav-item" role="presentation" key={t.key}>
                     <button
                       className={`nav-link fw-medium text-sm hover-border-main-600 ${active === t.key ? "active" : ""}`}
@@ -240,9 +251,11 @@ export default function TrendingProductsTabs() {
                     </button>
                   </li>
                 ))}
-              </ul>
+                </ul>
+              </div>
             </div>
           </div>
+
 
           {loading ? (
             <div className="py-24 text-center text-gray-500">Đang tải danh mục…</div>
@@ -250,7 +263,8 @@ export default function TrendingProductsTabs() {
             // ======= VIEW "Xem đầy đủ": HIỂN THỊ CÁC DANH MỤC TOP SOLD =======
             <div className="row g-12">
               {visibleCats.map((c) => {
-                const href = `/shop?category=${c.slug}`;
+                // const href = `/shop?category=${c.slug}`;
+                const href = `/products?category=${c.slug}&sort=trending`;
                 const img = catThumb(c);
                 return (
                   <div className="col-xxl-2 col-xl-3 col-lg-4 col-sm-6" key={c.id}>

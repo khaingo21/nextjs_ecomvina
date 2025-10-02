@@ -20,6 +20,7 @@ export default function FeaturedProductsSection() {
   const [loading, setLoading] = useState(true);
 
   const API = process.env.NEXT_PUBLIC_SERVER_API || "http://127.0.0.1:8000";
+  const viewAllHref = "/products?source=best_products&sort=popular";
 
   useEffect(() => {
     (async () => {
@@ -62,7 +63,7 @@ export default function FeaturedProductsSection() {
                   </h6>
                   <div className="gap-16 flex-align">
                     <a
-                      href="/shop"
+                      href={viewAllHref}
                       className="text-sm text-gray-700 fw-medium hover-text-main-600 hover-text-decoration-underline"
                     >
                       Xem đầy đủ
@@ -185,7 +186,7 @@ export default function FeaturedProductsSection() {
 
           {/* Banner phải giữ nguyên */}
           <div className="col-xxl-4">
-            {/* ... banner như cũ của ní ... */}
+            {/* ... banner như cũ  */}
           </div>
         </div>
       </div>

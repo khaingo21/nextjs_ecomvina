@@ -38,7 +38,7 @@ export default function SearchBox() {
   }, [q, API]);
 
   const goResult = (kw: string) => {
-    // Điều hướng tới trang kết quả (tự chọn path của ní)
+    // Điều hướng tới trang kết quả (tự chọn path)
     router.push(`/search?q=${encodeURIComponent(kw)}`);
   };
 

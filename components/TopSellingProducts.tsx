@@ -97,6 +97,11 @@ export default function TopSellingProducts(props: Props) {
     props.variant === "hot"
       ? `${API}/api/sanphams-selection?selection=hot_sales&per_page=${perPage}`
       : `${API}/api/sanphams-selection?selection=recommend&per_page=${perPage}`;
+  const viewAllHref =
+  props.variant === "hot"
+    ? "/products?source=hot_sales&sort=popular"
+    : "/products?source=recommend&sort=matches";
+
 
   const [loading, setLoading] = React.useState(true);
   const [items, setItems] = React.useState<UIProduct[]>([]);
@@ -133,13 +138,19 @@ export default function TopSellingProducts(props: Props) {
               <h6 className="mb-0">
                 <i className="ph-bold ph-fire text-main-600" /> {title}
               </h6>
-              <div className="gap-8 flex-align">
-                <button type="button" id="top-selling-prev" className="slick-prev slick-arrow">
+              <div className="gap-16 flex-align">
+                <a href={viewAllHref}
+                   className="text-sm fw-semibold hover-text-decoration-underline">
+                  Xem tất cả
+                </a>
+                <div className="gap-8 flex-align">
+                  <button type="button" id="top-selling-prev" className="slick-prev slick-arrow">
                   <i className="ph ph-caret-left"></i>
                 </button>
                 <button type="button" id="top-selling-next" className="slick-next slick-arrow">
                   <i className="ph ph-caret-right"></i>
                 </button>
+                </div>
               </div>
             </div>
           </div>

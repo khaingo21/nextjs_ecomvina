@@ -94,6 +94,8 @@ export default function TopBrandsSection() {
   const [brands, setBrands] = useState<UIBrand[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+  const viewAllHref = "/products?source=hot_sales&sort=popular";
+
   useEffect(() => {
     let alive = true;
     const API = process.env.NEXT_PUBLIC_SERVER_API || "http://127.0.0.1:8000";
@@ -131,6 +133,7 @@ export default function TopBrandsSection() {
         setBrands(top);
       })
       .finally(() => alive && setLoading(false));
+      
     return () => { alive = false; };
   }, []);
 
@@ -147,7 +150,7 @@ export default function TopBrandsSection() {
                 <i className="ph-bold ph-storefront text-main-600"></i> Thương hiệu hàng đầu
               </h6>
               <div className="gap-16 flex-align">
-                <Link href="/shop" className="text-sm text-gray-700 fw-semibold hover-text-main-600 hover-text-decoration-underline">
+                <Link href={viewAllHref} className="text-sm text-gray-700 fw-semibold hover-text-main-600 hover-text-decoration-underline">
                   Xem đầy đủ
                 </Link>
                 <div className="gap-8 flex-align">
@@ -236,6 +239,14 @@ export default function TopBrandsSection() {
                         </div>
 
                         <div className="my-12 border-gray-100 border-top"></div>
+                        <div className="mb-10 d-flex justify-content-end">
+                          <a
+                            href={`/products?brand=${encodeURIComponent(b.brand)}&sort=popular`}
+                            className="text-xs text-gray-600 hover-text-main-600 hover-text-decoration-underline"
+                          >
+                            Xem tất cả của {b.brand}
+                          </a>
+                        </div>
 
                         <div className="my-10 product-card__price">
                           {showDiscount && (
