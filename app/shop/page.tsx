@@ -82,6 +82,8 @@ export default function Page() {
   const brand    = (searchParams.get("brand") || "").toLowerCase();      // ADDED
   const q        = searchParams.get("q") || "";                          // ADDED
   const sort     = (searchParams.get("sort") || "popular").toLowerCase();// ADDED
+  const filter  = (searchParams.get("filter") || (searchParams.get("sort") || "popular")).toLowerCase();
+  const userId  = searchParams.get("user_id") || "";
 
   const page     = Number(searchParams.get("page") || 1) || 1;           // ADDED
   const perPage  = Number(searchParams.get("per_page") || 20) || 20;     // CHANGED (giữ default 20 nhưng hỗ trợ query)
@@ -97,11 +99,15 @@ export default function Page() {
       });
       return `${API}/api/sanphams-selection?${p.toString()}`;
     }
-    const p = new URLSearchParams({ per_page: String(perPage), page: String(page), sort });
+    const p = new URLSearchParams({
+    filter,                     // popular|latest|trending|matches
+    per_page: String(perPage),
+    page: String(page),
+    });
     if (q)        p.set("q", q);
-    if (category) p.set("category", category);
-    if (brand)    p.set("brand", brand);
-    return `${API}/api/sanphams?${p.toString()}`;
+    if (filter === "matches" && userId) p.set("user_id", userId); // matches có thể cần user_id
+
+    return `${API}/api/sanphams-all?${p.toString()}`;
   };
 
   // ADDED: tiêu đề breadcrumb theo ngữ cảnh
@@ -164,7 +170,7 @@ export default function Page() {
     };
 
     const cmpPopular  = (a: ApiProduct, b: ApiProduct) => (b.luotxem || 0) - (a.luotxem || 0);
-    const cmpLatest   = (a: ApiProduct, b: ApiProduct) => (b as any).id - (a as any).id; // tạm coi id ~ mới nhất
+    const cmpLatest   = (a: ApiProduct, b: ApiProduct) => (Number(b.id) || 0) - (Number(a.id) || 0); // tạm coi id ~ mới nhất
     const cmpTrending = (a: ApiProduct, b: ApiProduct) => (b.luotxem || 0) - (a.luotxem || 0);
     const cmpMatches  = (a: ApiProduct, b: ApiProduct) => {
       const d = discountPct(b) - discountPct(a);
