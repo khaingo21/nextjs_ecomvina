@@ -6,6 +6,7 @@ import TopBrandsSection from "@/components/TopBrandsSection";//top_brands
 import FeaturedProductsSection from "@/components/FeaturedProductsSection";//best_products
 import SearchBox from "@/components/SearchBox";
 import BannerTwo from "@/components/BannerTwo";
+import FeatureSection from "@/components/FeatureSection";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -369,145 +370,7 @@ export default function Home() {
       {/* ============================ Banner Section End =============================== */}
 
       {/* ============================ promotional banner Start ========================== */}
-      <div className="feature" id="featureSection">
-        <div className="container container-lg">
-          <div className="position-relative arrow-center">
-            <div className="flex-align">
-              <button type="button" id="feature-item-wrapper-prev"
-                className="text-xl bg-white slick-prev slick-arrow flex-center rounded-circle hover-bg-main-600 hover-text-white transition-1">
-                <i className="ph ph-caret-left"></i>
-              </button>
-              <button type="button" id="feature-item-wrapper-next"
-                className="text-xl bg-white slick-next slick-arrow flex-center rounded-circle hover-bg-main-600 hover-text-white transition-1">
-                <i className="ph ph-caret-right"></i>
-              </button>
-            </div>
-            <div className="feature-item-wrapper">
-              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="400">
-                <div className="feature-item__thumb rounded-circle">
-                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
-                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
-                  </a>
-                </div>
-                <div className="mt-16 feature-item__content">
-                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Vegetables</a></h6>
-
-                </div>
-              </div>
-              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="600">
-                <div className="feature-item__thumb rounded-circle">
-                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
-                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
-                  </a>
-                </div>
-                <div className="mt-16 feature-item__content">
-                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Fish & Meats</a></h6>
-
-                </div>
-              </div>
-              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="800">
-                <div className="feature-item__thumb rounded-circle">
-                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
-                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
-                  </a>
-                </div>
-                <div className="mt-16 feature-item__content">
-                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Desserts</a></h6>
-
-                </div>
-              </div>
-              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="1000">
-                <div className="feature-item__thumb rounded-circle">
-                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
-                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
-                  </a>
-                </div>
-                <div className="mt-16 feature-item__content">
-                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Drinks & Juice</a></h6>
-
-                </div>
-              </div>
-              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="1200">
-                <div className="feature-item__thumb rounded-circle">
-                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
-                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
-                  </a>
-                </div>
-                <div className="mt-16 feature-item__content">
-                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Animals Food</a></h6>
-
-                </div>
-              </div>
-              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="1400">
-                <div className="feature-item__thumb rounded-circle">
-                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
-                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
-                  </a>
-                </div>
-                <div className="mt-16 feature-item__content">
-                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Fresh Fruits</a></h6>
-
-                </div>
-              </div>
-              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="1600">
-                <div className="feature-item__thumb rounded-circle">
-                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
-                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
-                  </a>
-                </div>
-                <div className="mt-16 feature-item__content">
-                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Yummy Candy</a></h6>
-
-                </div>
-              </div>
-              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="1800">
-                <div className="feature-item__thumb rounded-circle">
-                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
-                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
-                  </a>
-                </div>
-                <div className="mt-16 feature-item__content">
-                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Fish & Meats</a></h6>
-
-                </div>
-              </div>
-              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="2000">
-                <div className="feature-item__thumb rounded-circle">
-                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
-                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
-                  </a>
-                </div>
-                <div className="mt-16 feature-item__content">
-                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Dairy & Eggs</a></h6>
-
-                </div>
-              </div>
-              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="2200">
-                <div className="feature-item__thumb rounded-circle">
-                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
-                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
-                  </a>
-                </div>
-                <div className="mt-16 feature-item__content">
-                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Snacks</a></h6>
-
-                </div>
-              </div>
-              <div className="text-center feature-item wow bounceIn" data-aos="fade-up" data-aos-duration="2400">
-                <div className="feature-item__thumb rounded-circle">
-                  <a href="shop.html" className="p-10 w-100 h-100 flex-center">
-                    <img src="/assets/images/thumbs/cyber-monday-img1.png" alt="" />
-                  </a>
-                </div>
-                <div className="mt-16 feature-item__content">
-                  <h6 className="mb-8 text-md"><a href="shop.html" className="text-inherit">Frozen Foods</a></h6>
-
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <FeatureSection />
       {/* ============================ promotional banner End ========================== */}
 
       {/* ========================= Top Selling Products Start ================================ */}
