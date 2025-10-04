@@ -1,5 +1,7 @@
 "use client";
 import React from "react";
+import { useWishlist } from "@/hooks/useWishlist";
+
 
 /** ==== Kiểu chung cho UI card ==== */
 type UIProduct = {
@@ -105,6 +107,8 @@ export default function TopSellingProducts(props: Props) {
 
   const [loading, setLoading] = React.useState(true);
   const [items, setItems] = React.useState<UIProduct[]>([]);
+  const { isWished, toggle } = useWishlist();
+
 
   React.useEffect(() => {
     let alive = true;
@@ -180,6 +184,19 @@ export default function TopSellingProducts(props: Props) {
                             Miễn phí
                           </span>
                         )}
+                        {/* ❤️ Wishlist */}
+                        <button
+                          type="button"
+                          aria-label={isWished(p.id) ? "Bỏ yêu thích" : "Yêu thích"}
+                          onClick={(e) => { e.preventDefault(); toggle(p.id); }}
+                          className={`position-absolute top-8 end-8 w-36 h-36 rounded-circle flex-center
+                                      ${isWished(p.id) ? "bg-danger-600 text-white" : "bg-white text-gray-700"}
+                                      hover-bg-danger-600 hover-text-white transition-1`}
+                          style={{ boxShadow: "0 2px 8px rgba(0,0,0,.06)" }}
+                        >
+                          <i className={isWished(p.id) ? "ph-fill ph-heart" : "ph ph-heart"} />
+                        </button>
+
                         <img src={p.img} alt={p.name} className="w-auto h-100" />
                       </a>
                       <div className="mt-16 product-card__content w-100">

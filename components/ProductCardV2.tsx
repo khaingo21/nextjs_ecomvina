@@ -34,6 +34,10 @@ type Props = {
   ratingCount?: number;   // ví dụ 17000
   rating?: string;        // fallback cũ: "4.8"
   reviews?: string;       // fallback cũ: "(17k)"
+  /** Tuỳ chọn hiển thị nút yêu thích (tim) */
+  showHeart?: boolean;        // hiện nút tim
+  isWished?: boolean;         // trạng thái đã yêu thích
+  onToggleWish?: () => void;  // callback toggle
 
   /** Badge trạng thái (giảm giá/miễn phí/v.v.) */
   badge?: { text: string; color: BadgeColor };
@@ -89,6 +93,9 @@ export default function ProductCardV2({
   rating,
   reviews,
   badge,
+  showHeart,       //  ADDED
+  isWished,        //  ADDED
+  onToggleWish,    //  ADDED
 }: Props) {
   const dest = href || "/product-details";
 
@@ -115,6 +122,19 @@ export default function ProductCardV2({
           // hiển thị ngay ảnh ngoài domain (nếu chưa cấu hình next.config.images)
           unoptimized={/^https?:\/\//.test(img)}
         />
+        {showHeart && (
+          <button
+            type="button"
+            aria-label={isWished ? "Bỏ yêu thích" : "Yêu thích"}
+            onClick={(e) => { e.preventDefault(); onToggleWish?.(); }}
+            className={`position-absolute top-8 end-8 w-36 h-36 rounded-circle flex-center
+                        ${isWished ? "bg-danger-600 text-white" : "bg-white text-gray-700"}
+                        hover-bg-danger-600 hover-text-white transition-1`}
+            style={{ boxShadow: "0 2px 8px rgba(0,0,0,.06)" }}
+          >
+            <i className={isWished ? "ph-fill ph-heart" : "ph ph-heart"} />
+          </button>
+        )}
         {badge ? (
           <span
             className={`product-card__badge ${colorMap[badge.color]} px-8 py-4 text-sm text-white position-absolute inset-inline-start-0 inset-block-start-0`}

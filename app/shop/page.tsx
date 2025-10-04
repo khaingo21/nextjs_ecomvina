@@ -8,6 +8,8 @@ import { useSearchParams } from "next/navigation";
 import ProductCardV2 from "@/components/ProductCardV2";
 import FullHeader from "@/components/FullHeader";
 import BenefitsStrip from "@/components/BenefitsStrip";
+import { useWishlist } from "@/hooks/useWishlist";
+
 
 /* =======================
    Types khớp API
@@ -105,6 +107,8 @@ export default function Page() {
     page: String(page),
     });
     if (q)        p.set("q", q);
+    if (category) p.set("category", category);  
+    if (brand) p.set("brand", brand);
     if (filter === "matches" && userId) p.set("user_id", userId); // matches có thể cần user_id
 
     return `${API}/api/sanphams-all?${p.toString()}`;
@@ -127,11 +131,13 @@ export default function Page() {
 
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<ApiProduct[]>([]);
+  const { isWished, toggle } = useWishlist();
 
   // ===== CHANGED: fetch theo buildUrl() (không đụng URL cũ) =====
   useEffect(() => {
     let mounted = true;
     const url = buildUrl();
+
 
     fetch(url, { headers: { Accept: "application/json" } })
       .then((r) => r.json())
@@ -147,7 +153,7 @@ export default function Page() {
       mounted = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, category, brand, q, sort, page, perPage]);
+  }, [source, category, brand, q, sort, page, perPage, filter, userId]);
   // ===== /CHANGED =====
 
   // ===== CHANGED: sort hiểu 4 tiêu chí + giữ logic HOT cũ =====
@@ -419,6 +425,9 @@ export default function Page() {
                           ratingAverage={avg}
                           ratingCount={count}
                           badge={showDiscount ? { text: `Sale ${percent}%`, color: "danger" } : undefined}
+                          showHeart
+                          isWished={isWished(p.id)}
+                          onToggleWish={() => toggle(p.id)}
                         />
                       </div>
                     );

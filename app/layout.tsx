@@ -4,6 +4,7 @@ import Script from "next/script";
 import GlobalChrome from "@/components/GlobalChrome";
 import GlobalFooter from "@/components/GlobalFooter";
 import AnimateBoot from "@/components/AnimateBoot";
+import { WishlistProvider } from "@/hooks/useWishlist";
 
 export const metadata = { title: "MarketPro" };
 
@@ -23,9 +24,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
 
       <body>
-        <GlobalChrome />
-        {children}
-        <GlobalFooter />
+        <WishlistProvider>
+          <GlobalChrome />
+          {children}
+          <GlobalFooter />
+        </WishlistProvider>
 
         {/* JS – đúng thứ tự: jQuery -> Slick -> plugin -> main.js */}
         <Script src="/assets/js/jquery-3.7.1.min.js" strategy="beforeInteractive" />
