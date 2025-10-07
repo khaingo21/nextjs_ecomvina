@@ -4,12 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "dev:be": "cross-env NEXT_PUBLIC_SERVER_API=http://127.0.0.1:8000 next dev --turbopack",
-    "dev:mock": "cross-env NEXT_PUBLIC_SERVER_API=http://127.0.0.1:4000 next dev --turbopack",
-    "build:be": "cross-env NEXT_PUBLIC_SERVER_API=http://127.0.0.1:8000 next build --turbopack",
-    "build:mock": "cross-env NEXT_PUBLIC_SERVER_API=http://127.0.0.1:4000 next build --turbopack",
+    "build": "next build --turbopack",
     "start": "next start",
-    "mock": "node ./mock/server.mjs",
+    "mock": "json-server --watch mock/db.json --routes mock/routes.json --port 4000",
+    "dev:mock": "next dev --turbopack",
     "lint": "eslint"
   },
   "dependencies": {
@@ -29,7 +27,6 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
-    "@types/css-modules": "^1.0.5",
     "@types/jquery": "^3.5.33",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -39,7 +36,7 @@
     "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
-    "json-server": "^0.17.4",
+    "json-server": "^1.0.0-beta.3",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.13",
     "typescript": "^5"

@@ -1,5 +1,21 @@
 (function ($) {
   "use strict";
+  // 1) Đừng chạy gì nếu không có jQuery
+  // if (!window.jQuery) return;
+
+  // // 2) Chỉ chạy khi có dấu hiệu là template cũ (VD: body có class legacy-html)
+  // if (!document.body.classList.contains('legacy-html')) return;
+
+  // var $ = window.jQuery;
+
+  // // 3) Trước khi gọi plugin phải kiểm tra tồn tại
+  // if ($.fn.marquee && $('.marquee').length) {
+  //   $('.marquee').marquee({ duration: 15000, gap: 50, duplicated: true });
+  // }
+
+  // if ($.fn.slick && $('.some-legacy-slick').length) {
+  //   $('.some-legacy-slick').slick({ /* options */ });
+  // }
 
   // ==========================================
   //      Start Document Ready function
@@ -119,12 +135,12 @@
     // ========================== Select2 Js End =================================
 
     // ========================== Select2 Js End =================================
-    $(".search-icon").on("click", function () {
-      $(".search-box").addClass("active");
-    });
-    $(".search-box__close").on("click", function () {
-      $(".search-box").removeClass("active");
-    });
+    // $(".search-icon").on("click", function () {
+    //   $(".search-box").addClass("active");
+    // });
+    // $(".search-box__close").on("click", function () {
+    //   $(".search-box").removeClass("active");
+    // });
     // ========================== Select2 Js End =================================
 
     // ========================== Category Dropdown Responsive Js Start =================================
@@ -1371,4 +1387,33 @@
     }
   });
   // ========================= Header Sticky Js End===================
+
+
+
+  // chỉ khởi tạo search box nếu bật cờ ở layout.tsx
+
+  function initGlobalSearchBox() {
+    if (!window.__THEME__ || window.__THEME__.enableGlobalSearch !== true) return;
+    // ... code cũ tạo search box
+  }
+
+  function runSlickOnce(selector, opts) {
+    var $el = window.jQuery && window.jQuery(selector);
+    if (!$el || !$el.length) return;           // không có -> bỏ qua
+    if ($el.hasClass('slick-initialized')) return; // tránh double-init
+    $el.slick(opts);
+  }
+
+  // Cho phép React gọi lại khi render xong data/DOM
+  window.initTheme = function () {
+    runSlickOnce('.banner-item-two__slider', {
+      arrows: true, autoplay: true, autoplaySpeed: 4000
+    });
+    // thêm các slider khác nếu có...
+  };
+
+  // Khởi tạo những thứ luôn có sẵn
+  initGlobalSearchBox();
+  // Không auto run slick ở đây nữa; để React gọi window.initTheme()
+
 })(jQuery);

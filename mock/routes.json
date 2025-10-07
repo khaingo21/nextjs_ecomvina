@@ -1,0 +1,10 @@
+{
+  "/api/yeuthichs*": "/yeuthichs",
+
+  "/api/bannerquangcaos*": "/bannerquangcaos",
+  "/api/danhmucs-selection*": "/danhmucs_selection",
+
+  "/api/sanphams-selection?selection=hot_sales*": "/sanphams_selection_hot_sales",
+  "/api/sanphams-selection?selection=best_products*": "/sanphams_selection_best_products",
+  "/api/sanphams-selection?selection=top_categories*": "/sanphams_selection_top_categories"
+}

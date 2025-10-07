@@ -4,9 +4,11 @@ import TopSellingProducts from "@/components/TopSellingProducts";//hot_sales
 import TrendingProductsTabs from "@/components/TrendingProductsTabs";//top_categories
 import TopBrandsSection from "@/components/TopBrandsSection";//top_brands
 import FeaturedProductsSection from "@/components/FeaturedProductsSection";//best_products
-import SearchBox from "@/components/SearchBox";
+// import SearchBox from "@/components/SearchBox";
 import BannerTwo from "@/components/BannerTwo";
 import FeatureSection from "@/components/FeatureSection";
+import FullHeader from "@/components/FullHeader";
+
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -16,6 +18,7 @@ export default function Home() {
   const API_BASE =
     process.env.NEXT_PUBLIC_SERVER_API ??
     "http://127.0.0.1:8000"; // fallback
+    // "http://127.0.0.1:4000"; // test mock
 
   // === INIT SLIDERS (jQuery/Slick) - KHÔNG any, KHÔNG mở rộng window ===
   useEffect(() => {
@@ -174,7 +177,7 @@ export default function Home() {
     <>
 
       {/* ======================= Middle Top Mobile Start ========================= */}
-      <div className="py-10 header-top bg-main-600 flex-between d-block d-lg-none">
+      {/* <div className="py-10 header-top bg-main-600 flex-between d-block d-lg-none">
         <div className="container container-lg">
           <div className="gap-8 flex-between">
 
@@ -219,7 +222,7 @@ export default function Home() {
             </ul>
           </div>
         </div>
-      </div>
+      </div> */}
       {/* ======================= Middle Top End ========================= */}
 
       {/* ======================= Middle Top Start ========================= */}
@@ -296,74 +299,12 @@ export default function Home() {
       </div>
       {/* ======================= Middle Top End ========================= */}
 
-      {/* ======================= Middle Header Two Start ========================= */}
-      <header className="pt-16 pb-10 header border-bottom border-neutral-40 pz99">
-        <div className="container container-lg">
-          <nav className="gap-16 header-inner flex-between">
-            <div className="logo">
-              <a href="index.html" className="link">
-                <img src="/assets/images/logo/logo_nguyenban.png" alt="Logo" />
-              </a>
-            </div>
-
-            <div className="header-menu w-50 d-lg-block d-none">
-              <div className="mx-20">
-                <div className="position-relative w-100 d-md-block d-none">
-                  <SearchBox />
-                </div>
-
-
-                <div className="gap-12 mt-10 flex-align title">
-                  <a href="#" className="text-sm text-gray-600 link hover-text-main-600 fst-italic">Máy massage</a>
-                  <a href="#" className="text-sm text-gray-600 link hover-text-main-600 fst-italic">điện gia dụng</a>
-                  <a href="#" className="text-sm text-gray-600 link hover-text-main-600 fst-italic">mẹ và bé</a>
-                  <a href="#" className="text-sm text-gray-600 link hover-text-main-600 fst-italic">móc khóa minecraft</a>
-                  <a href="#" className="text-sm text-gray-600 link hover-text-main-600 fst-italic">điện nội thất</a>
-                </div>
-              </div>
-            </div>
-
-            <div className="header-right flex-align">
-              <div
-                className="flex-wrap on-hover-item nav-menu__item has-submenu header-top__right style-two style-three flex-align d-lg-block d-none">
-                <a href="javascript:void(0)"
-                  className="gap-10 px-10 py-5 text-center text-gray-600 d-flex justify-content-center flex-align align-content-around fw-medium rounded-pill line-height-1 hover-text-main-600">
-                  <span className="line-height-1"><img src="/assets/images/thumbs/flag2.png"
-                    className="rounded-circle object-fit-cover" style={{ width: '25px', height: '25px' }} alt="" /></span>
-                  lyhuu123
-                </a>
-                <ul className="on-hover-dropdown common-dropdown nav-submenu scroll-sm">
-                  <li className="common-dropdown__item nav-submenu__item">
-                    <a href="cart.html"
-                      className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100"><i
-                        className="ph-bold ph-heart text-main-600"></i> Yêu thích <span
-                          className="badge bg-success-600 rounded-circle">6</span></a>
-                  </li>
-                  <li className="common-dropdown__item nav-submenu__item">
-                    <a href="wishlist.html"
-                      className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100"><i
-                        className="ph-bold ph-user text-main-600"></i> Tài khoản</a>
-                  </li>
-                  <li className="common-dropdown__item nav-submenu__item">
-                    <a href="checkout.html"
-                      className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100"><i
-                        className="ph-bold ph-notepad text-main-600"></i> Đơn hàng của tôi</a>
-                  </li>
-                  <li className="common-dropdown__item nav-submenu__item">
-                    <a href="checkout.html"
-                      className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100"><i
-                        className="ph-bold ph-sign-out text-main-600"></i> Đăng xuất</a>
-                  </li>
-                </ul>
-              </div>
-              <button type="button" className="text-4xl text-gray-800 toggle-mobileMenu d-lg-none ms-3n d-flex">
-                <i className="ph ph-list"></i>
-              </button>
-            </div>
-          </nav>
-        </div>
-      </header>
+      {/* ======================= Middle Header Two Start ========================= */} 
+      <>
+        <FullHeader showTopNav={true} showCategoriesBar={false} />
+      </>
       {/* ======================= Middle Header Two End ========================= */}
+
 
       {/* ============================ Banner Section start =============================== */}
       <BannerTwo />
@@ -374,247 +315,7 @@ export default function Home() {
       {/* ============================ promotional banner End ========================== */}
 
       {/* ========================= Top Selling Products Start ================================ */}
-      <section className="pt-20 overflow-hidden top-selling-products">
-        <div className="container container-lg">
-          <div className="p-24 border border-gray-100 rounded-10 bg-hotsales">
-            <div className="mb-24 section-heading">
-              <div className="flex-wrap gap-8 flex-between">
-                <h6 className="mb-0 text-white wow fadeInLeft">
-                  <img src="/assets/images/thumbs/top-deal-sieu-re.png" alt="" className="py-10 w-50" />
-                </h6>
-                <div className="gap-16 flex-align wow fadeInRight">
-                  <a href="shop.html" className="text-sm text-white fw-semibold hover-text-gray-100 hover-text-decoration-underline">Xem tất cả</a>
-                  <div className="gap-8 flex-align">
-                    <button type="button" id="top-selling-prev" className="text-xl text-white border slick-prev slick-arrow flex-center rounded-circle border-white-100 hover-border-neutral-600 hover-bg-neutral-600 hover-text-white transition-1 ">
-                      <i className="ph ph-caret-left"></i>
-                    </button>
-                    <button type="button" id="top-selling-next" className="text-xl text-white border slick-next slick-arrow flex-center rounded-circle border-white-100 hover-border-neutral-600 hover-bg-neutral-600 hover-text-white transition-1 ">
-                      <i className="ph ph-caret-right"></i>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="row g-12">
-              <div className="col-md-12">
-                <div className="top-selling-product-slider arrow-style-two">
-                  <div data-aos="fade-up" data-aos-duration="1000">
-                    <div className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-10 position-relative transition-2">
-                      <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50" style={{ height: '180px' }}>
-                        <span className="px-8 py-4 text-sm text-white product-card__badge bg-success-600 position-absolute inset-inline-start-0 inset-block-start-0">Giảm 10%</span>
-                        <img src="/assets/images/thumbs/product-two-img7.png" alt="" className="w-auto h-100" />
-                      </a>
-                      <div className="mt-16 product-card__content w-100">
-                        <h6 className="mt-12 mb-8 text-lg title fw-semibold">
-                          <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Thuốc hoạt huyết Nhất Nhất - tăng cường lưu thông máu lên não</a>
-                        </h6>
-                        <div className="gap-4 mb-5 flex-align">
-                          <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
-                          <span className="text-xs text-gray-500">Siêu thị Vina</span>
-                        </div>
-                        <div className="gap-6 flex-align">
-                          <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
-                          <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
-                          <span className="text-xs text-gray-500 fw-medium">(17k)</span>
-                        </div>
-                        <div className="my-10 product-card__price">
-                          <span className="text-xs text-gray-400 fw-semibold text-decoration-line-through">400.000 đ</span>
-                          <span className="text-heading text-md fw-semibold">350.000 đ</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div data-aos="fade-up" data-aos-duration="1000">
-                    <div className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-10 position-relative transition-2">
-                      <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50" style={{ height: '180px' }}>
-                        <span className="px-8 py-4 text-sm text-white product-card__badge bg-success-600 position-absolute inset-inline-start-0 inset-block-start-0">Giảm 20%</span>
-                        <img src="/assets/images/thumbs/product-two-img7.png" alt="" className="w-auto h-100" />
-                      </a>
-                      <div className="mt-16 product-card__content w-100">
-                        <h6 className="mt-12 mb-8 text-lg title fw-semibold">
-                          <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Thuốc hoạt huyết Nhất Nhất - tăng cường lưu thông máu lên não</a>
-                        </h6>
-                        <div className="gap-4 mb-5 flex-align">
-                          <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
-                          <span className="text-xs text-gray-500">Siêu thị Vina</span>
-                        </div>
-                        <div className="gap-6 flex-align">
-                          <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
-                          <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
-                          <span className="text-xs text-gray-500 fw-medium">(17k)</span>
-                        </div>
-                        <div className="my-10 product-card__price">
-                          <span className="text-xs text-gray-400 fw-semibold text-decoration-line-through">400.000 đ</span>
-                          <span className="text-heading text-md fw-semibold">350.000 đ</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div data-aos="fade-up" data-aos-duration="1000">
-                    <div className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-10 position-relative transition-2">
-                      <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50" style={{ height: '180px' }}>
-                        <span className="px-8 py-4 text-sm text-white product-card__badge bg-main-600 position-absolute inset-inline-start-0 inset-block-start-0">2 tặng 1</span>
-                        <img src="/assets/images/thumbs/product-two-img7.png" alt="" className="w-auto h-100" />
-                      </a>
-                      <div className="mt-16 product-card__content w-100">
-                        <h6 className="mt-12 mb-8 text-lg title fw-semibold">
-                          <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Thuốc hoạt huyết Nhất Nhất - tăng cường lưu thông máu lên não</a>
-                        </h6>
-                        <div className="gap-4 mb-5 flex-align">
-                          <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
-                          <span className="text-xs text-gray-500">Siêu thị Vina</span>
-                        </div>
-                        <div className="gap-6 flex-align">
-                          <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
-                          <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
-                          <span className="text-xs text-gray-500 fw-medium">(17k)</span>
-                        </div>
-                        <div className="my-10 product-card__price">
-                          <span className="text-xs text-gray-400 fw-semibold text-decoration-line-through">400.000 đ</span>
-                          <span className="text-heading text-md fw-semibold">350.000 đ</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Extra items copied from public/index.html */}
-                  <div data-aos="fade-up" data-aos-duration="1000">
-                    <div className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-10 position-relative transition-2">
-                      <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50" style={{ height: '180px' }}>
-                        <span className="px-8 py-4 text-sm text-white product-card__badge bg-success-600 position-absolute inset-inline-start-0 inset-block-start-0">Sold</span>
-                        <img src="/assets/images/thumbs/product-two-img7.png" alt="" className="w-auto h-100" />
-                      </a>
-                      <div className="mt-16 product-card__content w-100">
-                        <h6 className="mt-12 mb-8 text-lg title fw-semibold">
-                          <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Thuốc hoạt huyết Nhất Nhất - tăng cường lưu thông máu lên não</a>
-                        </h6>
-                        <div className="gap-4 mb-5 flex-align">
-                          <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
-                          <span className="text-xs text-gray-500">Siêu thị Vina</span>
-                        </div>
-                        <div className="gap-6 flex-align">
-                          <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
-                          <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
-                          <span className="text-xs text-gray-500 fw-medium">(17k)</span>
-                        </div>
-                        <div className="my-10 product-card__price">
-                          <span className="text-xs text-gray-400 fw-semibold text-decoration-line-through">400.000 đ</span>
-                          <span className="text-heading text-md fw-semibold">350.000 đ</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div data-aos="fade-up" data-aos-duration="1000">
-                    <div className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-10 position-relative transition-2">
-                      <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50" style={{ height: '180px' }}>
-                        <span className="px-8 py-4 text-sm text-white product-card__badge bg-success-600 position-absolute inset-inline-start-0 inset-block-start-0">Giảm 50.000 đ</span>
-                        <img src="/assets/images/thumbs/product-two-img7.png" alt="" className="w-auto h-100" />
-                      </a>
-                      <div className="mt-16 product-card__content w-100">
-                        <h6 className="mt-12 mb-8 text-lg title fw-semibold">
-                          <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Thuốc hoạt huyết Nhất Nhất - tăng cường lưu thông máu lên não</a>
-                        </h6>
-                        <div className="gap-4 mb-5 flex-align">
-                          <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
-                          <span className="text-xs text-gray-500">Siêu thị Vina</span>
-                        </div>
-                        <div className="gap-6 flex-align">
-                          <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
-                          <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
-                          <span className="text-xs text-gray-500 fw-medium">(17k)</span>
-                        </div>
-                        <div className="my-10 product-card__price">
-                          <span className="text-xs text-gray-400 fw-semibold text-decoration-line-through">400.000 đ</span>
-                          <span className="text-heading text-md fw-semibold">350.000 đ</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div data-aos="fade-up" data-aos-duration="1000">
-                    <div className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-10 position-relative transition-2">
-                      <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50" style={{ height: '180px' }}>
-                        <span className="px-8 py-4 text-sm text-white product-card__badge bg-main-600 position-absolute inset-inline-start-0 inset-block-start-0">Miễn phí (giới hạn)</span>
-                        <img src="/assets/images/thumbs/product-two-img7.png" alt="" className="w-auto h-100" />
-                      </a>
-                      <div className="mt-16 product-card__content w-100">
-                        <h6 className="mt-12 mb-8 text-lg title fw-semibold">
-                          <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Thuốc hoạt huyết Nhất Nhất - tăng cường lưu thông máu lên não</a>
-                        </h6>
-                        <div className="gap-4 mb-5 flex-align">
-                          <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
-                          <span className="text-xs text-gray-500">Siêu thị Vina</span>
-                        </div>
-                        <div className="gap-6 flex-align">
-                          <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
-                          <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
-                          <span className="text-xs text-gray-500 fw-medium">(17k)</span>
-                          <span className="text-xs text-gray-500 fw-medium"> | </span>
-                          <span className="text-xs text-gray-500 fw-medium">Còn: 18</span>
-                        </div>
-                        <div className="my-10 product-card__price">
-                          <span className="text-xs text-gray-400 fw-semibold text-decoration-line-through">400.000 đ</span>
-                          <span className="text-heading text-md fw-semibold">Miễn phí</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div data-aos="fade-up" data-aos-duration="1000">
-                    <div className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-10 position-relative transition-2">
-                      <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50">
-                        <span className="px-8 py-4 text-sm text-white product-card__badge bg-success-600 position-absolute inset-inline-start-0 inset-block-start-0">Sold</span>
-                        <img src="/assets/images/thumbs/product-two-img7.png" alt="" className="w-auto max-w-unset" />
-                      </a>
-                      <div className="mt-16 product-card__content w-100">
-                        <h6 className="mt-12 mb-8 text-lg title fw-semibold">
-                          <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Thuốc hoạt huyết Nhất Nhất - tăng cường lưu thông máu lên não</a>
-                        </h6>
-                        <div className="gap-4 mb-5 flex-align">
-                          <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
-                          <span className="text-xs text-gray-500">Siêu thị Vina</span>
-                        </div>
-                        <div className="gap-6 flex-align">
-                          <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
-                          <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
-                          <span className="text-xs text-gray-500 fw-medium">(17k)</span>
-                        </div>
-                        <div className="my-10 product-card__price">
-                          <span className="text-xs text-gray-400 fw-semibold text-decoration-line-through">400.000 đ</span>
-                          <span className="text-heading text-md fw-semibold">350.000 đ</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div data-aos="fade-up" data-aos-duration="1000">
-                    <div className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-10 position-relative transition-2">
-                      <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50">
-                        <span className="px-8 py-4 text-sm text-white product-card__badge bg-success-600 position-absolute inset-inline-start-0 inset-block-start-0">Sold</span>
-                        <img src="/assets/images/thumbs/product-two-img7.png" alt="" className="w-auto max-w-unset" />
-                      </a>
-                      <div className="mt-16 product-card__content w-100">
-                        <h6 className="mt-12 mb-8 text-lg title fw-semibold">
-                          <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Thuốc hoạt huyết Nhất Nhất - tăng cường lưu thông máu lên não</a>
-                        </h6>
-                        <div className="gap-4 mb-5 flex-align">
-                          <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
-                          <span className="text-xs text-gray-500">Siêu thị Vina</span>
-                        </div>
-                        <div className="gap-6 flex-align">
-                          <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
-                          <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
-                          <span className="text-xs text-gray-500 fw-medium">(17k)</span>
-                        </div>
-                        <div className="my-10 product-card__price">
-                          <span className="text-xs text-gray-400 fw-semibold text-decoration-line-through">400.000 đ</span>
-                          <span className="text-heading text-md fw-semibold">350.000 đ</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      
       <TopSellingProducts variant="hot" title="Top deal • Siêu rẻ" />
       {/* ========================= Top Selling Products End ================================ */}
 

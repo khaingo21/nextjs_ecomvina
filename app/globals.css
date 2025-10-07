@@ -1,4 +1,11 @@
 /* @import "tailwindcss";  Disabled to prevent conflicts with template CSS */
+@import "slick-carousel/slick/slick.css";
+@import "slick-carousel/slick/slick-theme.css";
+@import "swiper/css";
+@import "swiper/css/navigation";
+@import "swiper/css/pagination";
+@import "swiper/css/autoplay";
+
 
 :root {
   --background: #ffffff;
@@ -165,3 +172,6 @@
 .common-dropdown a {
   text-decoration: none;
 }
+
+/* Search Box đang bị ẩn bằng css và main.js */
+.search-box { display: none !important; }

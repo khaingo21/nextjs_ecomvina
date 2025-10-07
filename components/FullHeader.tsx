@@ -1,7 +1,17 @@
 "use client";
-import React from "react";
+
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import SearchBox from "@/components/SearchBox";
+
+/**
+ * NOTE:
+ * - Không dùng jQuery, không dùng "javascript:void(0)".
+ * - Dùng <button> cho trigger dropdown để tăng accessibility.
+ * - Đóng mở bằng React state; auto-close khi click ra ngoài / nhấn Esc.
+ * - Mobile menu toggle thuần React (không cần main.js).
+ */
 
 type FullHeaderProps = {
   showTopNav?: boolean;
@@ -9,40 +19,94 @@ type FullHeaderProps = {
   showClassicTopBar?: boolean;
 };
 
-export default function FullHeader({ showTopNav = true, showCategoriesBar = true, showClassicTopBar = true }: FullHeaderProps) {
+function useClickAway<T extends HTMLElement>(
+  ref: React.RefObject<T | null>,
+  onAway: () => void
+) {
+  React.useEffect(() => {
+    function handler(e: MouseEvent) {
+      const el = ref.current;
+      if (!el) return;                         // <- kiểm tra null
+      if (!el.contains(e.target as Node)) onAway();
+    }
+    function onEsc(e: KeyboardEvent) {
+      if (e.key === "Escape") onAway();
+    }
+    document.addEventListener("mousedown", handler);
+    document.addEventListener("keydown", onEsc);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("keydown", onEsc);
+    };
+  }, [ref, onAway]);
+}
+
+export default function FullHeader({
+  showTopNav = true,
+  showCategoriesBar = true,
+  showClassicTopBar = true,
+}: FullHeaderProps) {
+  // header dropdown states
+  const [langOpen, setLangOpen] = useState(false);
+  const [currOpen, setCurrOpen] = useState(false);
+  const [userOpen, setUserOpen] = useState(false);
+  const [catOpen, setCatOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const langRef = useRef<HTMLLIElement>(null);
+  const currRef = useRef<HTMLLIElement>(null);
+  const userRef = useRef<HTMLDivElement>(null);
+  const catRef = useRef<HTMLDivElement>(null);
+
+  useClickAway(langRef, () => setLangOpen(false));
+  useClickAway(currRef, () => setCurrOpen(false));
+  useClickAway(userRef, () => setUserOpen(false));
+  useClickAway(catRef, () => setCatOpen(false));
+
+  // đóng các dropdown khác khi mở 1 cái
+  function openOnly(which: "lang" | "curr" | "user" | "cat") {
+    setLangOpen(which === "lang");
+    setCurrOpen(which === "curr");
+    setUserOpen(which === "user");
+    setCatOpen(which === "cat");
+  }
+
   return (
     <>
-      {/* Header Middle with main nav */}
+      {/* HEADER MIDDLE */}
       {showTopNav && (
-        <header className="header-middle border-bottom border-neutral-40 py-20" style={{ overflow: "visible", position: "relative", zIndex: 300 }}>
+        <header
+          className="py-20 header-middle border-bottom border-neutral-40"
+          style={{ overflow: "visible", position: "relative", zIndex: 300 }}
+        >
           <div className="container container-lg">
-            <nav className="header-inner flex-between align-items-center gap-8">
+            <nav className="gap-8 header-inner flex-between align-items-center">
               {/* Logo */}
               <div className="logo">
-                <Link href="/" className="link">
+                <Link href="/" className="link" aria-label="Home">
                   <Image src="/assets/images/logo/logo-two.png" alt="Logo" width={120} height={32} />
                 </Link>
               </div>
 
               {/* Desktop Nav */}
               <div className="header-menu d-lg-block d-none">
-                <ul className="nav-menu flex-align ">
-                  <li className="on-hover-item nav-menu__item has-submenu activePage">
-                    <a href="javascript:void(0)" className="nav-menu__link text-heading-two">Home</a>
+                <ul className="nav-menu flex-align">
+                  <li className="nav-menu__item has-submenu activePage">
+                    <Link href="/" className="nav-menu__link text-heading-two">Home</Link>
                   </li>
-                  <li className="on-hover-item nav-menu__item has-submenu">
-                    <a href="javascript:void(0)" className="nav-menu__link text-heading-two">Shop</a>
+                  <li className="nav-menu__item has-submenu">
+                    <Link href="/shop" className="nav-menu__link text-heading-two">Shop</Link>
                   </li>
-                  <li className="on-hover-item nav-menu__item has-submenu">
-                    <span className="badge-notification bg-warning-600 text-white text-sm py-2 px-8 rounded-4">New</span>
-                    <a href="javascript:void(0)" className="nav-menu__link text-heading-two">Pages</a>
+                  <li className="nav-menu__item has-submenu">
+                    <span className="px-8 py-2 text-sm text-white badge-notification bg-warning-600 rounded-4">New</span>
+                    <Link href="/pages" className="nav-menu__link text-heading-two">Pages</Link>
                   </li>
-                  <li className="on-hover-item nav-menu__item has-submenu">
-                    <span className="badge-notification bg-tertiary-600 text-white text-sm py-2 px-8 rounded-4">New</span>
-                    <a href="javascript:void(0)" className="nav-menu__link text-heading-two">Vendors</a>
+                  <li className="nav-menu__item has-submenu">
+                    <span className="px-8 py-2 text-sm text-white badge-notification bg-tertiary-600 rounded-4">New</span>
+                    <Link href="/vendors" className="nav-menu__link text-heading-two">Vendors</Link>
                   </li>
-                  <li className="on-hover-item nav-menu__item has-submenu">
-                    <a href="javascript:void(0)" className="nav-menu__link text-heading-two">Blog</a>
+                  <li className="nav-menu__item has-submenu">
+                    <Link href="/blog" className="nav-menu__link text-heading-two">Blog</Link>
                   </li>
                   <li className="nav-menu__item">
                     <Link href="/contact" className="nav-menu__link text-heading-two">Contact Us</Link>
@@ -50,110 +114,97 @@ export default function FullHeader({ showTopNav = true, showCategoriesBar = true
                 </ul>
               </div>
 
-              {/* Right side: language/currency/tracking + mobile toggle */}
+              {/* Right side + Mobile toggle */}
               <div className="header-right flex-align">
-                <ul className="header-top__right style-two style-three flex-align flex-nowrap gap-16 d-lg-flex d-none">
-                  <li className="on-hover-item border-right-item border-right-item-sm-space has-submenu arrow-white">
-                    <a href="javascript:void(0)" className="selected-text selected-text text-neutral-500 fw-semibold text-sm py-8 text-nowrap">Eng</a>
-                    {/* Language Dropdown */}
-                    <ul className="selectable-text-list on-hover-dropdown common-dropdown common-dropdown--sm max-h-200 scroll-sm px-0 py-8" style={{ zIndex: 400 }}>
-                      <li>
-                        <a href="javascript:void(0)" className="hover-bg-gray-100 text-gray-500 text-xs py-6 px-16 flex-align gap-8 rounded-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src="/assets/images/thumbs/flag1.png" alt="" className="w-16 h-12 rounded-4 border border-gray-100" />
-                          English
-                        </a>
-                      </li>
-                      <li>
-                        <a href="javascript:void(0)" className="hover-bg-gray-100 text-gray-500 text-xs py-6 px-16 flex-align gap-8 rounded-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src="/assets/images/thumbs/flag2.png" alt="" className="w-16 h-12 rounded-4 border border-gray-100" />
-                          Japan
-                        </a>
-                      </li>
-                      <li>
-                        <a href="javascript:void(0)" className="hover-bg-gray-100 text-gray-500 text-xs py-6 px-16 flex-align gap-8 rounded-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src="/assets/images/thumbs/flag3.png" alt="" className="w-16 h-12 rounded-4 border border-gray-100" />
-                          French
-                        </a>
-                      </li>
-                      <li>
-                        <a href="javascript:void(0)" className="hover-bg-gray-100 text-gray-500 text-xs py-6 px-16 flex-align gap-8 rounded-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src="/assets/images/thumbs/flag4.png" alt="" className="w-16 h-12 rounded-4 border border-gray-100" />
-                          Germany
-                        </a>
-                      </li>
-                      <li>
-                        <a href="javascript:void(0)" className="hover-bg-gray-100 text-gray-500 text-xs py-6 px-16 flex-align gap-8 rounded-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src="/assets/images/thumbs/flag6.png" alt="" className="w-16 h-12 rounded-4 border border-gray-100" />
-                          Bangladesh
-                        </a>
-                      </li>
-                      <li>
-                        <a href="javascript:void(0)" className="hover-bg-gray-100 text-gray-500 text-xs py-6 px-16 flex-align gap-8 rounded-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src="/assets/images/thumbs/flag5.png" alt="" className="w-16 h-12 rounded-4 border border-gray-100" />
-                          South Korea
-                        </a>
-                      </li>
-                    </ul>
+                <ul className="gap-16 header-top__right style-two style-three flex-align flex-nowrap d-lg-flex d-none">
+                  {/* Language */}
+                  <li ref={langRef} className="on-hover-item border-right-item border-right-item-sm-space has-submenu arrow-white position-relative">
+                    <button
+                      type="button"
+                      aria-haspopup="menu"
+                      aria-expanded={langOpen}
+                      onClick={() => (langOpen ? setLangOpen(false) : openOnly("lang"))}
+                      className="py-8 text-sm selected-text text-neutral-500 fw-semibold text-nowrap btn-reset"
+                    >
+                      Eng
+                    </button>
+                    {langOpen && (
+                      <ul
+                        role="menu"
+                        className="px-0 py-8 selectable-text-list common-dropdown common-dropdown--sm max-h-200 scroll-sm position-absolute"
+                        style={{ zIndex: 400 }}
+                      >
+                        {[
+                          { flag: "/assets/images/thumbs/flag1.png", label: "English" },
+                          { flag: "/assets/images/thumbs/flag2.png", label: "Japan" },
+                          { flag: "/assets/images/thumbs/flag3.png", label: "French" },
+                          { flag: "/assets/images/thumbs/flag4.png", label: "Germany" },
+                          { flag: "/assets/images/thumbs/flag6.png", label: "Bangladesh" },
+                          { flag: "/assets/images/thumbs/flag5.png", label: "South Korea" },
+                        ].map((it) => (
+                          <li key={it.label} role="none">
+                            <button
+                              role="menuitem"
+                              className="gap-8 px-16 py-6 text-xs text-gray-500 hover-bg-gray-100 flex-align rounded-0 w-100 text-start btn-reset"
+                              onClick={() => setLangOpen(false)}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={it.flag} alt="" className="w-16 h-12 border border-gray-100 rounded-4" />
+                              {it.label}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </li>
-                  <li className="on-hover-item border-right-item border-right-item-sm-space has-submenu arrow-white">
-                    <a href="javascript:void(0)" className="selected-text selected-text text-neutral-500 fw-semibold text-sm py-8 text-nowrap">USD</a>
-                    {/* Currency Dropdown */}
-                    <ul className="selectable-text-list on-hover-dropdown common-dropdown common-dropdown--sm max-h-200 scroll-sm px-0 py-8" style={{ zIndex: 400 }}>
-                      <li>
-                        <a href="javascript:void(0)" className="hover-bg-gray-100 text-gray-500 text-xs py-6 px-16 flex-align gap-8 rounded-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src="/assets/images/thumbs/flag1.png" alt="" className="w-16 h-12 rounded-4 border border-gray-100" />
-                          USD
-                        </a>
-                      </li>
-                      <li>
-                        <a href="javascript:void(0)" className="hover-bg-gray-100 text-gray-500 text-xs py-6 px-16 flex-align gap-8 rounded-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src="/assets/images/thumbs/flag2.png" alt="" className="w-16 h-12 rounded-4 border border-gray-100" />
-                          Yen
-                        </a>
-                      </li>
-                      <li>
-                        <a href="javascript:void(0)" className="hover-bg-gray-100 text-gray-500 text-xs py-6 px-16 flex-align gap-8 rounded-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src="/assets/images/thumbs/flag3.png" alt="" className="w-16 h-12 rounded-4 border border-gray-100" />
-                          Franc
-                        </a>
-                      </li>
-                      <li>
-                        <a href="javascript:void(0)" className="hover-bg-gray-100 text-gray-500 text-xs py-6 px-16 flex-align gap-8 rounded-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src="/assets/images/thumbs/flag4.png" alt="" className="w-16 h-12 rounded-4 border border-gray-100" />
-                          EURO
-                        </a>
-                      </li>
-                      <li>
-                        <a href="javascript:void(0)" className="hover-bg-gray-100 text-gray-500 text-xs py-6 px-16 flex-align gap-8 rounded-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src="/assets/images/thumbs/flag6.png" alt="" className="w-16 h-12 rounded-4 border border-gray-100" />
-                          BDT
-                        </a>
-                      </li>
-                      <li>
-                        <a href="javascript:void(0)" className="hover-bg-gray-100 text-gray-500 text-xs py-6 px-16 flex-align gap-8 rounded-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src="/assets/images/thumbs/flag5.png" alt="" className="w-16 h-12 rounded-4 border border-gray-100" />
-                          WON
-                        </a>
-                      </li>
-                    </ul>
+
+                  {/* Currency */}
+                  <li ref={currRef} className="on-hover-item border-right-item border-right-item-sm-space has-submenu arrow-white position-relative">
+                    <button
+                      type="button"
+                      aria-haspopup="menu"
+                      aria-expanded={currOpen}
+                      onClick={() => (currOpen ? setCurrOpen(false) : openOnly("curr"))}
+                      className="py-8 text-sm selected-text text-neutral-500 fw-semibold text-nowrap btn-reset"
+                    >
+                      USD
+                    </button>
+                    {currOpen && (
+                      <ul
+                        role="menu"
+                        className="px-0 py-8 selectable-text-list common-dropdown common-dropdown--sm max-h-200 scroll-sm position-absolute"
+                        style={{ zIndex: 400 }}
+                      >
+                        {["USD", "Yen", "Franc", "EURO", "BDT", "WON"].map((label) => (
+                          <li key={label} role="none">
+                            <button
+                              role="menuitem"
+                              className="gap-8 px-16 py-6 text-xs text-gray-500 hover-bg-gray-100 flex-align rounded-0 w-100 text-start btn-reset"
+                              onClick={() => setCurrOpen(false)}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src="/assets/images/thumbs/flag1.png" alt="" className="w-16 h-12 border border-gray-100 rounded-4" />
+                              {label}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </li>
+
                   <li className="d-sm-flex d-none">
-                    <a href="javascript:void(0)" className="selected-text selected-text text-neutral-500 fw-semibold text-sm py-8 hover-text-heading text-nowrap">Order Tracking</a>
+                    <Link href="/tracking" className="py-8 text-sm selected-text text-neutral-500 fw-semibold hover-text-heading text-nowrap">
+                      Order Tracking
+                    </Link>
                   </li>
                 </ul>
-                <button type="button" className="toggle-mobileMenu d-lg-none ms-3n text-gray-800 text-4xl d-flex">
+
+                <button
+                  type="button"
+                  aria-label="Toggle mobile menu"
+                  className="text-4xl text-gray-800 d-lg-none ms-3n d-flex btn-reset"
+                  onClick={() => setMobileOpen((s) => !s)}
+                >
                   <i className="ph ph-list"></i>
                 </button>
               </div>
@@ -162,316 +213,251 @@ export default function FullHeader({ showTopNav = true, showCategoriesBar = true
         </header>
       )}
 
-      {/* Second header */}
+      {/* SECOND HEADER (categories/search/actions) */}
       {showTopNav ? (
         showCategoriesBar ? (
-        // Keep full categories/search/actions for pages like Contact
-        <header className="header bg-white pt-24" style={{ overflow: "visible", zIndex: 100 }}>
-          <div className="container container-lg">
-            <nav className="header-inner d-flex justify-content-between gap-16">
-              <div className="d-flex flex-grow-1">
-                {/* Category Button (hidden on smaller screens as in HTML) */}
-                <div className="category-two h-100 d-lg-block flex-shrink-0 on-hover-item">
-                  <button type="button" className="category__button flex-align gap-8 fw-medium bg-main-two-600 py-16 px-20 text-white h-100 md-rounded-top">
-                    <span className="icon text-2xl d-md-flex d-none"><i className="ph ph-squares-four"></i></span>
-                    <span className="d-lg-flex d-none">All</span>  Categories
-                    <span className="arrow-icon text-md d-flex ms-auto"><i className="ph ph-caret-down"></i></span>
-                  </button>
+          <header className="pt-24 bg-white header" style={{ overflow: "visible", zIndex: 100 }}>
+            <div className="container container-lg">
+              <nav className="gap-16 header-inner d-flex justify-content-between">
+                <div className="d-flex flex-grow-1">
+                  {/* Category Button */}
+                  <div ref={catRef} className="flex-shrink-0 category-two h-100 d-lg-block position-relative">
+                    <button
+                      type="button"
+                      aria-haspopup="menu"
+                      aria-expanded={catOpen}
+                      onClick={() => (catOpen ? setCatOpen(false) : openOnly("cat"))}
+                      className="gap-8 px-20 py-16 text-white category__button flex-align fw-medium bg-main-two-600 h-100 md-rounded-top"
+                    >
+                      <span className="text-2xl d-md-flex d-none"><i className="ph ph-squares-four" /></span>
+                      <span className="d-lg-flex d-none">All</span> Categories
+                      <span className="text-md d-flex ms-auto"><i className="ph ph-caret-down" /></span>
+                    </button>
 
-                  {/* Desktop Dropdown */}
-                  <div className="responsive-dropdown on-hover-dropdown common-dropdown nav-submenu p-0 submenus-submenu-wrapper">
-                    <ul className="scroll-sm p-0 py-8 w-300 max-h-400 overflow-y-auto">
-                      <li className="has-submenus-submenu">
-                        <a href="javascript:void(0)" className="text-gray-500 text-15 py-12 px-16 flex-align gap-8 rounded-0">
-                          <span>Vegetables &amp; Fruit</span>
-                          <span className="icon text-md d-flex ms-auto"><i className="ph ph-caret-right"></i></span>
-                        </a>
-                        <div className="submenus-submenu py-16">
-                          <h6 className="text-lg px-16 submenus-submenu__title">Vegetables &amp; Fruit</h6>
-                          <ul className="submenus-submenu__list max-h-300 overflow-y-auto scroll-sm">
-                            <li><a href="/shop">Potato &amp; Tomato</a></li>
-                            <li><a href="/shop">Cucumber &amp; Capsicum</a></li>
-                            <li><a href="/shop">Leafy Vegetables</a></li>
-                            <li><a href="/shop">Root Vegetables</a></li>
-                            <li><a href="/shop">Beans &amp; Okra</a></li>
-                            <li><a href="/shop">Cabbage &amp; Cauliflower</a></li>
-                          </ul>
-                        </div>
-                      </li>
-                      <li className="has-submenus-submenu">
-                        <a href="javascript:void(0)" className="text-gray-500 text-15 py-12 px-16 flex-align gap-8 rounded-0">
-                          <span>Beverages</span>
-                          <span className="icon text-md d-flex ms-auto"><i className="ph ph-caret-right"></i></span>
-                        </a>
-                        <div className="submenus-submenu py-16">
-                          <h6 className="text-lg px-16 submenus-submenu__title">Beverages</h6>
-                          <ul className="submenus-submenu__list max-h-300 overflow-y-auto scroll-sm">
-                            <li><a href="/shop">Soft Drinks</a></li>
-                            <li><a href="/shop">Juices</a></li>
-                            <li><a href="/shop">Tea &amp; Coffee</a></li>
-                            <li><a href="/shop">Energy Drinks</a></li>
-                          </ul>
-                        </div>
-                      </li>
-                      <li className="has-submenus-submenu">
-                        <a href="javascript:void(0)" className="text-gray-500 text-15 py-12 px-16 flex-align gap-8 rounded-0">
-                          <span>Meats &amp; Seafood</span>
-                          <span className="icon text-md d-flex ms-auto"><i className="ph ph-caret-right"></i></span>
-                        </a>
-                        <div className="submenus-submenu py-16">
-                          <h6 className="text-lg px-16 submenus-submenu__title">Meats &amp; Seafood</h6>
-                          <ul className="submenus-submenu__list max-h-300 overflow-y-auto scroll-sm">
-                            <li><a href="/shop">Beef</a></li>
-                            <li><a href="/shop">Chicken</a></li>
-                            <li><a href="/shop">Pork</a></li>
-                            <li><a href="/shop">Fish</a></li>
-                            <li><a href="/shop">Shrimp</a></li>
-                          </ul>
-                        </div>
-                      </li>
-                      <li className="has-submenus-submenu">
-                        <a href="javascript:void(0)" className="text-gray-500 text-15 py-12 px-16 flex-align gap-8 rounded-0">
-                          <span>Breakfast &amp; Dairy</span>
-                          <span className="icon text-md d-flex ms-auto"><i className="ph ph-caret-right"></i></span>
-                        </a>
-                        <div className="submenus-submenu py-16">
-                          <h6 className="text-lg px-16 submenus-submenu__title">Breakfast &amp; Dairy</h6>
-                          <ul className="submenus-submenu__list max-h-300 overflow-y-auto scroll-sm">
-                            <li><a href="/shop">Milk &amp; Yogurt</a></li>
-                            <li><a href="/shop">Cheese</a></li>
-                            <li><a href="/shop">Butter &amp; Margarine</a></li>
-                            <li><a href="/shop">Breakfast Cereal</a></li>
-                          </ul>
-                        </div>
-                      </li>
-                      <li className="has-submenus-submenu">
-                        <a href="javascript:void(0)" className="text-gray-500 text-15 py-12 px-16 flex-align gap-8 rounded-0">
-                          <span>Frozen Foods</span>
-                          <span className="icon text-md d-flex ms-auto"><i className="ph ph-caret-right"></i></span>
-                        </a>
-                        <div className="submenus-submenu py-16">
-                          <h6 className="text-lg px-16 submenus-submenu__title">Frozen Foods</h6>
-                          <ul className="submenus-submenu__list max-h-300 overflow-y-auto scroll-sm">
-                            <li><a href="/shop">Frozen Vegetables</a></li>
-                            <li><a href="/shop">Frozen Meat</a></li>
-                            <li><a href="/shop">Ice Cream</a></li>
-                          </ul>
-                        </div>
-                      </li>
-                      <li className="has-submenus-submenu">
-                        <a href="javascript:void(0)" className="text-gray-500 text-15 py-12 px-16 flex-align gap-8 rounded-0">
-                          <span>Biscuits &amp; Snacks</span>
-                          <span className="icon text-md d-flex ms-auto"><i className="ph ph-caret-right"></i></span>
-                        </a>
-                        <div className="submenus-submenu py-16">
-                          <h6 className="text-lg px-16 submenus-submenu__title">Biscuits &amp; Snacks</h6>
-                          <ul className="submenus-submenu__list max-h-300 overflow-y-auto scroll-sm">
-                            <li><a href="/shop">Biscuits</a></li>
-                            <li><a href="/shop">Chips</a></li>
-                            <li><a href="/shop">Namkeen</a></li>
-                          </ul>
-                        </div>
-                      </li>
-                      <li className="has-submenus-submenu">
-                        <a href="javascript:void(0)" className="text-gray-500 text-15 py-12 px-16 flex-align gap-8 rounded-0">
-                          <span>Grocery &amp; Staples</span>
-                          <span className="icon text-md d-flex ms-auto"><i className="ph ph-caret-right"></i></span>
-                        </a>
-                        <div className="submenus-submenu py-16">
-                          <h6 className="text-lg px-16 submenus-submenu__title">Grocery &amp; Staples</h6>
-                          <ul className="submenus-submenu__list max-h-300 overflow-y-auto scroll-sm">
-                            <li><a href="/shop">Atta &amp; Other Flours</a></li>
-                            <li><a href="/shop">Rice &amp; other grains</a></li>
-                            <li><a href="/shop">Dals &amp; Pulses</a></li>
-                            <li><a href="/shop">Edible Oils</a></li>
-                          </ul>
-                        </div>
+                    {/* Desktop Dropdown (React-controlled) */}
+                    {catOpen && (
+                      <div
+                        role="menu"
+                        className="p-0 bg-white rounded-md shadow responsive-dropdown common-dropdown nav-submenu submenus-submenu-wrapper position-absolute"
+                      >
+                        <ul className="p-0 py-8 overflow-y-auto scroll-sm w-300 max-h-400">
+                          {[
+                            {
+                              title: "Vegetables & Fruit",
+                              sub: ["Potato & Tomato", "Cucumber & Capsicum", "Leafy Vegetables", "Root Vegetables", "Beans & Okra", "Cabbage & Cauliflower"],
+                            },
+                            { title: "Beverages", sub: ["Soft Drinks", "Juices", "Tea & Coffee", "Energy Drinks"] },
+                            { title: "Meats & Seafood", sub: ["Beef", "Chicken", "Pork", "Fish", "Shrimp"] },
+                            { title: "Breakfast & Dairy", sub: ["Milk & Yogurt", "Cheese", "Butter & Margarine", "Breakfast Cereal"] },
+                            { title: "Frozen Foods", sub: ["Frozen Vegetables", "Frozen Meat", "Ice Cream"] },
+                            { title: "Biscuits & Snacks", sub: ["Biscuits", "Chips", "Namkeen"] },
+                            { title: "Grocery & Staples", sub: ["Atta & Other Flours", "Rice & other grains", "Dals & Pulses", "Edible Oils"] },
+                          ].map((grp) => (
+                            <li key={grp.title} className="position-relative">
+                              <div className="gap-8 px-16 py-12 text-gray-700 text-15 d-flex align-items-center">
+                                <span>{grp.title}</span>
+                              </div>
+                              <div className="py-16 border-top">
+                                <h6 className="px-16 text-lg">{grp.title}</h6>
+                                <ul className="overflow-y-auto max-h-300 scroll-sm">
+                                  {grp.sub.map((s) => (
+                                    <li key={s}>
+                                      <Link href="/shop" className="px-16 py-8 d-block hover-bg-neutral-100">
+                                        {s}
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Search */}
+                  <form action="#" className="position-relative ms-20 w-100 d-md-block d-none me-16" role="search">
+                    <input
+                      type="text"
+                      className="py-16 form-control ps-30 pe-60 bg-neutral-30 placeholder-italic placeholder-light"
+                      placeholder="Search for products, categories or brands..."
+                      aria-label="Search products"
+                    />
+                    <button type="submit" className="text-xl position-absolute top-50 translate-middle-y text-main-600 end-0 me-36 line-height-1" aria-label="Search">
+                      <i className="ph-bold ph-magnifying-glass"></i>
+                    </button>
+                  </form>
+                </div>
+
+                {/* Right actions */}
+                <div className="gap-16 d-flex align-items-center flex-nowrap">
+                  <Link href="/compare" className="gap-8 text-gray-900 d-flex align-items-center text-nowrap">
+                    <span className="position-relative d-inline-flex">
+                      <i className="ph-bold ph-git-compare"></i>
+                      <span className="top-0 badge bg-success-600 rounded-circle position-absolute start-100 translate-middle">2</span>
+                    </span>
+                    <span className="text-nowrap">Compare</span>
+                  </Link>
+                  <Link href="/cart" className="gap-8 text-gray-900 d-flex align-items-center text-nowrap">
+                    <span className="position-relative d-inline-flex">
+                      <i className="ph-bold ph-shopping-cart"></i>
+                      <span className="top-0 badge bg-success-600 rounded-circle position-absolute start-100 translate-middle">2</span>
+                    </span>
+                    <span className="text-nowrap">Cart</span>
+                  </Link>
+                  <div ref={userRef} className="flex-wrap on-hover-item nav-menu__item has-submenu header-top__right style-two style-three flex-align d-lg-block d-none position-relative">
+                    <button
+                      type="button"
+                      aria-haspopup="menu"
+                      aria-expanded={userOpen}
+                      onClick={() => (userOpen ? setUserOpen(false) : openOnly("user"))}
+                      className="gap-10 px-20 py-10 text-center text-white d-flex justify-content-center flex-align align-content-around fw-medium bg-success-600 rounded-pill line-height-1 hover-bg-success-500 hover-text-white btn-reset"
+                    >
+                      <span className="line-height-1">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src="/assets/images/thumbs/flag2.png"
+                          className="rounded-circle object-fit-cover"
+                          style={{ width: 25, height: 25 }}
+                          alt=""
+                        />
+                      </span>
+                      lyhuu123
+                    </button>
+                    {userOpen && (
+                      <ul role="menu" className="bg-white rounded-md shadow common-dropdown nav-submenu scroll-sm position-absolute">
+                        <li className="common-dropdown__item nav-submenu__item" role="none">
+                          <Link href="/cart" role="menuitem" className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100">
+                            <i className="ph-bold ph-heart text-main-600"></i>
+                            Yêu thích
+                            <span className="badge bg-success-600 rounded-circle ms-8">6</span>
+                          </Link>
+                        </li>
+                        <li className="common-dropdown__item nav-submenu__item" role="none">
+                          <Link href="/wishlist" role="menuitem" className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100">
+                            <i className="ph-bold ph-user text-main-600"></i>
+                            Tài khoản
+                          </Link>
+                        </li>
+                        <li className="common-dropdown__item nav-submenu__item" role="none">
+                          <Link href="/checkout" role="menuitem" className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100">
+                            <i className="ph-bold ph-notepad text-main-600"></i>
+                            Đơn hàng của tôi
+                          </Link>
+                        </li>
+                        <li className="common-dropdown__item nav-submenu__item" role="none">
+                          <Link href="/logout" role="menuitem" className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100">
+                            <i className="ph-bold ph-sign-out text-main-600"></i>
+                            Đăng xuất
+                          </Link>
+                        </li>
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              </nav>
+
+              {/* Mobile menu drawer (simple) */}
+              {mobileOpen && (
+                <div className="mt-12 d-lg-none">
+                  <div className="p-16 bg-white border rounded-8">
+                    <ul className="flex flex-col gap-8">
+                      <li><Link href="/" onClick={() => setMobileOpen(false)}>Home</Link></li>
+                      <li><Link href="/shop" onClick={() => setMobileOpen(false)}>Shop</Link></li>
+                      <li><Link href="/pages" onClick={() => setMobileOpen(false)}>Pages</Link></li>
+                      <li><Link href="/vendors" onClick={() => setMobileOpen(false)}>Vendors</Link></li>
+                      <li><Link href="/blog" onClick={() => setMobileOpen(false)}>Blog</Link></li>
+                      <li><Link href="/contact" onClick={() => setMobileOpen(false)}>Contact</Link></li>
+                      <li className="mt-8">
+                        <SearchBox />
                       </li>
                     </ul>
                   </div>
                 </div>
-
-                {/* Search Bar */}
-                <form action="#" className="position-relative ms-20 w-100 d-md-block d-none me-16">
-                  <input
-                    type="text"
-                    className="form-control py-16 ps-30 pe-60 bg-neutral-30 placeholder-italic placeholder-light"
-                    placeholder="Search for products, categories or brands..."
-                  />
-                  <button type="submit" className="position-absolute top-50 translate-middle-y text-main-600 end-0 me-36 text-xl line-height-1">
-                    <i className="ph-bold ph-magnifying-glass"></i>
-                  </button>
-                </form>
-              </div>
-
-              {/* Right side actions */}
-              <div className="d-flex align-items-center gap-16 flex-nowrap">
-                <Link href="/compare" className="d-flex align-items-center gap-8 text-gray-900 text-nowrap">
-                  <span className="position-relative d-inline-flex">
-                    <i className="ph-bold ph-git-compare"></i>
-                    <span className="badge bg-success-600 rounded-circle position-absolute top-0 start-100 translate-middle">2</span>
-                  </span>
-                  <span className="text-nowrap">Compare</span>
-                </Link>
-                <Link href="/cart" className="d-flex align-items-center gap-8 text-gray-900 text-nowrap">
-                  <span className="position-relative d-inline-flex">
-                    <i className="ph-bold ph-shopping-cart"></i>
-                    <span className="badge bg-success-600 rounded-circle position-absolute top-0 start-100 translate-middle">2</span>
-                  </span>
-                  <span className="text-nowrap">Cart</span>
-                </Link>
-                <Link href="/account" className="d-flex align-items-center gap-8 text-danger-600 btn bg-danger-50 hover-bg-danger-600 hover-text-white py-10 px-16 rounded-8 text-nowrap">
-                  <i className="ph-bold ph-user"></i>
-                  <span>Account</span>
-                </Link>
-              </div>
-            </nav>
-          </div>
-        </header>
+              )}
+            </div>
+          </header>
         ) : null
       ) : (
-        // Classic simple header: top red bar + logo/search/user pill
+        // CLASSIC HEADER (giữ cấu trúc cũ, nhưng không jQuery)
         <>
-          {/* Top thin red bar (index style) */}
           {showClassicTopBar && (
-          <div className="header-top bg-main-600 flex-between py-10 d-none d-lg-block">
-            <div className="container">
-              <div className="flex-between flex-wrap gap-16">
-                <ul className="flex-align flex-wrap gap-16">
-                  <li>
-                    <a href="#" className="text-white-6 text-sm hover-text-white flex-align gap-8">
-                      <i className="ph-bold ph-storefront"></i>
-                      Truy cập bán hàng
-                    </a>
-                  </li>
-                  <li className="text-white-6">•</li>
-                  <li>
-                    <a href="#" className="text-white-6 text-sm hover-text-white flex-align gap-8">
-                      <i className="ph-bold ph-hand-heart"></i>
-                      Đăng ký đối tác
-                    </a>
-                  </li>
-                  <li className="text-white-6">•</li>
-                  <li>
-                    <a href="#" className="text-white-6 text-sm hover-text-white flex-align gap-8">
-                      <i className="ph-bold ph-info"></i>
-                      Giới thiệu về Siêu Thị Vina
-                    </a>
-                  </li>
-                  <li className="text-white-6">•</li>
-                  <li>
-                    <a href="#" className="text-white-6 text-sm hover-text-white flex-align gap-8">
-                      <i className="ph-bold ph-headset"></i>
-                      Liên hệ hỗ trợ
-                    </a>
-                  </li>
-                </ul>
-                <ul className="flex-align flex-wrap gap-16">
-                  <li>
-                    <a href="#" className="text-white-6 text-sm hover-text-white flex-align gap-8">
-                      <i className="ph-bold ph-squares-four"></i>
-                      Danh mục
-                    </a>
-                  </li>
-                  <li className="text-white-6">•</li>
-                  <li>
-                    <a href="#" className="text-white-6 text-sm hover-text-white flex-align gap-8">
-                      <i className="ph-bold ph-notepad"></i>
-                      Tra cứu đơn hàng
-                    </a>
-                  </li>
-                  <li className="text-white-6">•</li>
-                  <li>
-                    <a href="/wishlist" className="text-white-6 text-sm hover-text-white flex-align gap-8">
-                      <i className="ph-bold ph-shopping-cart"></i>
-                      Giỏ hàng
-                      <span className="badge bg-success-600 rounded-circle">6</span>
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          )}
-
-
-        <header className="header border-bottom border-neutral-40 pt-14 pb-14">
-          <div className="container">
-            <nav className="header-inner flex-between gap-16">
-              {/* Logo */}
-              <div className="logo">
-                <Link href="/" className="link">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/assets/images/logo/logo_nguyenban.png" alt="Logo" />
-                </Link>
-              </div>
-
-              {/* Search */}
-              <div className="header-menu w-50 d-lg-block d-none">
-                <form action="#" className="position-relative ms-20 w-100 d-md-block d-none">
-                  <input
-                    type="text"
-                    className="form-control fw-medium placeholder-italic shadow-none bg-neutral-30 placeholder-fw-medium placeholder-light py-16 ps-30 pe-60"
-                    placeholder="Tìm kiếm sản phẩm, danh mục hoặc cửa hàng..."
-                  />
-                  <button type="submit" className="position-absolute top-50 translate-middle-y text-main-600 end-0 me-36 text-xl line-height-1">
-                    <i className="ph-bold ph-magnifying-glass"></i>
-                  </button>
-                </form>
-              </div>
-
-              {/* Right user pill */}
-              <div className="header-right flex-align">
-                <div className="on-hover-item nav-menu__item has-submenu header-top__right style-two style-three flex-align flex-wrap d-lg-block d-none">
-                  <a
-                    href="javascript:void(0)"
-                    className="d-flex justify-content-center flex-align align-content-around text-center gap-10 fw-medium text-white py-10 px-20 bg-success-600 rounded-pill line-height-1 hover-bg-success-500 hover-text-white"
-                  >
-                    <span className="line-height-1">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/assets/images/thumbs/flag2.png" className="rounded-circle object-fit-cover" style={{ width: 25, height: 25 }} alt="" />
-                    </span>
-                    lyhuu123
-                  </a>
-                  {/* Dropdown for user */}
-                  <ul className="on-hover-dropdown common-dropdown nav-submenu scroll-sm">
-                    <li className="common-dropdown__item nav-submenu__item">
-                      <Link href="/cart" className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100">
-                        <i className="ph-bold ph-heart text-main-600"></i>
-                        Yêu thích
-                        <span className="badge bg-success-600 rounded-circle ms-8">6</span>
-                      </Link>
-                    </li>
-                    <li className="common-dropdown__item nav-submenu__item">
-                      <Link href="/wishlist" className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100">
-                        <i className="ph-bold ph-user text-main-600"></i>
-                        Tài khoản
-                      </Link>
-                    </li>
-                    <li className="common-dropdown__item nav-submenu__item">
-                      <Link href="/checkout" className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100">
-                        <i className="ph-bold ph-notepad text-main-600"></i>
-                        Đơn hàng của tôi
-                      </Link>
-                    </li>
-                    <li className="common-dropdown__item nav-submenu__item">
-                      <Link href="/checkout" className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100">
-                        <i className="ph-bold ph-sign-out text-main-600"></i>
-                        Đăng xuất
-                      </Link>
-                    </li>
+            <div className="py-10 header-top bg-main-600 d-none d-lg-block">
+              <div className="container">
+                <div className="flex-wrap gap-16 flex-between">
+                  <ul className="flex-wrap gap-16 flex-align">
+                    <li><Link href="#" className="gap-8 text-sm text-white-6 hover-text-white flex-align"><i className="ph-bold ph-storefront"></i> Truy cập bán hàng</Link></li>
+                    <li className="text-white-6">•</li>
+                    <li><Link href="#" className="gap-8 text-sm text-white-6 hover-text-white flex-align"><i className="ph-bold ph-hand-heart"></i> Đăng ký đối tác</Link></li>
+                    <li className="text-white-6">•</li>
+                    <li><Link href="#" className="gap-8 text-sm text-white-6 hover-text-white flex-align"><i className="ph-bold ph-info"></i> Giới thiệu về Siêu Thị Vina</Link></li>
+                    <li className="text-white-6">•</li>
+                    <li><Link href="#" className="gap-8 text-sm text-white-6 hover-text-white flex-align"><i className="ph-bold ph-headset"></i> Liên hệ hỗ trợ</Link></li>
+                  </ul>
+                  <ul className="flex-wrap gap-16 flex-align">
+                    <li><Link href="#" className="gap-8 text-sm text-white-6 hover-text-white flex-align"><i className="ph-bold ph-squares-four"></i> Danh mục</Link></li>
+                    <li className="text-white-6">•</li>
+                    <li><Link href="#" className="gap-8 text-sm text-white-6 hover-text-white flex-align"><i className="ph-bold ph-notepad"></i> Tra cứu đơn hàng</Link></li>
+                    <li className="text-white-6">•</li>
+                    <li><Link href="/wishlist" className="gap-8 text-sm text-white-6 hover-text-white flex-align"><i className="ph-bold ph-shopping-cart"></i> Giỏ hàng <span className="badge bg-success-600 rounded-circle">6</span></Link></li>
                   </ul>
                 </div>
-                <button type="button" className="toggle-mobileMenu d-lg-none ms-3n text-gray-800 text-4xl d-flex">
-                  <i className="ph ph-list"></i>
-                </button>
               </div>
-            </nav>
-          </div>
-        </header>
+            </div>
+          )}
+
+          <header className="header border-bottom border-neutral-40 pt-14 pb-14">
+            <div className="container">
+              <nav className="gap-16 header-inner flex-between">
+                <div className="logo">
+                  <Link href="/" className="link" aria-label="Home">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/assets/images/logo/logo_nguyenban.png" alt="Logo" />
+                  </Link>
+                </div>
+                <div className="header-menu w-50 d-lg-block d-none">
+                  <div className="relative mx-20">
+                    <SearchBox />
+                  </div>
+                </div>
+                <div className="header-right flex-align">
+                  <div className="d-lg-block d-none position-relative">
+                    <Link
+                      href="/account"
+                      className="gap-10 px-20 py-10 text-center text-white d-flex justify-content-center flex-align fw-medium bg-success-600 rounded-pill hover-bg-success-500"
+                    >
+                      <i className="ph-bold ph-user"></i>
+                      Tài khoản
+                    </Link>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Toggle mobile menu"
+                    className="text-4xl text-gray-800 d-lg-none ms-3n d-flex btn-reset"
+                    onClick={() => setMobileOpen((s) => !s)}
+                  >
+                    <i className="ph ph-list"></i>
+                  </button>
+                </div>
+              </nav>
+              {mobileOpen && (
+                <div className="mt-12 d-lg-none">
+                  <div className="p-16 bg-white border rounded-8">
+                    <ul className="flex flex-col gap-8">
+                      <li><Link href="/" onClick={() => setMobileOpen(false)}>Trang chủ</Link></li>
+                      <li><Link href="/shop" onClick={() => setMobileOpen(false)}>Cửa hàng</Link></li>
+                      <li><Link href="/wishlist" onClick={() => setMobileOpen(false)}>Yêu thích</Link></li>
+                      <li><Link href="/cart" onClick={() => setMobileOpen(false)}>Giỏ hàng</Link></li>
+                      <li className="mt-8"><SearchBox /></li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+          </header>
         </>
       )}
     </>
   );
 }
-

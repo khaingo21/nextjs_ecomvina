@@ -1,0 +1,122 @@
+{
+  "yeuthichs": [{ "id": 1 }, { "id": 2 }],
+
+  "bannerquangcaos": [
+    { "id": 1, "hinhanh": "/assets/images/bg/shopee-06.jpg", "duongdan": "/cart", "tieude": "Banner 1" },
+    { "id": 2, "hinhanh": "/assets/images/bg/shopee-07.jpg", "duongdan": "/checkout", "tieude": "Banner 2" },
+    { "id": 3, "hinhanh": "/assets/images/bg/shopee-2.jpg",  "duongdan": "/product-details-two", "tieude": "Banner 3" },
+    { "id": 4, "hinhanh": "/assets/images/bg/shopee-04.webp","duongdan": "#", "tieude": "Banner 4" },
+    { "id": 5, "hinhanh": "/assets/images/bg/shopee-1.jpg",  "duongdan": "#", "tieude": "Banner 5" }
+  ],
+
+  "danhmucs_selection": [
+    { "id": 1, "ten": "Máy massage", "slug": "may-massage", "hinh": "/assets/images/thumbs/cyber-monday-img1.png" },
+    { "id": 2, "ten": "Điện gia dụng", "slug": "dien-gia-dung", "hinh": "/assets/images/thumbs/cyber-monday-img1.png" },
+    { "id": 3, "ten": "Mẹ & Bé", "slug": "me-be", "hinh": "/assets/images/thumbs/cyber-monday-img1.png" }
+  ],
+
+  "api_sanphams_selection_hot_sales": {
+    "status": true,
+    "data": [
+      {
+        "id": 101,
+        "ten": "Instax Mini 12",
+        "slug": "instax-mini-12",
+        "mediaurl": "/assets/images/thumbs/product-two-img1.png",
+        "selling_price": 300000,
+        "original_price": 450000,
+        "discount_amount": 150000,
+        "discount_type": null,
+        "is_free": false,
+        "rating_average": 4.8,
+        "rating_count": 120
+      },
+      {
+        "id": 102,
+        "ten": "Tai nghe XYZ",
+        "slug": "tai-nghe-xyz",
+        "mediaurl": "/assets/images/thumbs/product-two-img1.png",
+        "selling_price": 500000,
+        "original_price": 650000,
+        "discount_amount": 150000,
+        "discount_type": null,
+        "is_free": false,
+        "rating_average": 4.5,
+        "rating_count": 80
+      }
+    ]
+  },
+
+ 
+  "api_sanphams_selection_recommend": {
+    "status": true,
+    "data": [
+      {
+        "id": 201,
+        "ten": "Kem dưỡng ABC",
+        "slug": "kem-duong-abc",
+        "mediaurl": "/assets/images/thumbs/product-two-img1.png",
+        "gia": {
+          "current": 199000,
+          "before_discount": 249000,
+          "discount_percent": 20
+        },
+        "rating": { "average": 4.6, "count": 37 }
+      },
+      {
+        "id": 202,
+        "ten": "Sữa tắm DEF",
+        "slug": "sua-tam-def",
+        "mediaurl": "/assets/images/thumbs/product-two-img1.png",
+        "gia": {
+          "current": 99000,
+          "before_discount": 0,
+          "discount_percent": 0
+        },
+        "rating": { "average": 4.3, "count": 22 }
+      }
+    ]
+  },
+
+  
+  "api_sanphams_selection_top_categories": {
+    "status": true,
+    "data": [
+      {
+        "id": 2,
+        "ten": "Chăm sóc cá nhân",
+        "slug": "cham-soc-ca-nhan",
+        "sanphams": [
+          {
+            "id": 1,
+            "ten": "Vitamin C 500mg",
+            "slug": "vitamin-c-500mg",
+            "mediaurl": "/assets/images/thumbs/product-two-img1.png",
+            "luotxem": 120,
+            "bienthes": [{ "gia": "34500", "giagiam": "0" }],
+            "danhgias": [{ "diem": 4.5 }]
+          }
+        ]
+      }
+    ]
+  },
+
+  "api_sanphams_selection_best_products": {
+    "status": true,
+    "data": [
+      {
+        "id": 301,
+        "ten": "Máy sấy tóc GHI",
+        "slug": "may-say-toc-ghi",
+        "mediaurl": "/assets/images/thumbs/product-two-img1.png",
+        "selling_price": 259000,
+        "original_price": 299000,
+        "discount_amount": 40000,
+        "discount_type": null,
+        "is_free": false,
+        "rating_average": 4.4,
+        "rating_count": 18
+      }
+    ]
+  }
+}

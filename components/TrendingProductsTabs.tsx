@@ -235,7 +235,7 @@ export default function TrendingProductsTabs() {
 
               <div className="gap-16 flex-align">
                 <a href={viewAllHref} className="text-sm fw-semibold hover-text-decoration-underline">
-                  Xem tất cả
+                  Xem tất cả danh mục
                 </a>
 
                 <ul className={THEME.tabsVariantClass} role="tablist">

@@ -20,30 +20,6 @@ export default function GlobalChrome() {
         </svg>
       </div>
 
-      {/* Search Box */}
-      <form action="#" className="search-box">
-        <button
-          type="button"
-          className="search-box__close position-absolute inset-block-start-0 inset-inline-end-0 m-16 w-48 h-48 border border-gray-100 rounded-circle flex-center text-white hover-text-gray-800 hover-bg-white text-2xl transition-1"
-        >
-          <i className="ph ph-x"></i>
-        </button>
-        <div className="container container-lg">
-          <div className="position-relative">
-            <input
-              type="text"
-              className="form-control py-16 px-24 text-xl rounded-pill pe-64"
-              placeholder="Search for a product or brand"
-            />
-            <button
-              type="submit"
-              className="w-48 h-48 bg-main-600 rounded-circle flex-center text-xl text-white position-absolute top-50 translate-middle-y inset-inline-end-0 me-8"
-            >
-              <i className="ph ph-magnifying-glass"></i>
-            </button>
-          </div>
-        </div>
-      </form>
 
       {/* Mobile Menu (matches index.html) */}
       <div className="mobile-menu scroll-sm d-lg-none d-block">
@@ -60,18 +36,18 @@ export default function GlobalChrome() {
                 <form action="#" className="position-relative w-100">
                   <input
                     type="text"
-                    className="form-control text-sm fw-medium placeholder-italic shadow-none bg-neutral-30 placeholder-fw-medium placeholder-light py-10 ps-20 pe-60"
+                    className="py-10 text-sm shadow-none form-control fw-medium placeholder-italic bg-neutral-30 placeholder-fw-medium placeholder-light ps-20 pe-60"
                     placeholder="Tìm kiếm sản phẩm, danh mục hoặc cửa hàng..."
                   />
                   <button
                     type="submit"
-                    className="position-absolute top-50 translate-middle-y text-main-600 end-0 me-36 text-xl line-height-1"
+                    className="text-xl position-absolute top-50 translate-middle-y text-main-600 end-0 me-36 line-height-1"
                   >
                     <i className="ph-bold ph-magnifying-glass"></i>
                   </button>
                 </form>
               </li>
-              <li className="nav-menu__item pt-10">
+              <li className="pt-10 nav-menu__item">
                 <a href="#" className="nav-menu__link text-heading-two hover-text-main-600">
                   <i className="ph-bold ph-notepad text-main-600"></i> Tra cứu đơn hàng
                 </a>
@@ -96,10 +72,10 @@ export default function GlobalChrome() {
                   <i className="ph-bold ph-chat-dots text-main-600"></i> Liên hệ hỗ trợ
                 </a>
               </li>
-              <li className="nav-menu__item pt-10">
+              <li className="pt-10 nav-menu__item">
                 <a
                   href="javascript:void(0)"
-                  className="d-flex justify-content-center align-content-around text-center gap-10 fw-medium text-white py-14 px-24 bg-main-600 rounded-pill line-height-1 hover-bg-main-50 hover-text-main-600"
+                  className="gap-10 px-24 text-center text-white d-flex justify-content-center align-content-around fw-medium py-14 bg-main-600 rounded-pill line-height-1 hover-bg-main-50 hover-text-main-600"
                 >
                   <span className="d-lg-none d-flex line-height-1">
                     <i className="ph-bold ph-user"></i>
@@ -107,10 +83,10 @@ export default function GlobalChrome() {
                   Đăng nhập / Đăng ký
                 </a>
               </li>
-              <li className="on-hover-item nav-menu__item has-submenu pt-10">
+              <li className="pt-10 on-hover-item nav-menu__item has-submenu">
                 <a
                   href="javascript:void(0)"
-                  className="d-flex justify-content-center flex-align align-content-around text-center gap-10 fw-medium text-white py-10 px-20 bg-success-600 rounded-pill line-height-1 hover-bg-success-500"
+                  className="gap-10 px-20 py-10 text-center text-white d-flex justify-content-center flex-align align-content-around fw-medium bg-success-600 rounded-pill line-height-1 hover-bg-success-500"
                 >
                   <span className="d-lg-none d-flex line-height-1">
                     <img
