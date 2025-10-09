@@ -25,10 +25,27 @@ export default function FeaturedProductsSection() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(
-          `${API}/api/sanphams-selection?selection=best_products&per_page=8`,
-          { headers: { Accept: "application/json" } }
-        );
+        // Tránh fetch khi chạy trực tiếp file:// (mở file build từ ổ đĩa)
+        if (typeof window !== "undefined" && window.location.protocol === "file:") {
+          console.warn("Skip fetch on file:// protocol. Set NEXT_PUBLIC_SERVER_API hoặc chạy Next server.");
+          setItems([]);
+          return;
+        }
+
+        // Chuẩn hoá URL và thêm timeout an toàn
+        const base = (API || "").replace(/\/$/, "");
+        const url = `${base}/api/sanphams-selection?selection=best_products&per_page=8`;
+        const ctrl = new AbortController();
+        const timeout = setTimeout(() => ctrl.abort(), 10000); // 10s
+
+        const res = await fetch(url, {
+          headers: { Accept: "application/json" },
+          mode: "cors",
+          signal: ctrl.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json(); // { status, message, data: Prod[] }
         setItems(Array.isArray(json?.data) ? json.data : []);
       } catch (e) {
