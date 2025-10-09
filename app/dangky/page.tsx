@@ -4,6 +4,7 @@ import React, { useState, ChangeEvent, FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { api } from "../../lib/api";
+import AuthFooter from "@/components/AuthFooter";
 
 export default function Page() {
     // Đơn giản theo flow giống ảnh: đăng ký bằng số điện thoại
@@ -238,20 +239,12 @@ export default function Page() {
                 </div>
             </section>
 
-            {/* Footer bar */}
-            <footer className="border-top" style={{ background: '#f7f7f7', borderTopColor: '#e6e6e6', position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 999, boxShadow: '0 -4px 12px rgba(0,0,0,0.06)' }}>
-                <div className="container container-lg py-12">
-                    <div className="text-center" style={{ color: '#555', fontSize: 13 }}>
-                        Siêu Thị Vina © {new Date().getFullYear()}. All Rights Reserved
-                    </div>
-                    <div className="d-flex flex-center gap-10 mt-6">
-                        <span className="px-12 py-6 rounded-8 border bg-white" style={{ fontSize: 12, borderColor: '#ddd' }}>Apple Pay</span>
-                        <span className="px-12 py-6 rounded-8 border bg-white" style={{ fontSize: 12, borderColor: '#ddd' }}>VISA</span>
-                        <span className="px-12 py-6 rounded-8 border bg-white" style={{ fontSize: 12, borderColor: '#ddd' }}>Mastercard</span>
-                        <span className="px-12 py-6 rounded-8 border bg-white" style={{ fontSize: 12, borderColor: '#ddd' }}>ShopeePay</span>
-                    </div>
-                </div>
-            </footer>
+            <AuthFooter />
+            <style jsx global>{`
+              :root, html, body { background: #fff !important; }
+              .bg-overlay::before { display: none !important; }
+              .gradient-shadow::before, .gradient-shadow::after { display: none !important; }
+            `}</style>
             <style jsx>{`
               .social-btn strong {
                 display: inline-block !important;

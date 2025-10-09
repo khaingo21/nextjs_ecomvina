@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { api, getTokenFromResponse, type LoginResponse } from "../../lib/api";
 import { useRouter } from "next/navigation";
+import AuthFooter from "@/components/AuthFooter";
 
 export default function Page() {
   const [form, setForm] = useState({ identifier: "", password: "" });
@@ -207,18 +208,13 @@ export default function Page() {
         </div>
       </section>
 
-      {/* Footer nhẹ, tái sử dụng phong cách trang đăng ký */}
-      <footer
-        className="border-top"
-        style={{ background: "#f7f7f7", borderTopColor: "#e6e6e6", position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 999 }}
-      >
-        <div className="container container-lg py-12">
-          <div className="text-center" style={{ color: "#555", fontSize: 13 }}>
-            Siêu Thị Vina © {new Date().getFullYear()}. All Rights Reserved
-          </div>
-        </div>
-      </footer>
+      <AuthFooter />
 
+      <style jsx global>{`
+        :root, html, body { background: #fff !important; }
+        .bg-overlay::before { display: none !important; }
+        .gradient-shadow::before, .gradient-shadow::after { display: none !important; }
+      `}</style>
       <style jsx>{`
         .social-btn strong {
           display: inline-block !important;
