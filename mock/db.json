@@ -1,20 +1,73 @@
 {
-  "yeuthichs": [{ "id": 1 }, { "id": 2 }],
-
+  "yeuthichs": [
+    {
+      "id": 1
+    },
+    {
+      "id": 2
+    }
+  ],
+  "users": [
+    {
+      "id": 1760033825024,
+      "name": "Ngô Gia Khải",
+      "email": "ngokhai244@gmail.com",
+      "phone": "0765364451",
+      "password": "123456"
+    }
+  ],
   "bannerquangcaos": [
-    { "id": 1, "hinhanh": "/assets/images/bg/shopee-06.jpg", "duongdan": "/cart", "tieude": "Banner 1" },
-    { "id": 2, "hinhanh": "/assets/images/bg/shopee-07.jpg", "duongdan": "/checkout", "tieude": "Banner 2" },
-    { "id": 3, "hinhanh": "/assets/images/bg/shopee-2.jpg",  "duongdan": "/product-details-two", "tieude": "Banner 3" },
-    { "id": 4, "hinhanh": "/assets/images/bg/shopee-04.webp","duongdan": "#", "tieude": "Banner 4" },
-    { "id": 5, "hinhanh": "/assets/images/bg/shopee-1.jpg",  "duongdan": "#", "tieude": "Banner 5" }
+    {
+      "id": 1,
+      "hinhanh": "/assets/images/bg/shopee-06.jpg",
+      "duongdan": "/cart",
+      "tieude": "Banner 1"
+    },
+    {
+      "id": 2,
+      "hinhanh": "/assets/images/bg/shopee-07.jpg",
+      "duongdan": "/checkout",
+      "tieude": "Banner 2"
+    },
+    {
+      "id": 3,
+      "hinhanh": "/assets/images/bg/shopee-2.jpg",
+      "duongdan": "/product-details-two",
+      "tieude": "Banner 3"
+    },
+    {
+      "id": 4,
+      "hinhanh": "/assets/images/bg/shopee-04.webp",
+      "duongdan": "#",
+      "tieude": "Banner 4"
+    },
+    {
+      "id": 5,
+      "hinhanh": "/assets/images/bg/shopee-1.jpg",
+      "duongdan": "#",
+      "tieude": "Banner 5"
+    }
   ],
-
   "danhmucs_selection": [
-    { "id": 1, "ten": "Máy massage", "slug": "may-massage", "hinh": "/assets/images/thumbs/cyber-monday-img1.png" },
-    { "id": 2, "ten": "Điện gia dụng", "slug": "dien-gia-dung", "hinh": "/assets/images/thumbs/cyber-monday-img1.png" },
-    { "id": 3, "ten": "Mẹ & Bé", "slug": "me-be", "hinh": "/assets/images/thumbs/cyber-monday-img1.png" }
+    {
+      "id": 1,
+      "ten": "Máy massage",
+      "slug": "may-massage",
+      "hinh": "/assets/images/thumbs/cyber-monday-img1.png"
+    },
+    {
+      "id": 2,
+      "ten": "Điện gia dụng",
+      "slug": "dien-gia-dung",
+      "hinh": "/assets/images/thumbs/cyber-monday-img1.png"
+    },
+    {
+      "id": 3,
+      "ten": "Mẹ & Bé",
+      "slug": "me-be",
+      "hinh": "/assets/images/thumbs/cyber-monday-img1.png"
+    }
   ],
-
   "api_sanphams_selection_hot_sales": {
     "status": true,
     "data": [
@@ -46,8 +99,6 @@
       }
     ]
   },
-
- 
   "api_sanphams_selection_recommend": {
     "status": true,
     "data": [
@@ -61,7 +112,10 @@
           "before_discount": 249000,
           "discount_percent": 20
         },
-        "rating": { "average": 4.6, "count": 37 }
+        "rating": {
+          "average": 4.6,
+          "count": 37
+        }
       },
       {
         "id": 202,
@@ -73,12 +127,13 @@
           "before_discount": 0,
           "discount_percent": 0
         },
-        "rating": { "average": 4.3, "count": 22 }
+        "rating": {
+          "average": 4.3,
+          "count": 22
+        }
       }
     ]
   },
-
-  
   "api_sanphams_selection_top_categories": {
     "status": true,
     "data": [
@@ -93,14 +148,22 @@
             "slug": "vitamin-c-500mg",
             "mediaurl": "/assets/images/thumbs/product-two-img1.png",
             "luotxem": 120,
-            "bienthes": [{ "gia": "34500", "giagiam": "0" }],
-            "danhgias": [{ "diem": 4.5 }]
+            "bienthes": [
+              {
+                "gia": "34500",
+                "giagiam": "0"
+              }
+            ],
+            "danhgias": [
+              {
+                "diem": 4.5
+              }
+            ]
           }
         ]
       }
     ]
   },
-
   "api_sanphams_selection_best_products": {
     "status": true,
     "data": [
