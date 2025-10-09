@@ -1,7 +1,11 @@
 "use client";
 import React from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { useWishlist } from "@/hooks/useWishlist";
-
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Navigation } from "swiper/modules";
+import type { Swiper as SwiperInstance } from "swiper/types";
 
 /** ==== Kiểu chung cho UI card ==== */
 type UIProduct = {
@@ -22,14 +26,11 @@ type HotSalesItem = {
   ten: string;
   slug?: string;
   mediaurl?: string | null;
-
-  // các trường normalize sẵn trong v2:
   original_price?: number | null;
   discount_amount?: number | null;
   selling_price?: number | null;
   discount_type?: string | null; // "Miễn phí"
   is_free?: boolean;
-
   rating_average?: number | null;
   rating_count?: number | null;
 };
@@ -88,7 +89,7 @@ type Props =
   | { variant: "hot"; title?: string; perPage?: number }
   | { variant: "recommend"; title?: string; perPage?: number };
 
-/** ==== Component chính ==== */
+/** ==== Component chính (đã đổi sang Swiper) ==== */
 export default function TopSellingProducts(props: Props) {
   const API = process.env.NEXT_PUBLIC_SERVER_API || "http://127.0.0.1:8000";
   const title =
@@ -99,16 +100,20 @@ export default function TopSellingProducts(props: Props) {
     props.variant === "hot"
       ? `${API}/api/sanphams-selection?selection=hot_sales&per_page=${perPage}`
       : `${API}/api/sanphams-selection?selection=recommend&per_page=${perPage}`;
-  const viewAllHref =
-  props.variant === "hot"
-    ? "/products?source=hot_sales&sort=popular"
-    : "/products?source=recommend&sort=matches";
 
+  const viewAllHref =
+    props.variant === "hot"
+      ? "/products?source=hot_sales&sort=popular"
+      : "/products?source=recommend&sort=matches";
 
   const [loading, setLoading] = React.useState(true);
   const [items, setItems] = React.useState<UIProduct[]>([]);
   const { isWished, toggle } = useWishlist();
 
+  // Swiper refs
+  const prevRef = React.useRef<HTMLButtonElement | null>(null);
+  const nextRef = React.useRef<HTMLButtonElement | null>(null);
+  const swiperRef = React.useRef<SwiperInstance | null>(null);
 
   React.useEffect(() => {
     let alive = true;
@@ -133,6 +138,18 @@ export default function TopSellingProducts(props: Props) {
     };
   }, [url, props.variant]);
 
+  // Gắn prev/next cho Swiper sau khi dữ liệu sẵn sàng
+  React.useEffect(() => {
+    const s = swiperRef.current;
+    if (!s) return;
+    if (typeof s.params.navigation === "object") {
+      s.params.navigation.prevEl = prevRef.current;
+      s.params.navigation.nextEl = nextRef.current;
+      s.navigation.init();
+      s.navigation.update();
+    }
+  }, [items.length]);
+
   return (
     <section className="pt-20 overflow-hidden top-selling-products">
       <div className="container container-lg">
@@ -143,17 +160,19 @@ export default function TopSellingProducts(props: Props) {
                 <i className="ph-bold ph-fire text-main-600" /> {title}
               </h6>
               <div className="gap-16 flex-align">
-                <a href={viewAllHref}
-                   className="text-sm fw-semibold hover-text-decoration-underline">
+                <Link
+                  href={viewAllHref}
+                  className="text-sm fw-semibold hover-text-decoration-underline"
+                >
                   Xem tất cả
-                </a>
+                </Link>
                 <div className="gap-8 flex-align">
-                  <button type="button" id="top-selling-prev" className="slick-prev slick-arrow">
-                  <i className="ph ph-caret-left"></i>
-                </button>
-                <button type="button" id="top-selling-next" className="slick-next slick-arrow">
-                  <i className="ph ph-caret-right"></i>
-                </button>
+                  <button ref={prevRef} type="button" className="slick-prev slick-arrow" aria-label="Prev">
+                    <i className="ph ph-caret-left"></i>
+                  </button>
+                  <button ref={nextRef} type="button" className="slick-next slick-arrow" aria-label="Next">
+                    <i className="ph ph-caret-right"></i>
+                  </button>
                 </div>
               </div>
             </div>
@@ -164,17 +183,43 @@ export default function TopSellingProducts(props: Props) {
           ) : items.length === 0 ? (
             <div className="p-12 text-white">Không có sản phẩm.</div>
           ) : (
-            <div className="row g-12 top-selling-product-slider arrow-style-two">
+            <Swiper
+              modules={[Autoplay, Navigation]}
+              onSwiper={(s) => {
+                swiperRef.current = s;
+              }}
+              navigation
+              autoplay={{
+                delay: 2500,
+                disableOnInteraction: false,
+                pauseOnMouseEnter: true,
+              }}
+              loop={items.length > 4}
+              speed={500}
+              spaceBetween={12}
+              breakpoints={{
+                0: { slidesPerView: 1 },
+                480: { slidesPerView: 2 },
+                768: { slidesPerView: 3 },
+                1024: { slidesPerView: 5 },
+              }}
+              className="top-selling-product-swiper arrow-style-two"
+            >
               {items.map((p) => {
                 const hasSale =
                   p.isFree ||
                   (typeof p.priceBefore === "number" &&
                     typeof p.price === "number" &&
                     p.priceBefore > p.price);
+
                 return (
-                  <div key={p.id} data-aos="fade-up" data-aos-duration={1000}>
-                    <div className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-10 position-relative transition-2">
-                      <a
+                  <SwiperSlide key={p.id}>
+                    <div
+                      data-aos="fade-up"
+                      data-aos-duration={1000}
+                      className="p-16 bg-white border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-10 position-relative transition-2"
+                    >
+                      <Link
                         href={`/product/${p.slug}`}
                         className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50"
                         style={{ height: "180px" }}
@@ -184,11 +229,15 @@ export default function TopSellingProducts(props: Props) {
                             Miễn phí
                           </span>
                         )}
+
                         {/* ❤️ Wishlist */}
                         <button
                           type="button"
                           aria-label={isWished(p.id) ? "Bỏ yêu thích" : "Yêu thích"}
-                          onClick={(e) => { e.preventDefault(); toggle(p.id); }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toggle(p.id);
+                          }}
                           className={`position-absolute top-8 end-8 w-36 h-36 rounded-circle flex-center
                                       ${isWished(p.id) ? "bg-danger-600 text-white" : "bg-white text-gray-700"}
                                       hover-bg-danger-600 hover-text-white transition-1`}
@@ -197,25 +246,22 @@ export default function TopSellingProducts(props: Props) {
                           <i className={isWished(p.id) ? "ph-fill ph-heart" : "ph ph-heart"} />
                         </button>
 
-                        <img src={p.img} alt={p.name} className="w-auto h-100" />
-                      </a>
+                        <Image src={p.img} alt={p.name} width={220} height={180} className="w-auto h-100" />
+                      </Link>
+
                       <div className="mt-16 product-card__content w-100">
                         <h6 className="mt-12 mb-8 text-lg title fw-semibold">
-                          <a href={`/product/${p.slug}`} className="link text-line-2">
+                          <Link href={`/product/${p.slug}`} className="link text-line-2">
                             {p.name}
-                          </a>
+                          </Link>
                         </h6>
 
                         <div className="gap-6 flex-align">
-                          <span className="text-xs text-gray-500 fw-medium">
-                            {p.ratingAvg ?? "—"}
-                          </span>
+                          <span className="text-xs text-gray-500 fw-medium">{p.ratingAvg ?? "—"}</span>
                           <span className="text-xs text-gray-500 fw-medium">
                             <i className="ph-fill ph-star text-warning-600"></i>
                           </span>
-                          <span className="text-xs text-gray-500 fw-medium">
-                            ({p.ratingCount ?? 0})
-                          </span>
+                          <span className="text-xs text-gray-500 fw-medium">({p.ratingCount ?? 0})</span>
                         </div>
 
                         <div className="my-10 product-card__price">
@@ -238,10 +284,10 @@ export default function TopSellingProducts(props: Props) {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </SwiperSlide>
                 );
               })}
-            </div>
+            </Swiper>
           )}
         </div>
       </div>

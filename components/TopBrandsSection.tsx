@@ -1,7 +1,10 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Navigation } from "swiper/modules";
+import type { Swiper as SwiperInstance } from "swiper/types";
 
 /* =======================
    Types khớp API hot_sales (không any)
@@ -20,7 +23,6 @@ type ApiProduct = {
   bienthes?: Variant[];
   danhgias?: Review[];
   thuonghieu?: Brand;
-  // (có thể có thêm field khác nhưng không bắt buộc ở đây)
 };
 
 type UIProduct = {
@@ -38,10 +40,10 @@ type UIProduct = {
 };
 
 type UIBrand = {
-  brand: string;              // tên thương hiệu
-  sample: UIProduct;          // 1 sản phẩm tiêu biểu để render card
-  productCount: number;       // số sp của brand trong hot_sales
-  score: number;              // điểm dùng để xếp hạng (discount + rating)
+  brand: string;       // tên thương hiệu
+  sample: UIProduct;   // 1 sản phẩm tiêu biểu để render card
+  productCount: number;
+  score: number;       // điểm xếp hạng (discount + rating)
 };
 
 /* =======================
@@ -49,7 +51,10 @@ type UIBrand = {
 ======================= */
 const asNumber = (v: unknown, fallback = 0): number => {
   if (typeof v === "number" && Number.isFinite(v)) return v;
-  if (typeof v === "string") { const n = parseFloat(v); return Number.isFinite(n) ? n : fallback; }
+  if (typeof v === "string") {
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : fallback;
+  }
   return fallback;
 };
 
@@ -87,14 +92,16 @@ const toUIProduct = (p: ApiProduct): UIProduct => {
   };
 };
 
-/* =======================
-   Component (UI giữ nguyên bố cục bên trái)
-======================= */
 export default function TopBrandsSection() {
   const [brands, setBrands] = useState<UIBrand[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   const viewAllHref = "/products?source=hot_sales&sort=popular";
+
+  // Refs cho nav + swiper instance
+  const prevRef = useRef<HTMLButtonElement | null>(null);
+  const nextRef = useRef<HTMLButtonElement | null>(null);
+  const swiperRef = useRef<SwiperInstance | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -103,29 +110,28 @@ export default function TopBrandsSection() {
       .then((r) => r.json() as Promise<{ status: boolean; data: ApiProduct[] }>)
       .then((res) => {
         if (!alive) return;
-        const list = (res?.status && Array.isArray(res.data)) ? res.data : [];
+        const list = res?.status && Array.isArray(res.data) ? res.data : [];
         const ui = list.map(toUIProduct);
 
-        // Group theo thương hiệu, chọn 1 sản phẩm đại diện có discount% cao nhất -> rating cao
+        // Group theo thương hiệu, chọn sample có điểm tốt nhất
         const grouped = new Map<string, UIBrand>();
         for (const p of ui) {
           const key = p.brandName;
+          const score = p.discountPercent * 2 + p.ratingAverage * 10; // ưu tiên giảm giá + rating
           const cur = grouped.get(key);
-          const score = p.discountPercent * 2 + p.ratingAverage * 10; // trọng số: ưu tiên giảm giá + rating
           if (!cur) {
             grouped.set(key, { brand: key, sample: p, productCount: 1, score });
           } else {
-            const better = score > cur.score;
             grouped.set(key, {
               brand: key,
-              sample: better ? p : cur.sample,
+              sample: score > cur.score ? p : cur.sample,
               productCount: cur.productCount + 1,
-              score: better ? score : cur.score,
+              score: Math.max(score, cur.score),
             });
           }
         }
 
-        // Sắp xếp thương hiệu theo score giảm dần, lấy Top 5
+        // Sắp xếp & lấy Top 5
         const top = Array.from(grouped.values())
           .sort((a, b) => b.score - a.score)
           .slice(0, 5);
@@ -133,11 +139,23 @@ export default function TopBrandsSection() {
         setBrands(top);
       })
       .finally(() => alive && setLoading(false));
-      
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, []);
 
-  // Tính % thanh tiến độ dựa vào rating (đẹp & ổn định)
+  // Gắn navigation cho Swiper sau khi instance + buttons sẵn sàng
+  useEffect(() => {
+    const s = swiperRef.current;
+    if (!s) return;
+    if (typeof s.params.navigation === "object") {
+      s.params.navigation.prevEl = prevRef.current;
+      s.params.navigation.nextEl = nextRef.current;
+      s.navigation.init();
+      s.navigation.update();
+    }
+  }, [brands.length]); // khi danh sách đổi, cập nhật lại navigation
+
   const progress = (b: UIBrand) => Math.min(100, Math.round((b.sample.ratingAverage / 5) * 100));
 
   return (
@@ -150,20 +168,25 @@ export default function TopBrandsSection() {
                 <i className="ph-bold ph-storefront text-main-600"></i> Thương hiệu hàng đầu
               </h6>
               <div className="gap-16 flex-align">
-                <Link href={viewAllHref} className="text-sm text-gray-700 fw-semibold hover-text-main-600 hover-text-decoration-underline">
+                <Link
+                  href={viewAllHref}
+                  className="text-sm text-gray-700 fw-semibold hover-text-main-600 hover-text-decoration-underline"
+                >
                   Xem đầy đủ
                 </Link>
                 <div className="gap-8 flex-align">
                   <button
+                    ref={prevRef}
                     type="button"
-                    id="top-brands-prev"
+                    aria-label="Prev"
                     className="text-xl border border-gray-100 slick-prev slick-arrow flex-center rounded-circle hover-border-neutral-600 hover-bg-neutral-600 hover-text-white transition-1"
                   >
                     <i className="ph ph-caret-left"></i>
                   </button>
                   <button
+                    ref={nextRef}
                     type="button"
-                    id="top-brands-next"
+                    aria-label="Next"
                     className="text-xl border border-gray-100 slick-next slick-arrow flex-center rounded-circle hover-border-neutral-600 hover-bg-neutral-600 hover-text-white transition-1"
                   >
                     <i className="ph ph-caret-right"></i>
@@ -176,14 +199,31 @@ export default function TopBrandsSection() {
           {loading ? (
             <div className="py-24 text-center text-gray-500">Đang tải thương hiệu…</div>
           ) : (
-            <div className="row g-12 top-brands-grid">
+            <Swiper
+              modules={[Autoplay, Navigation]}
+              onSwiper={(s) => {
+                swiperRef.current = s;
+              }}
+              navigation   // kích hoạt module Navigation
+              autoplay={{ delay: 2500, disableOnInteraction: false, pauseOnMouseEnter: true }}
+              loop={brands.length > 5}
+              speed={500}
+              spaceBetween={16}
+              breakpoints={{
+                0: { slidesPerView: 1 },
+                480: { slidesPerView: 2 },
+                768: { slidesPerView: 3 },
+                1024: { slidesPerView: 5 },
+              }}
+              className="top-brands-swiper"
+            >
               {brands.map((b, idx) => {
                 const p = b.sample;
                 const showDiscount = p.isDiscounted;
-                const bestSale = idx === 0 && showDiscount; // thẻ "Best Sale" cho brand top 1 nếu có giảm
+                const bestSale = idx === 0 && showDiscount;
 
                 return (
-                  <div className="col-xxl-5th col-xl-5th col-lg-4 col-sm-6" key={`${b.brand}-${p.id}`}>
+                  <SwiperSlide key={`${b.brand}-${p.id}`}>
                     <div className="p-16 border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-16 position-relative transition-2">
                       <Link href={p.href} className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50">
                         {showDiscount && (
@@ -208,18 +248,26 @@ export default function TopBrandsSection() {
 
                       <div className="mt-16 product-card__content w-100">
                         <h6 className="mt-12 mb-8 text-lg title fw-semibold">
-                          <Link href={p.href} className="link text-line-2">{p.name}</Link>
+                          <Link href={p.href} className="link text-line-2">
+                            {p.name}
+                          </Link>
                         </h6>
 
                         <div className="gap-6 flex-align">
                           <span className="text-xs text-gray-500 fw-medium">{p.ratingAverage.toFixed(1)}</span>
-                          <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                          <span className="text-xs fw-medium text-warning-600 d-flex">
+                            <i className="ph-fill ph-star"></i>
+                          </span>
                           <span className="text-xs text-gray-500 fw-medium">({p.ratingCount})</span>
                         </div>
 
                         <div className="gap-4 mt-8 flex-align">
-                          <span className="text-tertiary-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
-                          <span className="text-xs text-gray-500">By {b.brand} • {b.productCount} items</span>
+                          <span className="text-tertiary-600 text-md d-flex">
+                            <i className="ph-fill ph-storefront"></i>
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            By {b.brand} • {b.productCount} items
+                          </span>
                         </div>
 
                         <div className="mt-8">
@@ -227,25 +275,29 @@ export default function TopBrandsSection() {
                             className="h-4 progress w-100 bg-color-three rounded-pill"
                             role="progressbar"
                             aria-label="Top brand rating"
-                            aria-valuenow={progress(b)}
+                            aria-valuenow={Math.round((p.ratingAverage / 5) * 100)}
                             aria-valuemin={0}
                             aria-valuemax={100}
                           >
-                            <div className="progress-bar bg-tertiary-600 rounded-pill" style={{ width: `${progress(b)}%` }}></div>
+                            <div
+                              className="progress-bar bg-tertiary-600 rounded-pill"
+                              style={{ width: `${Math.round((p.ratingAverage / 5) * 100)}%` }}
+                            />
                           </div>
                           <span className="mt-8 text-xs text-gray-900 fw-medium d-block">
                             Rating: {p.ratingAverage.toFixed(1)}/5
                           </span>
                         </div>
 
-                        <div className="my-12 border-gray-100 border-top"></div>
+                        <div className="my-12 border-gray-100 border-top" />
+
                         <div className="mb-10 d-flex justify-content-end">
-                          <a
+                          <Link
                             href={`/products?brand=${encodeURIComponent(b.brand)}&sort=popular`}
                             className="text-xs text-gray-600 hover-text-main-600 hover-text-decoration-underline"
                           >
                             Xem tất cả của {b.brand}
-                          </a>
+                          </Link>
                         </div>
 
                         <div className="my-10 product-card__price">
@@ -255,19 +307,23 @@ export default function TopBrandsSection() {
                             </span>
                           )}
                           <span className="text-heading text-md fw-semibold ms-8">
-                            {p.sellingPrice.toLocaleString("vi-VN")} đ <span className="text-gray-500 fw-normal">/Qty</span>
+                            {p.sellingPrice.toLocaleString("vi-VN")} đ{" "}
+                            <span className="text-gray-500 fw-normal">/Qty</span>
                           </span>
                         </div>
 
-                        <Link href="/cart" className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-pill flex-center fw-medium">
+                        <Link
+                          href="/cart"
+                          className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-pill flex-center fw-medium"
+                        >
                           Add To Cart <i className="ph ph-shopping-cart"></i>
                         </Link>
                       </div>
                     </div>
-                  </div>
+                  </SwiperSlide>
                 );
               })}
-            </div>
+            </Swiper>
           )}
         </div>
       </div>

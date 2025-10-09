@@ -1,6 +1,8 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Navigation } from "swiper/modules";
 
 type Gia = { current: number; before_discount: number | string | null; discount_percent: number };
 type Rating = { average: number; count: number };
@@ -21,6 +23,9 @@ export default function FeaturedProductsSection() {
 
   const API = process.env.NEXT_PUBLIC_SERVER_API || "http://127.0.0.1:8000";
   const viewAllHref = "/products?source=best_products&sort=popular";
+
+  const prevRef = useRef<HTMLButtonElement | null>(null);
+  const nextRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -62,24 +67,24 @@ export default function FeaturedProductsSection() {
                     <i className="ph-bold ph-package text-main-600"></i> Sản phẩm hàng đầu
                   </h6>
                   <div className="gap-16 flex-align">
-                    <a
-                      href={viewAllHref}
-                      className="text-sm text-gray-700 fw-medium hover-text-main-600 hover-text-decoration-underline"
-                    >
+                    <a href={viewAllHref} className="text-sm text-gray-700 fw-medium hover-text-main-600 hover-text-decoration-underline">
                       Xem đầy đủ
                     </a>
+                    {/* Nút điều hướng custom */}
                     <div className="gap-8 flex-align">
                       <button
                         type="button"
-                        id="featured-products-prev"
+                        ref={prevRef}
                         className="text-xl border border-gray-100 slick-prev slick-arrow flex-center rounded-circle hover-border-neutral-600 hover-bg-neutral-600 hover-text-white transition-1"
+                        aria-label="Prev"
                       >
                         <i className="ph ph-caret-left"></i>
                       </button>
                       <button
                         type="button"
-                        id="featured-products-next"
+                        ref={nextRef}
                         className="text-xl border border-gray-100 slick-next slick-arrow flex-center rounded-circle hover-border-neutral-600 hover-bg-neutral-600 hover-text-white transition-1"
+                        aria-label="Next"
                       >
                         <i className="ph ph-caret-right"></i>
                       </button>
@@ -90,9 +95,33 @@ export default function FeaturedProductsSection() {
 
               {loading && <div className="p-12 text-gray-600">Đang tải...</div>}
 
-              {!loading && (
-                <div className="row g-3">
-                  {grid.map((p, i) => {
+              {!loading && items.length > 0 && (
+                <Swiper
+                  modules={[Autoplay, Navigation]}
+                  autoplay={{ delay: 2500, disableOnInteraction: false, pauseOnMouseEnter: true }}
+                  loop={items.length > 4}
+                  speed={500}
+                  spaceBetween={16}
+                  navigation={{
+                    prevEl: prevRef.current,
+                    nextEl: nextRef.current,
+                  }}
+                  onBeforeInit={(swiper) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    (swiper.params.navigation as any).prevEl = prevRef.current;
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    (swiper.params.navigation as any).nextEl = nextRef.current;
+                  }}
+                  breakpoints={{
+                    0: { slidesPerView: 1 },
+                    480: { slidesPerView: 2 },
+                    768: { slidesPerView: 2 },
+                    1024:{ slidesPerView: 3 },
+                    1280:{ slidesPerView: 4 },
+                  }}
+                  className="featured-products-swiper"
+                >
+                  {items.slice(0, 8).map((p) => {
                     const price = p.gia?.current ?? null;
                     const before = p.gia?.before_discount ?? null;
                     const hasDiscount =
@@ -102,24 +131,19 @@ export default function FeaturedProductsSection() {
                     const external = /^https?:\/\//i.test(img);
 
                     return (
-                      <div className="col-md-6" key={p.id}>
-                        <div className="gap-16 p-16 border border-gray-100 product-card d-flex hover-border-main-600 rounded-16 position-relative transition-2">
+                      <SwiperSlide key={p.id}>
+                        <div className="gap-16 p-16 border border-gray-100 product-card d-flex hover-border-main-600 rounded-16 position-relative transition-2 h-100">
                           <a
                             href={`/product/${p.slug || p.id}`}
-                            className="flex-shrink-0 p-24 product-card__thumb flex-center h-unset rounded-8 position-relative w-unset"
+                            className="flex-shrink-0 p-24 product-card__thumb flex-center rounded-8 position-relative"
+                            style={{ width: 200 }}
                           >
                             {hasDiscount && (
                               <span className="px-8 py-4 text-sm text-white product-card__badge bg-primary-600 position-absolute inset-inline-start-0 inset-block-start-0">
                                 Best Sale
                               </span>
                             )}
-                            <Image
-                              src={img}
-                              alt={p.ten}
-                              width={180}
-                              height={180}
-                              unoptimized={external} // khỏi cần cấu hình images.domains
-                            />
+                            <Image src={img} alt={p.ten} width={180} height={180} unoptimized={external} />
                           </a>
 
                           <div className="my-20 product-card__content w-100 flex-grow-1">
@@ -145,9 +169,7 @@ export default function FeaturedProductsSection() {
                               <span className="text-main-two-600 text-md d-flex">
                                 <i className="ph-fill ph-storefront"></i>
                               </span>
-                              <span className="text-xs text-gray-500">
-                                By {p.store?.name ?? "—"}
-                              </span>
+                              <span className="text-xs text-gray-500">By {p.store?.name ?? "—"}</span>
                             </div>
 
                             <div className="my-20 product-card__price">
@@ -162,8 +184,7 @@ export default function FeaturedProductsSection() {
                                 </>
                               ) : (
                                 <span className="text-heading text-md fw-semibold">
-                                  {fmt(price) ?? "Liên hệ"}{" "}
-                                  <span className="text-gray-500 fw-normal">/Qty</span>
+                                  {fmt(price) ?? "Liên hệ"} <span className="text-gray-500 fw-normal">/Qty</span>
                                 </span>
                               )}
                             </div>
@@ -176,10 +197,10 @@ export default function FeaturedProductsSection() {
                             </a>
                           </div>
                         </div>
-                      </div>
+                      </SwiperSlide>
                     );
                   })}
-                </div>
+                </Swiper>
               )}
             </div>
           </div>
