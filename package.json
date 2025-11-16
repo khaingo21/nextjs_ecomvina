@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "dev:be": "cross-env NEXT_PUBLIC_SERVER_API=http://127.0.0.1:8000 next dev --turbopack",
-    "dev:mock": "cross-env NEXT_PUBLIC_SERVER_API=http://127.0.0.1:4000 next dev --turbopack",
-    "build:be": "cross-env NEXT_PUBLIC_SERVER_API=http://127.0.0.1:8000 next build --turbopack",
-    "build:mock": "cross-env NEXT_PUBLIC_SERVER_API=http://127.0.0.1:4000 next build --turbopack",
+    "dev:be": "cross-env NEXT_PUBLIC_SERVER_API=http://localhost:8000 next dev --turbopack",
+    "dev:mock": "cross-env NEXT_PUBLIC_SERVER_API=http://localhost:4000 next dev --turbopack",
+    "build:be": "cross-env NEXT_PUBLIC_SERVER_API=http://localhost:8000 next build --turbopack",
+    "build:mock": "cross-env NEXT_PUBLIC_SERVER_API=http://localhost:4000 next build --turbopack",
     "start": "next start",
     "mock": "node ./mock/server.mjs",
     "lint": "eslint"
@@ -16,14 +16,18 @@
     "@types/react-slick": "^0.23.13",
     "aos": "^2.3.4",
     "canvas": "^3.2.0",
+    "framer-motion": "^12.23.24",
     "jquery": "^3.7.1",
+    "multer": "^2.0.2",
     "next": "15.5.4",
+    "qs": "^6.14.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-slick": "^0.31.0",
     "slick-carousel": "^1.8.1",
     "swiper": "^12.0.2",
     "tailwind-scrollbar-hide": "^4.0.0",
+    "vnpay": "^2.4.4",
     "wow": "^0.0.7"
   },
   "devDependencies": {

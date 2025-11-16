@@ -1,661 +1,456 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import TopSellingProducts from "@/components/TopSellingProducts";//hot_sales
-import TrendingProductsTabs from "@/components/TrendingProductsTabs";//top_categories
-import TopBrandsSection from "@/components/TopBrandsSection";//top_brands
-import FeaturedProductsSection from "@/components/FeaturedProductsSection";//best_products
-// import SearchBox from "@/components/SearchBox";
+import React, { useEffect, useState, useRef } from "react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Navigation } from "swiper/modules";
+import type { Swiper as SwiperType } from "swiper";
+import FeaturedProductsSection from "@/components/FeaturedProductsSection"; // best_products
+import LatestProductsSection from "@/components/LatestProductsSection";
+import MostInterestedSection from "@/components/MostInterestedSection";
 import BannerTwo from "@/components/BannerTwo";
 import FeatureSection from "@/components/FeatureSection";
 import FullHeader from "@/components/FullHeader";
+import PreloaderFix from "@/components/PreloaderFix";
+import OverlayLayers from "@/components/OverlayLayers";
+import ScrollTopProgress from "@/components/ScrollTopProgress";
+import SearchOverlay from "@/components/SearchOverlay";
+import MobileMenu from "@/components/MobileMenu";
+import Reveal from "@/components/Reveal";
+import { motion } from "framer-motion";
+import TopDealsSection from "@/components/TopDealsSection";
+import GiftEventsSection from "@/components/GiftEventsSection";
+import TopBrandsSection from "@/components/TopBrandsSection";
 
+// types for jQuery-like object (minimal)
+// Loại bỏ các kiểu tạm cho jQuery slick (đã chuyển sang Swiper)
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // Helper: lấy biến môi trường cho client
-  const API_BASE =
-    process.env.NEXT_PUBLIC_SERVER_API ??
-    "http://127.0.0.1:8000"; // fallback
-    // "http://127.0.0.1:4000"; // test mock
+  // UI state: overlays
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // === INIT SLIDERS (jQuery/Slick) - KHÔNG any, KHÔNG mở rộng window ===
-  useEffect(() => {
-    if (!mounted || typeof window === "undefined") return;
+  // (Không còn dùng API fetch hay jQuery slick ở Top Deals)
 
-    // Lấy $ và AOS từ window nhưng KHÔNG dùng any
-    type JQNode = {
-      length: number;
-      hasClass?: (c: string) => boolean;
-      slick?: (...args: unknown[]) => unknown;
-    };
-    type WinPick = {
-      $?: (selector: string | Element) => unknown;
-      AOS?: { init?: (...args: unknown[]) => unknown };
-    };
-    const w = window as unknown as WinPick;
-    const $ = w.$;
-    if (!$) return; // không có jQuery thì bỏ qua
 
-    // Cast 1 lần khi dùng
-    const sel = (s: string | Element) => ($!(s) as unknown) as JQNode;
+  // =========== Swiper Settings =============
+  // Ref Swiper với kiểu rõ ràng để tránh 'any'
+  const swiperRef = useRef<SwiperType | null>(null);
 
-    try {
-      // 1) .brand-slider
-      const brand = sel(".brand-slider");
-      if (brand.length && !brand.hasClass?.("slick-initialized")) {
-        brand.slick?.({
-          slidesToShow: 8,
-          slidesToScroll: 1,
-          autoplay: true,
-          autoplaySpeed: 2000,
-          dots: false,
-          pauseOnHover: true,
-          arrows: true,
-          draggable: true,
-          rtl: document.documentElement.getAttribute("dir") === "rtl",
-          speed: 900,
-          infinite: true,
-          nextArrow: "#brand-next",
-          prevArrow: "#brand-prev",
-          responsive: [
-            { breakpoint: 1599, settings: { slidesToShow: 7, arrows: false } },
-            { breakpoint: 1399, settings: { slidesToShow: 6, arrows: false } },
-            { breakpoint: 992, settings: { slidesToShow: 5, arrows: false } },
-            { breakpoint: 575, settings: { slidesToShow: 4, arrows: false } },
-            { breakpoint: 424, settings: { slidesToShow: 3, arrows: false } },
-            { breakpoint: 359, settings: { slidesToShow: 2, arrows: false } },
-          ],
-        });
-      }
 
-      // 2) .featured-product-slider
-      const featured = sel(".featured-product-slider");
-      if (featured.length && !featured.hasClass?.("slick-initialized")) {
-        featured.slick?.({
-          slidesToShow: 2,
-          slidesToScroll: 1,
-          autoplay: true,
-          autoplaySpeed: 2000,
-          dots: false,
-          pauseOnHover: true,
-          arrows: true,
-          draggable: true,
-          rtl: document.documentElement.getAttribute("dir") === "rtl",
-          speed: 900,
-          infinite: true,
-          nextArrow: "#featured-products-next",
-          prevArrow: "#featured-products-prev",
-          responsive: [{ breakpoint: 991, settings: { slidesToShow: 1, arrows: false } }],
-        });
-      }
-
-      // 3) .top-selling-product-slider
-      const initTopSelling = () => {
-        const wrap = sel(".top-selling-product-slider");
-        if (!wrap.length) return false;
-        if (wrap.hasClass?.("slick-initialized")) return true;
-        wrap.slick?.({
-          slidesToShow: 5,
-          slidesToScroll: 1,
-          autoplay: true,
-          autoplaySpeed: 2500,
-          dots: false,
-          pauseOnHover: true,
-          arrows: true,
-          draggable: true,
-          rtl: document.documentElement.getAttribute("dir") === "rtl",
-          speed: 800,
-          infinite: true,
-          nextArrow: "#top-selling-next",
-          prevArrow: "#top-selling-prev",
-          responsive: [
-            { breakpoint: 1599, settings: { slidesToShow: 4 } },
-            { breakpoint: 1199, settings: { slidesToShow: 3 } },
-            { breakpoint: 991, settings: { slidesToShow: 2, arrows: false } },
-            { breakpoint: 575, settings: { slidesToShow: 1, arrows: false } },
-          ],
-        });
-        // setPosition an toàn
-        try {
-          (wrap.slick as unknown as (arg: string) => void)?.("setPosition");
-        } catch {}
-        return true;
-      };
-
-      if (!initTopSelling()) {
-        let tries = 0;
-        const t = setInterval(() => {
-          tries++;
-          const ok = initTopSelling();
-          if (ok || tries > 12) clearInterval(t);
-        }, 200);
-      }
-
-      // Resize -> setPosition
-      window.addEventListener("resize", () => {
-        try {
-          (sel(".top-selling-product-slider").slick as unknown as (arg: string) => void)?.(
-            "setPosition"
-          );
-        } catch {}
-      });
-
-      // AOS fallback
-      const AOS = w.AOS;
-      if (AOS?.init) {
-        AOS.init({ once: true, duration: 800, easing: "ease-out" });
-      } else {
-        document.querySelectorAll("[data-aos]").forEach((el) => {
-          el.classList.add("aos-init", "aos-animate");
-        });
-      }
-    } catch {}
-  }, [mounted]);
-
-  // === FETCH API ví dụ (dùng NEXT_PUBLIC_SERVER_API) ===
+  // Body scroll lock when overlays open
   useEffect(() => {
     if (!mounted) return;
-    (async () => {
-      try {
-        const res = await fetch(
-          `${API_BASE}/api/sanphams-selection?selection=hot_sales&per_page=10`,
-          { headers: { Accept: "application/json" } }
-        );
-        const json = await res.json();
-        // TODO: setState json.data nếu cần
-        console.log("hot_sales:", json);
-      } catch (e) {
-        console.error("Fetch hot_sales failed", e);
+    const lock = isSearchOpen || isMobileMenuOpen;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = lock ? "hidden" : prev || "";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mounted, isSearchOpen, isMobileMenuOpen]);
+
+  // Delegated open triggers (optional)
+  useEffect(() => {
+    if (!mounted) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Element | null;
+      if (!target) return;
+      if (target.closest?.(".js-open-search")) {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      } else if (target.closest?.(".js-open-menu")) {
+        e.preventDefault();
+        setIsMobileMenuOpen(true);
       }
-    })();
-  }, [mounted, API_BASE]);
+    };
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [mounted]);
+
+  // Dọn cảnh báo: loại bỏ BRANDS, handleImgError, cartCount vì không dùng trong trang này
 
   if (!mounted) return null;
+
   return (
     <>
+      {/* Overlay, preloader, scroll, search, mobile menu giữ nguyên, KHÔNG render logo/tìm kiếm/tài khoản ở đầu trang nữa */}
+      <PreloaderFix />
+      <OverlayLayers
+        showOverlay={isSearchOpen}
+        showSideOverlay={isMobileMenuOpen}
+        onOverlayClick={() => setIsSearchOpen(false)}
+        onSideOverlayClick={() => setIsMobileMenuOpen(false)}
+      />
+      <ScrollTopProgress />
+      <SearchOverlay visible={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      <MobileMenu visible={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
 
-      {/* ======================= Middle Top Mobile Start ========================= */}
-      {/* <div className="py-10 header-top bg-main-600 flex-between d-block d-lg-none">
-        <div className="container container-lg">
-          <div className="gap-8 flex-between">
+      {/* Chỉ render header template sau thanh top đỏ */}
+      <FullHeader showClassicTopBar={true} showTopNav={false} showCategoriesBar={false} />
 
-            <ul className="flex-wrap gap-16 header-top__right flex-align">
-              <li className="flex-shrink-0 d-block on-hover-item text-white-6">
-                <button className="gap-4 text-sm category__button flex-align text-white-6 rounded-top">
-                  <span className="text-sm icon "><i className="ph ph-squares-four"></i></span>
-                  <span className="">Danh mục</span>
-                </button>
+      <main id="main-content" role="main" className="home-two">
 
-                <div className="p-0 responsive-dropdown on-hover-dropdown common-dropdown nav-submenu submenus-submenu-wrapper">
-                  <button
-                    className="mt-4 text-xl close-responsive-dropdown rounded-circle position-absolute inset-inline-end-0 inset-block-start-0 me-8 d-lg-none d-flex">
-                    <i className="ph ph-x"></i> </button>
-                  <div className="px-16 logo d-lg-none d-block">
-                    <a href="index.html" className="link">
-                      <img src="/assets/images/logo/logo_nguyenban.png" alt="Logo" />
-                    </a>
-                  </div>
-                  <ul className="p-0 py-8 overflow-y-auto scroll-sm w-300 max-h-400">
-                    <li className="has-submenus-submenu">
-                      <a href="product-details-two.html"
-                        className="gap-8 px-16 py-12 text-gray-500 text-15 flex-align rounded-0">
-                        <span className="text-xl d-flex"><i className="ph ph-carrot"></i></span>
-                        <span>Vegetables &amp; Fruit</span>
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-              </li>
+        {/* ============================ Banner Section =============================== */}
+        <BannerTwo />
+        {/* ============================ Banner Section End =============================== */}
 
-            </ul>
-            <ul className="flex-wrap gap-16 header-top__right flex-align justify-content-end">
+        {/* ============================ promotional banner Start ========================== */}
+        <FeatureSection />
+        {/* ============================ promotional banner End ========================== */}
 
-              <li className="flex-align">
-                <a href="wishlist.html" className="text-sm text-white-6 hover-text-white">
-                  <i className="ph-bold ph-shopping-cart"></i>
-                  Giỏ hàng
-                  <span className="badge bg-success-600 rounded-circle">6</span>
+        {/* ========================= TOP DEALS * SIÊU RẺ ================================ */}
+        
+        <TopDealsSection title="Top deal • Siêu rẻ" perPage={10} />
+        {/* ========================= TOP DEALS * SIÊU RẺ End ================================ */}
+
+        {/* ========================= QUÀ TẶNG ================================ */}
+        <GiftEventsSection />
+        {/* ========================= QUÀ TẶNG End ================================ */}
+
+        {/* ========================= 3 Small Banners ============================== */}
+        <div className="container mt-10 container-lg mb-70">
+          <div className="row">
+            <div className="col-lg-4">
+              <div className="rounded-5">
+                <a href="#" className="p-0 m-0">
+                  <img
+                    src="/assets/images/bg/shopee-04.webp"
+                    alt="Banner 1"
+                    className="banner-img w-100 h-100 object-fit-cover rounded-10"
+                  />
                 </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div> */}
-      {/* ======================= Middle Top End ========================= */}
-
-      {/* ======================= Middle Top Start ========================= */}
-      <div className="py-10 header-top bg-main-600 flex-between d-none d-lg-block pz100">
-        <div className="container container-lg">
-          <div className="flex-wrap gap-8 flex-between">
-
-            <ul className="flex-wrap gap-16 header-top__right flex-align">
-              <li className="flex-align">
-                <a href="" className="text-sm text-center text-white-6 hover-text-white"><i
-                  className="ph-bold ph-storefront text-white-6"></i> Truy cập bán hàng</a>
-              </li>
-              <li className="flex-align">
-                <a href="" className="text-sm text-white-6 hover-text-white"><i className="ph-bold ph-handshake text-white-6"></i>
-                  Đăng ký đối tác</a>
-              </li>
-              <li className="flex-align">
-                <a href="#" className="text-sm text-white-6 hover-text-white pe-1"><i className="ph-bold ph-info text-white-6"></i>
-                  Giới thiệu về Siêu Thị Vina </a>
-              </li>
-              <li className="flex-align">
-                <a href="contact.html" className="text-sm text-white-6 hover-text-white">
-                  <i className="ph-bold ph-chat-dots"></i>
-                  Liên hệ hỗ trợ
-                </a>
-              </li>
-
-            </ul>
-
-            <ul className="flex-wrap gap-16 header-top__right flex-align">
-              <li className="flex-shrink-0 d-block on-hover-item text-white-6">
-                <button className="gap-4 text-sm category__button flex-align text-white-6 rounded-top">
-                  <span className="text-sm icon d-md-flex d-none"><i className="ph ph-squares-four"></i></span>
-                  <span className="d-sm-flex d-none">Danh mục</span>
-                </button>
-
-                <div className="p-0 responsive-dropdown on-hover-dropdown common-dropdown nav-submenu submenus-submenu-wrapper">
-                  <button
-                    className="mt-4 text-xl close-responsive-dropdown rounded-circle position-absolute inset-inline-end-0 inset-block-start-0 me-8 d-lg-none d-flex">
-                    <i className="ph ph-x"></i> </button>
-                  <div className="px-16 logo d-lg-none d-block">
-                    <a href="index.html" className="link">
-                      <img src="/assets/images/logo/logo_nguyenban.png" alt="Logo" />
-                    </a>
-                  </div>
-                  <ul className="p-0 py-8 overflow-y-auto scroll-sm w-300 max-h-400">
-                    <li className="has-submenus-submenu">
-                      <a href="javascript:void(0)" className="gap-8 px-16 py-12 text-gray-500 text-15 flex-align rounded-0">
-                        <span className="text-xl d-flex"><i className="ph ph-carrot"></i></span>
-                        <span>Vegetables &amp; Fruit</span>
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-
-              </li>
-
-              <li className="flex-align">
-                <a href="javascript:void(0)" className="text-sm text-white-6 hover-text-white">
-                  <i className="ph-bold ph-notepad"></i>
-                  Tra cứu đơn hàng</a>
-              </li>
-
-              <li className="flex-align">
-                <a href="wishlist.html" className="text-sm text-white-6 hover-text-white">
-                  <i className="ph-bold ph-shopping-cart"></i>
-                  Giỏ hàng
-                  <span className="badge bg-success-600 rounded-circle">6</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-      {/* ======================= Middle Top End ========================= */}
-
-      {/* ======================= Middle Header Two Start ========================= */} 
-      <>
-        <FullHeader showTopNav={true} showCategoriesBar={false} />
-      </>
-      {/* ======================= Middle Header Two End ========================= */}
-
-
-      {/* ============================ Banner Section start =============================== */}
-      <BannerTwo />
-      {/* ============================ Banner Section End =============================== */}
-
-      {/* ============================ promotional banner Start ========================== */}
-      <FeatureSection />
-      {/* ============================ promotional banner End ========================== */}
-
-      {/* ========================= Top Selling Products Start ================================ */}
-      
-      <TopSellingProducts variant="hot" title="Top deal • Siêu rẻ" />
-      {/* ========================= Top Selling Products End ================================ */}
-
-      {/* ========================= 3 Small Banners Start ================================ */}
-      <div className="container mt-10 container-lg mb-70">
-        <div className="row">
-          <div className="col-lg-4">
-            <div className="rounded-5">
-              <a href="#" className="p-0 m-0">
-                <img src="/assets/images/bg/shopee-04.webp" alt="Banner 1"
-                  className="banner-img w-100 h-100 object-fit-cover rounded-10" />
-              </a>
-            </div>
-          </div>
-          <div className="col-lg-4">
-            <div className="rounded-5">
-              <a href="#" className="p-0 m-0">
-                <img src="/assets/images/bg/shopee-06.jpg" alt="Banner 2"
-                  className="banner-img w-100 h-100 object-fit-cover rounded-10" />
-              </a>
-            </div>
-          </div>
-          <div className="col-lg-4">
-            <div className="rounded-5">
-              <a href="#" className="p-0 m-0">
-                <img src="/assets/images/bg/shopee-07.jpg" alt="Banner 3"
-                  className="banner-img w-100 h-100 object-fit-cover rounded-10" />
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* ========================= 3 Small Banners End ================================== */}
-
-      {/* ========================= Trending Products Start ================================ */}
-      <TrendingProductsTabs />
-      {/* ========================= Trending Products End ================================ */}
-
-      {/* ========================= Top Brands Start ===================================== */}
-      <TopBrandsSection />
-      {/* ========================= Top Brands End ======================================= */}
-
-      {/* ========================= Featured Products (Sản phẩm hàng đầu) Start ============================== */}
-      <FeaturedProductsSection />
-      {/* ========================= Featured Products (Sản phẩm hàng đầu) End ================================= */}
-
-      {/* ========================= Super Discount Start ================================ */}
-      <div className="">
-        <div className="container container-lg">
-          <div className="py-20 border border-dashed border-main-500 bg-main-50 rounded-8 d-flex align-items-center justify-content-evenly">
-            <p className="h6 text-main-600 fw-normal">
-              Super discount for your{' '}
-              <a href="javascript:void(0)" className="fw-bold text-decoration-underline text-main-600 hover-text-decoration-none hover-text-primary-600">first purchase</a>
-            </p>
-            <div className="position-relative">
-              <button className="px-32 py-10 text-white border-0 copy-coupon-btn text-uppercase bg-main-600 rounded-pill hover-bg-main-800">
-                FREE25BAC
-                <i className="text-lg ph ph-file-text line-height-1"></i>
-              </button>
-              <span className="px-16 py-6 mb-8 text-xs text-white copy-text bg-main-600 fw-normal position-absolute rounded-pill bottom-100 start-50 translate-middle-x min-w-max"></span>
-            </div>
-            <p className="text-md text-main-600 fw-normal">
-              Use discount code to get <span className="fw-bold text-main-600">20% </span> discount for any item
-            </p>
-          </div>
-        </div>
-      </div>
-      {/* ========================= Super Discount End ================================== */}
-
-      {/* ========================= Trending Products Start ================================ */}
-      <section className="overflow-hidden trending-productss pt-60">
-        <div className="container container-lg">
-          <div className="p-24 border border-gray-100 rounded-16">
-            <div className="mb-24 section-heading">
-              <div className="flex-wrap gap-8 flex-between">
-                <h6 className="mb-0 wow fadeInLeft"><i className="ph-bold ph-hand-withdraw text-main-600"></i> Có thể bạn quan tâm</h6>
-                <ul className="nav common-tab style-two nav-pills wow fadeInRight" id="pills-tab" role="tablist">
-                  <li className="nav-item" role="presentation">
-                    <button className="text-sm nav-link fw-medium hover-border-main-600 active" id="pills-all-tab" data-bs-toggle="pill" data-bs-target="#pills-all" type="button" role="tab" aria-controls="pills-all" aria-selected="true">All</button>
-                  </li>
-                  <li className="nav-item" role="presentation">
-                    <button className="text-sm nav-link fw-medium hover-border-main-600" id="pills-mobile-tab" data-bs-toggle="pill" data-bs-target="#pills-mobile" type="button" role="tab" aria-controls="pills-mobile" aria-selected="false">Mobile</button>
-                  </li>
-                  <li className="nav-item" role="presentation">
-                    <button className="text-sm nav-link fw-medium hover-border-main-600" id="pills-headphone-tab" data-bs-toggle="pill" data-bs-target="#pills-headphone" type="button" role="tab" aria-controls="pills-headphone" aria-selected="false">Headphone</button>
-                  </li>
-                  <li className="nav-item" role="presentation">
-                    <button className="text-sm nav-link fw-medium hover-border-main-600" id="pills-usb-tab" data-bs-toggle="pill" data-bs-target="#pills-usb" type="button" role="tab" aria-controls="pills-usb" aria-selected="false">USB</button>
-                  </li>
-                  <li className="nav-item" role="presentation">
-                    <button className="text-sm nav-link fw-medium hover-border-main-600" id="pills-camera-tab" data-bs-toggle="pill" data-bs-target="#pills-camera" type="button" role="tab" aria-controls="pills-camera" aria-selected="false">Camera</button>
-                  </li>
-                  <li className="nav-item" role="presentation">
-                    <button className="text-sm nav-link fw-medium hover-border-main-600" id="pills-laptop-tab" data-bs-toggle="pill" data-bs-target="#pills-laptop" type="button" role="tab" aria-controls="pills-laptop" aria-selected="false">Laptop</button>
-                  </li>
-                  <li className="nav-item" role="presentation">
-                    <button className="text-sm nav-link fw-medium hover-border-main-600" id="pills-accessories-tab" data-bs-toggle="pill" data-bs-target="#pills-accessories" type="button" role="tab" aria-controls="pills-accessories" aria-selected="false">Accessories</button>
-                  </li>
-                </ul>
               </div>
             </div>
-            <div className="tab-content" id="pills-tabContent">
-              {/* All */}
-              <div className="tab-pane fade show active" id="pills-all" role="tabpanel" aria-labelledby="pills-all-tab" tabIndex={0}>
-                <div className="row g-12">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={`all-${i}`} className="col-xxl-3 col-xl-3 col-lg-4 col-sm-6">
-                      <div className="p-16 border border-gray-100 product-card h-100 hover-border-main-600 rounded-16 position-relative transition-2">
-                        <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 bg-gray-50 position-relative">
-                          <img src="/assets/images/thumbs/product-two-img1.png" alt="" className="w-auto max-w-unset" />
+            <div className="col-lg-4">
+              <div className="rounded-5">
+                <a href="#" className="p-0 m-0">
+                  <img
+                    src="/assets/images/bg/shopee-06.jpg"
+                    alt="Banner 2"
+                    className="banner-img w-100 h-100 object-fit-cover rounded-10"
+                  />
+                </a>
+              </div>
+            </div>
+            <div className="col-lg-4">
+              <div className="rounded-5">
+                <a href="#" className="p-0 m-0">
+                  <img
+                    src="/assets/images/bg/shopee-07.jpg"
+                    alt="Banner 3"
+                    className="banner-img w-100 h-100 object-fit-cover rounded-10"
+                  />
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ========================= DANH MỤC HÀNG ĐẦU ================================ */}
+        <section className="mt-10 overflow-hidden trending-productss fix-scale-80">
+          <div className="container px-0 container-lg">
+            <div className="p-24 border border-gray-100 rounded-8">
+              <div className="mb-24 section-heading">
+                <div className="flex-wrap gap-8 flex-between flex-align">
+                  <h6 className="mb-0 wow fadeInLeft">
+                    <i className="ph-bold ph-squares-four text-main-600"></i> Danh mục hàng đầu
+                  </h6>
+                  <ul className="m-0 nav common-tab style-two nav-pills wow fadeInRight" id="pills-tab" role="tablist">
+                    <li className="nav-item" role="presentation">
+                      <button className="text-sm nav-link fw-medium hover-border-main-600 active" id="tab-7" data-bs-toggle="pill" data-bs-target="#content-7" type="button" role="tab" aria-controls="content-7" aria-selected="true">
+                        Bách hóa
+                      </button>
+                    </li>
+                    <li className="nav-item" role="presentation">
+                      <button className="text-sm nav-link fw-medium hover-border-main-600" id="tab-11" data-bs-toggle="pill" data-bs-target="#content-11" type="button" role="tab" aria-controls="content-11" aria-selected="false">
+                        Thực phẩm - đồ ăn
+                      </button>
+                    </li>
+                    <li className="nav-item" role="presentation">
+                      <button className="text-sm nav-link fw-medium hover-border-main-600" id="tab-6" data-bs-toggle="pill" data-bs-target="#content-6" type="button" role="tab" aria-controls="content-6" aria-selected="false">
+                        Thiết bị y tế
+                      </button>
+                    </li>
+                    <li className="nav-item" role="presentation">
+                      <button className="text-sm nav-link fw-medium hover-border-main-600" id="tab-4" data-bs-toggle="pill" data-bs-target="#content-4" type="button" role="tab" aria-controls="content-4" aria-selected="false">
+                        Làm đẹp
+                      </button>
+                    </li>
+                    <li className="nav-item" role="presentation">
+                      <button className="text-sm nav-link fw-medium hover-border-main-600" id="tab-2" data-bs-toggle="pill" data-bs-target="#content-2" type="button" role="tab" aria-controls="content-2" aria-selected="false">
+                        Thực phẩm chức năng
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="tab-content" id="pills-tabContent">
+                {/* Tab 1: Bách hóa */}
+                <div className="tab-pane fade show active" id="content-7" role="tabpanel" aria-labelledby="tab-7" tabIndex={0}>
+                  <div className="row g-12">
+                    {/* Product 1 */}
+                    <div className="col-xxl-2 col-xl-3 col-lg-4 col-xs-6">
+                      <div className="border border-gray-100 product-card h-100 hover-border-main-600 rounded-6 position-relative transition-2">
+                        <a href="/product-details-two/hat-dieu-rang-muoi-loai-1-con-vo-lua-happy-nuts-500g" className="flex-center rounded-8 bg-gray-50 position-relative">
+                          <img src="/assets/images/thumbs/hat-dieu-rang-muoi-loai-1-con-vo-lua-happy-nuts-500g-1.webp" alt="Hạt điều rang muối" className="w-100 rounded-top-2" />
                         </a>
-                        <div className="mt-16 product-card__content w-100">
-                          
-                          <h6 className="my-16 text-lg title fw-semibold">
-                            <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Instax Mini 12 Instant Film Camera - Green</a>
-                          </h6>
-                          <div className="gap-6 flex-align">
-                            <div className="gap-2 flex-align">
-                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
-                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
-                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
-                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
-                              <span className="text-xs fw-medium text-warning-600 d-flex"><i className="ph-fill ph-star"></i></span>
+                        <div className="px-10 pb-8 mt-10 product-card__content w-100 h-100 align-items-stretch flex-column justify-content-between d-flex">
+                          <div>
+                            <h6 className="mt-2 mb-2 text-lg title fw-semibold">
+                              <a href="/product-details-two/hat-dieu-rang-muoi-loai-1-con-vo-lua-happy-nuts-500g" className="link text-line-2" tabIndex={0}>
+                                Hạt điều rang muối loại 1 (còn vỏ lụa) Happy Nuts 500g
+                              </a>
+                            </h6>
+                            <div className="mt-2 flex-align justify-content-between">
+                              <div className="gap-6 flex-align">
+                                <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
+                                <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
+                              </div>
+                              <div className="gap-4 flex-align">
+                                <span className="text-xs text-gray-500 fw-medium">782</span>
+                                <span className="text-xs text-gray-500 fw-medium">Đã bán</span>
+                              </div>
                             </div>
-                            <span className="text-xs text-gray-500 fw-medium">4.8</span>
-                            <span className="text-xs text-gray-500 fw-medium">(12K)</span>
-                            <span className="px-8 py-2 text-xs rounded-pill text-main-two-600 bg-main-two-50 fw-normal">Apple</span>
                           </div>
-
-                          <div className="mt-16 mb-10 product-card__price">
-                            <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">450.000 đ</span>
-                            <span className="text-heading text-md fw-semibold">300.000 đ</span>
+                          <div className="mt-5 product-card__price">
+                            <div className="gap-4 flex-align text-main-two-600">
+                              <i className="text-sm ph-fill ph-seal-percent"></i> -10%
+                              <span className="text-sm text-gray-400 fw-semibold text-decoration-line-through">282.000 đ</span>
+                            </div>
+                            <span className="text-lg text-heading fw-semibold">253.800 đ</span>
                           </div>
-                          <a href="cart.html" className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-pill flex-center fw-medium" tabIndex={0}>
-                            Thêm vào giỏ hàng <i className="ph ph-shopping-cart"></i>
-                          </a>
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-              {/* Mobile */}
-              <div className="tab-pane fade" id="pills-mobile" role="tabpanel" aria-labelledby="pills-mobile-tab" tabIndex={0}>
-                <div className="row g-12">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={`mobile-${i}`} className="col-xxl-3 col-xl-3 col-lg-4 col-sm-6">
-                      <div className="p-16 border border-gray-100 product-card h-100 hover-border-main-600 rounded-16 position-relative transition-2">
-                        <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 bg-gray-50 position-relative">
-                          <img src="/assets/images/thumbs/product-two-img1.png" alt="" className="w-auto max-w-unset" />
+                    {/* Product 2 */}
+                    <div className="col-xxl-2 col-xl-3 col-lg-4 col-xs-6">
+                      <div className="border border-gray-100 product-card h-100 hover-border-main-600 rounded-6 position-relative transition-2">
+                        <a href="/product-details-two/banh-trung-thu-2025-thu-an-nhien-banh-chay-hop-2-banh-1-tra" className="flex-center rounded-8 bg-gray-50 position-relative">
+                          <img src="/assets/images/thumbs/banh-trung-thu-2025-thu-an-nhien-banh-chay-hop-2-banh-1-tra-1.webp" alt="Bánh Trung Thu" className="w-100 rounded-top-2" />
                         </a>
-                        <div className="mt-16 product-card__content w-100">
-                          <h6 className="my-16 text-lg title fw-semibold">
-                            <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Instax Mini 12 Instant Film Camera - Green</a>
-                          </h6>
-                          <div className="product-card__price">
-                            <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">$450.00</span>
-                            <span className="text-heading text-md fw-semibold">$300.00</span>
+                        <div className="px-10 pb-8 mt-10 product-card__content w-100 h-100 align-items-stretch flex-column justify-content-between d-flex">
+                          <div>
+                            <h6 className="mt-2 mb-2 text-lg title fw-semibold">
+                              <a href="/product-details-two/banh-trung-thu-2025-thu-an-nhien-banh-chay-hop-2-banh-1-tra" className="link text-line-2" tabIndex={0}>
+                                Bánh Trung Thu 2025 - Thu An Nhiên (bánh chay hộp 2 bánh 1 trà)
+                              </a>
+                            </h6>
+                            <div className="mt-2 flex-align justify-content-between">
+                              <div className="gap-6 flex-align">
+                                <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
+                                <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
+                              </div>
+                              <div className="gap-4 flex-align">
+                                <span className="text-xs text-gray-500 fw-medium">472</span>
+                                <span className="text-xs text-gray-500 fw-medium">Đã bán</span>
+                              </div>
+                            </div>
                           </div>
-                          <a href="cart.html" className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-8 flex-center fw-medium" tabIndex={0}>
-                            Thêm vào giỏ hàng <i className="ph ph-shopping-cart"></i>
-                          </a>
+                          <div className="mt-5 product-card__price">
+                            <div className="gap-4 flex-align text-main-two-600">
+                              <i className="text-sm ph-fill ph-seal-percent"></i> -70%
+                              <span className="text-sm text-gray-400 fw-semibold text-decoration-line-through">369.000 đ</span>
+                            </div>
+                            <span className="text-lg text-heading fw-semibold">110.700 đ</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-              {/* Headphone */}
-              <div className="tab-pane fade" id="pills-headphone" role="tabpanel" aria-labelledby="pills-headphone-tab" tabIndex={0}>
-                <div className="row g-12">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={`headphone-${i}`} className="col-xxl-3 col-xl-3 col-lg-4 col-sm-6">
-                      <div className="p-16 border border-gray-100 product-card h-100 hover-border-main-600 rounded-16 position-relative transition-2">
-                        <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 bg-gray-50 position-relative">
-                          <img src="/assets/images/thumbs/product-two-img1.png" alt="" className="w-auto max-w-unset" />
+                    {/* Product 3 */}
+                    <div className="col-xxl-2 col-xl-3 col-lg-4 col-xs-6">
+                      <div className="border border-gray-100 product-card h-100 hover-border-main-600 rounded-6 position-relative transition-2">
+                        <a href="/product-details-two/keo-qua-sam-khong-duong-free-suger-ginseng-berry-s-candy-200g" className="flex-center rounded-8 bg-gray-50 position-relative">
+                          <img src="/assets/images/thumbs/keo-qua-sam-khong-duong-free-suger-ginseng-berry-s-candy-200g-1.webp" alt="Kẹo Quả Sâm" className="w-100 rounded-top-2" />
                         </a>
-                        <div className="mt-16 product-card__content w-100">
-                          <h6 className="my-16 text-lg title fw-semibold">
-                            <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Instax Mini 12 Instant Film Camera - Green</a>
-                          </h6>
-                          <div className="product-card__price">
-                            <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">$450.00</span>
-                            <span className="text-heading text-md fw-semibold">$300.00</span>
+                        <div className="px-10 pb-8 mt-10 product-card__content w-100 h-100 align-items-stretch flex-column justify-content-between d-flex">
+                          <div>
+                            <h6 className="mt-2 mb-2 text-lg title fw-semibold">
+                              <a href="/product-details-two/keo-qua-sam-khong-duong-free-suger-ginseng-berry-s-candy-200g" className="link text-line-2" tabIndex={0}>
+                                Kẹo Quả Sâm không đường Free Suger Ginseng Berry S candy 200g
+                              </a>
+                            </h6>
+                            <div className="mt-2 flex-align justify-content-between">
+                              <div className="gap-6 flex-align">
+                                <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
+                                <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
+                              </div>
+                              <div className="gap-4 flex-align">
+                                <span className="text-xs text-gray-500 fw-medium">187</span>
+                                <span className="text-xs text-gray-500 fw-medium">Đã bán</span>
+                              </div>
+                            </div>
                           </div>
-                          <a href="cart.html" className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-8 flex-center fw-medium" tabIndex={0}>
-                            Thêm vào giỏ hàng <i className="ph ph-shopping-cart"></i>
-                          </a>
+                          <div className="mt-5 product-card__price">
+                            <div className="gap-4 flex-align text-main-two-600">
+                              <i className="text-sm ph-fill ph-seal-percent"></i> -25%
+                              <span className="text-sm text-gray-400 fw-semibold text-decoration-line-through">249.000 đ</span>
+                            </div>
+                            <span className="text-lg text-heading fw-semibold">186.750 đ</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-              {/* USB */}
-              <div className="tab-pane fade" id="pills-usb" role="tabpanel" aria-labelledby="pills-usb-tab" tabIndex={0}>
-                <div className="row g-12">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={`usb-${i}`} className="col-xxl-3 col-xl-3 col-lg-4 col-sm-6">
-                      <div className="p-16 border border-gray-100 product-card h-100 hover-border-main-600 rounded-16 position-relative transition-2">
-                        <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 bg-gray-50 position-relative">
-                          <img src="/assets/images/thumbs/product-two-img1.png" alt="" className="w-auto max-w-unset" />
+                    {/* Product 4 */}
+                    <div className="col-xxl-2 col-xl-3 col-lg-4 col-xs-6">
+                      <div className="border border-gray-100 product-card h-100 hover-border-main-600 rounded-6 position-relative transition-2">
+                        <a href="/product-details-two/nuoc-rua-bat-bio-formula-bo-va-lo-hoi-tui-500ml" className="flex-center rounded-8 bg-gray-50 position-relative">
+                          <img src="/assets/images/thumbs/nuoc-rua-bat-bio-formula-bo-va-lo-hoi-tui-500ml-1.webp" alt="Nước rửa bát" className="w-100 rounded-top-2" />
                         </a>
-                        <div className="mt-16 product-card__content w-100">
-                          <h6 className="my-16 text-lg title fw-semibold">
-                            <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Instax Mini 12 Instant Film Camera - Green</a>
-                          </h6>
-                          <div className="product-card__price">
-                            <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">$450.00</span>
-                            <span className="text-heading text-md fw-semibold">$300.00</span>
+                        <div className="px-10 pb-8 mt-10 product-card__content w-100 h-100 align-items-stretch flex-column justify-content-between d-flex">
+                          <div>
+                            <h6 className="mt-2 mb-2 text-lg title fw-semibold">
+                              <a href="/product-details-two/nuoc-rua-bat-bio-formula-bo-va-lo-hoi-tui-500ml" className="link text-line-2" tabIndex={0}>
+                                Nước rửa bát Bio Formula - Bơ và Lô Hội (Túi 500ml)
+                              </a>
+                            </h6>
+                            <div className="mt-2 flex-align justify-content-between">
+                              <div className="gap-6 flex-align">
+                                <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
+                                <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
+                              </div>
+                              <div className="gap-4 flex-align">
+                                <span className="text-xs text-gray-500 fw-medium">142</span>
+                                <span className="text-xs text-gray-500 fw-medium">Đã bán</span>
+                              </div>
+                            </div>
                           </div>
-                          <a href="cart.html" className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-8 flex-center fw-medium" tabIndex={0}>
-                            Thêm vào giỏ hàng <i className="ph ph-shopping-cart"></i>
-                          </a>
+                          <div className="mt-5 product-card__price">
+                            <span className="text-lg text-heading fw-semibold">90.000 đ</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-              {/* Camera */}
-              <div className="tab-pane fade" id="pills-camera" role="tabpanel" aria-labelledby="pills-camera-tab" tabIndex={0}>
-                <div className="row g-12">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={`camera-${i}`} className="col-xxl-3 col-xl-3 col-lg-4 col-sm-6">
-                      <div className="p-16 border border-gray-100 product-card h-100 hover-border-main-600 rounded-16 position-relative transition-2">
-                        <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 bg-gray-50 position-relative">
-                          <img src="/assets/images/thumbs/product-two-img1.png" alt="" className="w-auto max-w-unset" />
+                    {/* Product 5 */}
+                    <div className="col-xxl-2 col-xl-3 col-lg-4 col-xs-6">
+                      <div className="border border-gray-100 product-card h-100 hover-border-main-600 rounded-6 position-relative transition-2">
+                        <a href="/product-details-two/nuoc-rua-chen-sa-chanh-come-on-lam-sach-bat-dia-an-toan-da-tay-1-lit" className="flex-center rounded-8 bg-gray-50 position-relative">
+                          <img src="/assets/images/thumbs/nuoc-rua-chen-sa-chanh-come-on-lam-sach-bat-dia-an-toan-da-tay-1-lit-1.webp" alt="Nước rửa chén" className="w-100 rounded-top-2" />
                         </a>
-                        <div className="mt-16 product-card__content w-100">
-                          <h6 className="my-16 text-lg title fw-semibold">
-                            <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Instax Mini 12 Instant Film Camera - Green</a>
-                          </h6>
-                          <div className="product-card__price">
-                            <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">$450.00</span>
-                            <span className="text-heading text-md fw-semibold">$300.00</span>
+                        <div className="px-10 pb-8 mt-10 product-card__content w-100 h-100 align-items-stretch flex-column justify-content-between d-flex">
+                          <div>
+                            <h6 className="mt-2 mb-2 text-lg title fw-semibold">
+                              <a href="/product-details-two/nuoc-rua-chen-sa-chanh-come-on-lam-sach-bat-dia-an-toan-da-tay-1-lit" className="link text-line-2" tabIndex={0}>
+                                Nước rửa chén sả chanh COME ON làm sạch bát đĩa, an toàn da tay 1 lít
+                              </a>
+                            </h6>
+                            <div className="mt-2 flex-align justify-content-between">
+                              <div className="gap-6 flex-align">
+                                <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
+                                <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
+                              </div>
+                              <div className="gap-4 flex-align">
+                                <span className="text-xs text-gray-500 fw-medium">76</span>
+                                <span className="text-xs text-gray-500 fw-medium">Đã bán</span>
+                              </div>
+                            </div>
                           </div>
-                          <a href="cart.html" className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-8 flex-center fw-medium" tabIndex={0}>
-                            Thêm vào giỏ hàng <i className="ph ph-shopping-cart"></i>
-                          </a>
+                          <div className="mt-5 product-card__price">
+                            <span className="text-lg text-heading fw-semibold">69.000 đ</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-              {/* Laptop */}
-              <div className="tab-pane fade" id="pills-laptop" role="tabpanel" aria-labelledby="pills-laptop-tab" tabIndex={0}>
-                <div className="row g-12">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={`laptop-${i}`} className="col-xxl-3 col-xl-3 col-lg-4 col-sm-6">
-                      <div className="p-16 border border-gray-100 product-card h-100 hover-border-main-600 rounded-16 position-relative transition-2">
-                        <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 bg-gray-50 position-relative">
-                          <img src="/assets/images/thumbs/product-two-img1.png" alt="" className="w-auto max-w-unset" />
+                    {/* Product 6 */}
+                    <div className="col-xxl-2 col-xl-3 col-lg-4 col-xs-6">
+                      <div className="border border-gray-100 product-card h-100 hover-border-main-600 rounded-6 position-relative transition-2">
+                        <a href="/product-details-two/bot-matcha-gao-rang-nhat-ban-onelife-goi-100g" className="flex-center rounded-8 bg-gray-50 position-relative">
+                          <img src="/assets/images/thumbs/bot-matcha-gao-rang-nhat-ban-onelife-goi-100g-1.webp" alt="Bột Matcha" className="w-100 rounded-top-2" />
                         </a>
-                        <div className="mt-16 product-card__content w-100">
-                          <h6 className="my-16 text-lg title fw-semibold">
-                            <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Instax Mini 12 Instant Film Camera - Green</a>
-                          </h6>
-                          <div className="product-card__price">
-                            <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">$450.00</span>
-                            <span className="text-heading text-md fw-semibold">$300.00</span>
+                        <div className="px-10 pb-8 mt-10 product-card__content w-100 h-100 align-items-stretch flex-column justify-content-between d-flex">
+                          <div>
+                            <h6 className="mt-2 mb-2 text-lg title fw-semibold">
+                              <a href="/product-details-two/bot-matcha-gao-rang-nhat-ban-onelife-goi-100g" className="link text-line-2" tabIndex={0}>
+                                Bột Matcha Gạo Rang Nhật Bản ONELIFE (Gói 100g)
+                              </a>
+                            </h6>
+                            <div className="mt-2 flex-align justify-content-between">
+                              <div className="gap-6 flex-align">
+                                <span className="text-xs text-gray-500 fw-medium">Đánh giá</span>
+                                <span className="text-xs text-gray-500 fw-medium">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
+                              </div>
+                              <div className="gap-4 flex-align">
+                                <span className="text-xs text-gray-500 fw-medium">17</span>
+                                <span className="text-xs text-gray-500 fw-medium">Đã bán</span>
+                              </div>
+                            </div>
                           </div>
-                          <a href="cart.html" className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-8 flex-center fw-medium" tabIndex={0}>
-                            Thêm vào giỏ hàng <i className="ph ph-shopping-cart"></i>
-                          </a>
+                          <div className="mt-5 product-card__price">
+                            <span className="text-lg text-heading fw-semibold">220.800 đ</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-              {/* Accessories */}
-              <div className="tab-pane fade" id="pills-accessories" role="tabpanel" aria-labelledby="pills-accessories-tab" tabIndex={0}>
-                <div className="row g-12">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={`accessories-${i}`} className="col-xxl-3 col-xl-3 col-lg-4 col-sm-6">
-                      <div className="p-16 border border-gray-100 product-card h-100 hover-border-main-600 rounded-16 position-relative transition-2">
-                        <a href="product-details-two.html" className="product-card__thumb flex-center rounded-8 bg-gray-50 position-relative">
-                          <img src="/assets/images/thumbs/product-two-img1.png" alt="" className="w-auto max-w-unset" />
-                        </a>
-                        <div className="mt-16 product-card__content w-100">
-                          <h6 className="my-16 text-lg title fw-semibold">
-                            <a href="product-details-two.html" className="link text-line-2" tabIndex={0}>Instax Mini 12 Instant Film Camera - Green</a>
-                          </h6>
-                          <div className="product-card__price">
-                            <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">$450.00</span>
-                            <span className="text-heading text-md fw-semibold">$300.00</span>
-                          </div>
-                          <a href="cart.html" className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-8 flex-center fw-medium" tabIndex={0}>
-                            Thêm vào giỏ hàng <i className="ph ph-shopping-cart"></i>
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-      <TopSellingProducts variant="recommend" title="Có thể bạn quan tâm" perPage={8} />
-      {/* ========================= Trending Products End ================================== */}
-
-      {/* ============================== Top Brand Section Start ==================================== */}
-      <div className="py-40 top-brand">
-        <div className="container container-lg">
-          <div className="p-24 border border-gray-50 rounded-16">
-            <div className="mb-24 section-heading">
-              <div className="flex-wrap gap-8 flex-between">
-                <h6 className="mb-0">Các thương hiệu đối tác</h6>
-                <div className="gap-8 flex-align">
-                  <button type="button" id="topBrand-prev" className="text-xl border border-gray-100 slick-prev slick-arrow flex-center rounded-circle hover-border-main-two-600 hover-bg-main-two-600 hover-text-white transition-1">
-                    <i className="ph ph-caret-left"></i>
-                  </button>
-                  <button type="button" id="topBrand-next" className="text-xl border border-gray-100 slick-next slick-arrow flex-center rounded-circle hover-border-main-two-600 hover-bg-main-two-600 hover-text-white transition-1">
-                    <i className="ph ph-caret-right"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="top-brand__slider">
-              {Array.from({ length: 9 }).map((_, idx) => (
-                <div key={idx} className="wow bounceIn">
-                  <div className="px-8 my-4 top-brand__item flex-center rounded-8 hover-border-main-600 transition-1 box-shadow-7xl">
-                    <img src={`assets/images/thumbs/top-brand-img${Math.min(idx + 1, 8)}.png`} alt="" />
+                  </div>
+                  <div className="mx-auto text-center w-100">
+                    <a href="/san-pham?sortby=top-bach-hoa" className="px-32 py-12 mt-40 btn border-main-600 text-main-600 hover-bg-main-600 hover-border-main-600 hover-text-white rounded-8">
+                      Xem thêm sản phẩm
+                    </a>
                   </div>
                 </div>
-              ))}
+              </div>
+            </div>
+          </div>
+        </section>
+        {/* ========================= DANH MỤC HÀNG ĐẦU End ================================ */}
+
+        {/* ========================= Banner Image ============================== */}
+        <div className="container px-0 mt-10 container-lg">
+          <div className="rounded-10">
+            <a href="#" className="p-0 m-0 d-block">
+              <img
+                src="/assets/images/bg/shopee-05.jpg"
+                alt="Banner"
+                className="banner-img w-100 object-fit-cover rounded-10"
+              />
+            </a>
+          </div>
+        </div>
+        {/* ========================= Banner Image End ============================== */}
+
+        {/* ========================= THƯƠNG HIỆU HÀNG ĐẦU ================================ */}
+        <TopBrandsSection />
+        {/* ========================= THƯƠNG HIỆU HÀNG ĐẦU End ================================ */}
+
+        {/* ========================= Featured Products ============================ */}
+        <FeaturedProductsSection />
+
+        {/* ========================= Super Discount =============================== */}
+        <div className="">
+          <div className="container px-0 container-lg">
+            <div className="py-20 border border-dashed border-main-500 bg-main-50 rounded-8 d-flex align-items-center justify-content-evenly">
+              <p className="h6 text-main-600 fw-normal">
+                Áp dụng mã giảm giá ưu đãi cho{" "}
+                <a
+                  href="#"
+                  className="fw-bold text-decoration-underline text-main-600 hover-text-decoration-none hover-text-primary-600"
+                >
+                  thành viên mới
+                </a>
+              </p>
+              <div className="position-relative">
+                <button className="px-32 py-10 text-white border-0 copy-coupon-btn text-uppercase bg-main-600 rounded-pill hover-bg-main-800">
+                  SIEUTHIVINA2025
+                  <i className="text-lg ph ph-file-text line-height-1"></i>
+                </button>
+                <span className="px-16 py-6 mb-8 text-xs text-white copy-text bg-main-600 fw-normal position-absolute rounded-pill bottom-100 start-50 translate-middle-x min-w-max" style={{ display: "none" }}></span>
+              </div>
+              <p className="text-md text-main-600 fw-normal">
+                Áp dụng giảm giá đến{" "}
+                <span className="fw-bold text-main-600">20% </span>
+                tổng giá trị mỗi đơn hàng
+              </p>
             </div>
           </div>
         </div>
-      </div>
-      {/* ============================== Top Brand Section End ==================================== */}
 
-      {/* Footer removed as requested */}
+        {/* Hàng mới chào sân */}
+        <LatestProductsSection />
+
+        {/* Được quan tâm nhiều nhất */}
+        <MostInterestedSection />
+      </main>
     </>
   );
 }
-
-

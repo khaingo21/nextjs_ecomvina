@@ -1,84 +1,467 @@
 {
-  "yeuthichs": [{ "id": 1 }, { "id": 2 }],
-
+  "yeuthichs": [
+    {
+      "id": 1
+    },
+    {
+      "id": 2
+    },
+    {
+      "product_id": 15,
+      "id": 3
+    },
+    {
+      "product_id": 8,
+      "id": 4
+    },
+    {
+      "product_id": 15,
+      "id": 5
+    },
+    {
+      "product_id": 7,
+      "id": 6
+    },
+    {
+      "product_id": 7,
+      "id": 7
+    },
+    {
+      "product_id": 3,
+      "id": 8
+    },
+    {
+      "product_id": 7,
+      "id": 9
+    },
+    {
+      "product_id": 3,
+      "id": 10
+    },
+    {
+      "product_id": 7,
+      "id": 11
+    },
+    {
+      "product_id": 3,
+      "id": 12
+    },
+    {
+      "product_id": 5,
+      "id": 13
+    },
+    {
+      "product_id": 5,
+      "id": 14
+    },
+    {
+      "product_id": 5,
+      "id": 15
+    },
+    {
+      "product_id": 7,
+      "id": 16
+    },
+    {
+      "product_id": 7,
+      "id": 17
+    },
+    {
+      "product_id": 15,
+      "id": 18
+    },
+    {
+      "product_id": 7,
+      "id": 19
+    }
+  ],
+  "yeuthichs_user": [
+    {
+      "id": 1761858701747,
+      "user_id": "1760452892044",
+      "product_id": 1
+    },
+    {
+      "id": 1761858701750,
+      "user_id": "1760452892044",
+      "product_id": 2
+    },
+    {
+      "id": 1761858701753,
+      "user_id": "1760452892044",
+      "product_id": 15
+    },
+    {
+      "id": 1761858701754,
+      "user_id": "1760452892044",
+      "product_id": 8
+    },
+    {
+      "id": 1761858701756,
+      "user_id": "1760452892044",
+      "product_id": 3
+    },
+    {
+      "id": 1763126671194,
+      "user_id": "1760452892044",
+      "product_id": 7
+    }
+  ],
+  "giohangs": [
+    {
+      "id": 1761810866961,
+      "user_id": "1760452892044",
+      "id_bienthesp": 16,
+      "quantity": 1
+    },
+    {
+      "id": 1761862824242,
+      "user_id": "1760452892044",
+      "id_bienthesp": 7,
+      "quantity": 1
+    },
+    {
+      "id": 1762950600147,
+      "user_id": "1760452892044",
+      "id_bienthesp": "16",
+      "quantity": 1
+    }
+  ],
+  "donhangs": [],
+  "profiles": [
+    {
+      "id": 1760467322971,
+      "user_id": "1760467322969",
+      "name": "leehuy1",
+      "gender": "male",
+      "birthday": "2004-06-30",
+      "email": "leehuy1@gmail.com",
+      "nationality": "VN",
+      "phone": "0983914063"
+    },
+    {
+      "id": 1760822524196,
+      "user_id": "1760822524194",
+      "name": "Ngô Gia Khải",
+      "gender": "male",
+      "birthday": "2025-10-30",
+      "email": "ngokhai748@gmail.com",
+      "nationality": "VN",
+      "phone": "0765364451"
+    },
+    {
+      "id": 1761816701936,
+      "user_id": "1760452892044",
+      "name": "leehuy",
+      "gender": "male",
+      "birthday": "2025-10-08",
+      "email": "leehuy@gmail.com",
+      "nationality": "VN",
+      "phone": "0983914062",
+      "address_street": "174/19 đường số 20",
+      "address_district": "Gò Vấp",
+      "address_city": "phường 5",
+      "address_postal": "00700",
+      "avatar": "/uploads/1763147726118-vjzh9u.jpg",
+      "updated_at": "2025-11-14T19:15:26.129Z"
+    }
+  ],
+  "users": [
+    { "id": 1760452892044, "username": "hotb", "email": "hotb@example.com", "name": "Trần Bá Hộ" }
+  ],
+  "profiles": [
+    { "id": 1, "user_id": "1760452892044", "name": "Trần Bá Hộ", "avatar": "/uploads/default.png" }
+  ],
+  "orders": [
+    {
+      "id": 1001,
+      "madon": "DH1001",
+      "thanhtien": 1250000,
+      "trangthai": "Đang chờ",
+      "trangthaithanhtoan": "Chưa thanh toán",
+      "created_at": "2025-10-01T08:00:00.000Z",
+      "chitietdonhang": [
+        {
+          "id": 111,
+          "soluong": 1,
+          "dongia": 1250000,
+          "bienthe": {
+            "sanpham": { "ten": "iPhone 15 Pro Max 256GB - Natural Titanium", "hinhanh": "/assets/images/thumbs/iphone15.png" }
+          }
+        }
+      ]
+    },
+    {
+      "id": 1002,
+      "madon": "DH1002",
+      "thanhtien": 2450000,
+      "trangthai": "Hoàn tất",
+      "trangthaithanhtoan": "Đã thanh toán",
+      "created_at": "2025-09-28T09:30:00.000Z",
+      "chitietdonhang": [
+        {
+          "id": 121,
+          "soluong": 1,
+          "dongia": 1200000,
+          "bienthe": {
+            "sanpham": { "ten": "MacBook Air M2 13inch 256GB - Midnight", "hinhanh": "/assets/images/thumbs/macbook.png" }
+          }
+        },
+        {
+          "id": 122,
+          "soluong": 2,
+          "dongia": 1250000,
+          "bienthe": {
+            "sanpham": { "ten": "Magic Mouse - White Multi‑Touch Surface", "hinhanh": "/assets/images/thumbs/mouse.png" }
+          }
+        }
+      ]
+    },
+    {
+      "id": 1760033825024,
+      "name": "Ngô Gia Khải",
+      "email": "ngokhai244@gmail.com",
+      "phone": "0765364451",
+      "password": "123456"
+    },
+    {
+      "id": 1760040329470,
+      "name": "Ngô Gia Khải",
+      "email": "caochotvot@gmail.com",
+      "phone": "0765364451",
+      "password": "000000"
+    },
+    {
+      "id": 1760452892044,
+      "name": "leehuy",
+      "email": "leehuy@gmail.com",
+      "password": "leehuy"
+    },
+    {
+      "id": 1760467322969,
+      "name": "leehuy1",
+      "email": "leehuy1@gmail.com",
+      "phone": "0983914063",
+      "password": "leehuy1"
+    },
+    {
+      "id": 1760822524194,
+      "name": "Ngô Gia Khải",
+      "email": "ngokhai748@gmail.com",
+      "phone": "0765364451",
+      "password": "123456"
+    }
+  ],
   "bannerquangcaos": [
-    { "id": 1, "hinhanh": "/assets/images/bg/shopee-06.jpg", "duongdan": "/cart", "tieude": "Banner 1" },
-    { "id": 2, "hinhanh": "/assets/images/bg/shopee-07.jpg", "duongdan": "/checkout", "tieude": "Banner 2" },
-    { "id": 3, "hinhanh": "/assets/images/bg/shopee-2.jpg",  "duongdan": "/product-details-two", "tieude": "Banner 3" },
-    { "id": 4, "hinhanh": "/assets/images/bg/shopee-04.webp","duongdan": "#", "tieude": "Banner 4" },
-    { "id": 5, "hinhanh": "/assets/images/bg/shopee-1.jpg",  "duongdan": "#", "tieude": "Banner 5" }
+    {
+      "id": 1,
+      "hinhanh": "/assets/images/bg/banner-droppii-1.png",
+      "duongdan": "#",
+      "tieude": "Banner Slider 1",
+      "vitri": "HomeBannerSlider",
+      "trangthai": "hoat_dong",
+      "thutu": 1
+    },
+    {
+      "id": 6,
+      "hinhanh": "/assets/images/bg/banner-droppii-2.png",
+      "duongdan": "#",
+      "tieude": "Banner Slider 2",
+      "vitri": "HomeBannerSlider",
+      "trangthai": "hoat_dong",
+      "thutu": 2
+    },
+    {
+      "id": 7,
+      "hinhanh": "/assets/images/bg/banner-droppii-3.png",
+      "duongdan": "#",
+      "tieude": "Banner Slider 3",
+      "vitri": "HomeBannerSlider",
+      "trangthai": "hoat_dong",
+      "thutu": 3
+    },
+    {
+      "id": 2,
+      "hinhanh": "/assets/images/bg/shopee-1.jpg",
+      "duongdan": "/thanh-toan",
+      "tieude": "Banner 2",
+      "vitri": "ProdudctBanner-2",
+      "trangthai": "hoat_dong",
+      "thutu": 1
+    },
+    {
+      "id": 3,
+      "hinhanh": "/assets/images/bg/shopee-2.jpg",
+      "duongdan": "/product-details-two",
+      "tieude": "Banner 3",
+      "vitri": "ProdudctBanner-3",
+      "trangthai": "hoat_dong",
+      "thutu": 2
+    },
+    {
+      "id": 4,
+      "hinhanh": "/assets/images/bg/shopee-3.jpg",
+      "duongdan": "#",
+      "tieude": "Banner 4",
+      "vitri": "ProdudctBanner-4",
+      "trangthai": "hoat_dong",
+      "thutu": 3
+    },
+    {
+      "id": 5,
+      "hinhanh": "/assets/images/bg/shopee-04.webp",
+      "duongdan": "#",
+      "tieude": "Banner 5",
+      "vitri": "ProdudctBanner-5",
+      "trangthai": "hoat_dong",
+      "thutu": 4
+    }
   ],
-
   "danhmucs_selection": [
-    { "id": 1, "ten": "Máy massage", "slug": "may-massage", "hinh": "/assets/images/thumbs/cyber-monday-img1.png" },
-    { "id": 2, "ten": "Điện gia dụng", "slug": "dien-gia-dung", "hinh": "/assets/images/thumbs/cyber-monday-img1.png" },
-    { "id": 3, "ten": "Mẹ & Bé", "slug": "me-be", "hinh": "/assets/images/thumbs/cyber-monday-img1.png" }
+    {
+      "id": 1,
+      "ten": "Máy massage",
+      "slug": "may-massage",
+      "hinh": "/assets/images/categories/may-massage.svg"
+    },
+    {
+      "id": 2,
+      "ten": "Điện gia dụng",
+      "slug": "dien-gia-dung",
+      "hinh": "/assets/images/categories/dien-may.svg"
+    },
+    {
+      "id": 3,
+      "ten": "Mẹ & Bé",
+      "slug": "me-be",
+      "hinh": "/assets/images/categories/me-va-be.svg"
+    }
   ],
-
   "api_sanphams_selection_hot_sales": {
     "status": true,
     "data": [
       {
-        "id": 101,
-        "ten": "Instax Mini 12",
-        "slug": "instax-mini-12",
-        "mediaurl": "/assets/images/thumbs/product-two-img1.png",
-        "selling_price": 300000,
-        "original_price": 450000,
-        "discount_amount": 150000,
-        "discount_type": null,
-        "is_free": false,
-        "rating_average": 4.8,
-        "rating_count": 120
+        "id": 111,
+        "ten": "Cà phê bào tử Linh Chi phá vách – Giúp tỉnh táo",
+        "slug": "ca-phe-bao-tu-linh-chi-pha-vach-giup-tinh-tao",
+        "mediaurl": "https://sieuthivina.com/assets/client/images/thumbs/ca-phe-bao-tu-linh-chi-pha-vach-giup-tinh-tao-1.webp",
+        "selling_price": 306000,
+        "original_price": 340000,
+        "shop_name": "CHẤT VIỆT GROUP",
+        "rating": null,
+        "sold": 10300,
+        "discount_percent": 10
       },
       {
-        "id": 102,
-        "ten": "Tai nghe XYZ",
-        "slug": "tai-nghe-xyz",
-        "mediaurl": "/assets/images/thumbs/product-two-img1.png",
-        "selling_price": 500000,
-        "original_price": 650000,
-        "discount_amount": 150000,
-        "discount_type": null,
-        "is_free": false,
-        "rating_average": 4.5,
-        "rating_count": 80
+        "id": 112,
+        "ten": "Hạt điều rang muối loại 1 (còn vỏ lụa) Happy Nuts 500g",
+        "slug": "hat-dieu-rang-muoi-loai-1-con-vo-lua-happy-nuts-500g",
+        "mediaurl": "https://sieuthivina.com/assets/client/images/thumbs/hat-dieu-rang-muoi-loai-1-con-vo-lua-happy-nuts-500g-1.webp",
+        "selling_price": 253800,
+        "original_price": 282000,
+        "shop_name": "Trung Tâm Bán Hàng Siêu Thị Vina",
+        "rating": null,
+        "sold": 782,
+        "discount_percent": 10
+      },
+      {
+        "id": 113,
+        "ten": "Bánh Trung Thu 2025 - Thu An Nhiên (bánh chay hộp 2 bánh 1 trà)",
+        "slug": "banh-trung-thu-2025-thu-an-nhien-banh-chay-hop-2-banh-1-tra",
+        "mediaurl": "https://sieuthivina.com/assets/client/images/thumbs/banh-trung-thu-2025-thu-an-nhien-banh-chay-hop-2-banh-1-tra-1.webp",
+        "selling_price": 110700,
+        "original_price": 369000,
+        "shop_name": "Trung Tâm Bán Hàng Siêu Thị Vina",
+        "rating": null,
+        "sold": 472,
+        "discount_percent": 70
+      },
+      {
+        "id": 114,
+        "ten": "Kẹo Quả Sâm không đường Free Suger Ginseng Berry S candy 200g",
+        "slug": "keo-qua-sam-khong-duong-free-suger-ginseng-berry-s-candy-200g",
+        "mediaurl": "https://sieuthivina.com/assets/client/images/thumbs/keo-qua-sam-khong-duong-free-suger-ginseng-berry-s-candy-200g-1.webp",
+        "selling_price": 186750,
+        "original_price": 249000,
+        "shop_name": "Trung Tâm Bán Hàng Siêu Thị Vina",
+        "rating": null,
+        "sold": 187,
+        "discount_percent": 25
+      },
+      {
+        "id": 115,
+        "ten": "Dưỡng mi tế bào gốc C’Choi - Bio Placenta Lash Serum",
+        "slug": "duong-mi-te-bao-goc-cchoi-bio-placenta-lash-serum",
+        "mediaurl": "https://sieuthivina.com/assets/client/images/thumbs/duong-mi-te-bao-goc-cchoi-bio-placenta-lash-serum-1.webp",
+        "selling_price": 231000,
+        "original_price": 330000,
+        "shop_name": "C'CHOI",
+        "rating": null,
+        "sold": 84,
+        "discount_percent": 30
+      },
+      {
+        "id": 116,
+        "ten": "Yến tổ Nest100 (Hộp 50g + túi)",
+        "slug": "yen-to-nest100-hop-50g-tui",
+        "mediaurl": "https://sieuthivina.com/assets/client/images/thumbs/yen-to-nest100-hop-50g-tui-1.webp",
+        "selling_price": 3230000,
+        "original_price": 3400000,
+        "shop_name": "NEST100",
+        "rating": null,
+        "sold": 50,
+        "discount_percent": 5
+      },
+      {
+        "id": 117,
+        "ten": "Thực phẩm bảo vệ sức khỏe: Midu MenaQ7 180mcg",
+        "slug": "thuc-pham-bao-ve-suc-khoe-midu-menaq7-180mcg",
+        "mediaurl": "https://sieuthivina.com/assets/client/images/thumbs/thuc-pham-bao-ve-suc-khoe-midu-menaq7-180mcg-1.webp",
+        "selling_price": 234000,
+        "original_price": 260000,
+        "shop_name": "Trung Tâm Bán Hàng Siêu Thị Vina",
+        "rating": null,
+        "sold": 30,
+        "discount_percent": 10
+      },
+      {
+        "id": 118,
+        "ten": "Keo ong xanh Tracybee Propolis Mint & Honey – Giảm đau rát họng",
+        "slug": "keo-ong-xanh-tracybee-propolis-mint-honey",
+        "mediaurl": "https://sieuthivina.com/assets/client/images/thumbs/keo-ong-xanh-tracybee-propolis-mint-honey-giam-dau-rat-hong-ho-viem-hong-vi-bac-ha-1.webp",
+        "selling_price": 243000,
+        "original_price": 270000,
+        "shop_name": "Trung Tâm Bán Hàng Siêu Thị Vina",
+        "rating": null,
+        "sold": 0,
+        "discount_percent": 10
+      },
+      {
+        "id": 119,
+        "ten": "Mật ong Tây Bắc đông trùng hạ thảo X3 (Hũ 240g)",
+        "slug": "mat-ong-tay-bac-dong-trung-ha-thao-x3-hu-240g",
+        "mediaurl": "https://sieuthivina.com/assets/client/images/thumbs/mat-ong-tay-bac-dong-trung-ha-thao-x3-hu-240g-1.webp",
+        "selling_price": 308000,
+        "original_price": 385000,
+        "shop_name": "Trung Tâm Bán Hàng Siêu Thị Vina",
+        "rating": null,
+        "sold": 0,
+        "discount_percent": 20
+      },
+      {
+        "id": 120,
+        "ten": "Tinh dầu tràm tự nhiên ECO - Lọ 30ml",
+        "slug": "tinh-dau-tram-tu-nhien-eco-30ml",
+        "mediaurl": "https://sieuthivina.com/assets/client/images/thumbs/tinh-dau-tram-tu-nhien-eco-ho-tro-giam-ho-cam-cum-so-mui-cam-lanh-lo-30ml-1.webp",
+        "selling_price": 39000,
+        "original_price": 260000,
+        "shop_name": "Trung Tâm Bán Hàng Siêu Thị Vina",
+        "rating": null,
+        "sold": 0,
+        "discount_percent": 85
       }
     ]
   },
-
- 
-  "api_sanphams_selection_recommend": {
-    "status": true,
-    "data": [
-      {
-        "id": 201,
-        "ten": "Kem dưỡng ABC",
-        "slug": "kem-duong-abc",
-        "mediaurl": "/assets/images/thumbs/product-two-img1.png",
-        "gia": {
-          "current": 199000,
-          "before_discount": 249000,
-          "discount_percent": 20
-        },
-        "rating": { "average": 4.6, "count": 37 }
-      },
-      {
-        "id": 202,
-        "ten": "Sữa tắm DEF",
-        "slug": "sua-tam-def",
-        "mediaurl": "/assets/images/thumbs/product-two-img1.png",
-        "gia": {
-          "current": 99000,
-          "before_discount": 0,
-          "discount_percent": 0
-        },
-        "rating": { "average": 4.3, "count": 22 }
-      }
-    ]
-  },
-
-  
   "api_sanphams_selection_top_categories": {
     "status": true,
     "data": [
@@ -93,14 +476,22 @@
             "slug": "vitamin-c-500mg",
             "mediaurl": "/assets/images/thumbs/product-two-img1.png",
             "luotxem": 120,
-            "bienthes": [{ "gia": "34500", "giagiam": "0" }],
-            "danhgias": [{ "diem": 4.5 }]
+            "bienthes": [
+              {
+                "gia": "34500",
+                "giagiam": "0"
+              }
+            ],
+            "danhgias": [
+              {
+                "diem": 4.5
+              }
+            ]
           }
         ]
       }
     ]
   },
-
   "api_sanphams_selection_best_products": {
     "status": true,
     "data": [
@@ -118,5 +509,848 @@
         "rating_count": 18
       }
     ]
-  }
+  },
+  "danhmucs": [
+    {
+      "id": 1,
+      "ten": "Máy massage",
+      "slug": "may-massage"
+    },
+    {
+      "id": 2,
+      "ten": "Điện gia dụng",
+      "slug": "dien-gia-dung"
+    },
+    {
+      "id": 3,
+      "ten": "Mẹ & Bé",
+      "slug": "me-be"
+    },
+    {
+      "id": 4,
+      "ten": "Chăm sóc cá nhân",
+      "slug": "cham-soc-ca-nhan"
+    }
+  ],
+  "sanphams": {
+    "status": true,
+    "data": [
+      {
+        "id": 111,
+        "ten": "Cà phê bào tử Linh Chi phá vách – Giúp tỉnh táo",
+        "slug": "ca-phe-bao-tu-linh-chi-pha-vach-giup-tinh-tao",
+        "mediaurl": "https://sieuthivina.com/assets/client/images/thumbs/ca-phe-bao-tu-linh-chi-pha-vach-giup-tinh-tao-1.webp",
+        "selling_price": 306000,
+        "original_price": 340000,
+        "shop_name": "CHẤT VIỆT GROUP",
+        "rating": null,
+        "sold": 10300,
+        "discount_percent": 10
+      },
+      {
+        "id": 112,
+        "ten": "Hạt điều rang muối loại 1 (còn vỏ lụa) Happy Nuts 500g",
+        "slug": "hat-dieu-rang-muoi-loai-1-con-vo-lua-happy-nuts-500g",
+        "mediaurl": "https://sieuthivina.com/assets/client/images/thumbs/hat-dieu-rang-muoi-loai-1-con-vo-lua-happy-nuts-500g-1.webp",
+        "selling_price": 253800,
+        "original_price": 282000,
+        "shop_name": "Trung Tâm Bán Hàng Siêu Thị Vina",
+        "rating": null,
+        "sold": 782,
+        "discount_percent": 10
+      },
+      {
+        "id": 113,
+        "ten": "Bánh Trung Thu 2025 - Thu An Nhiên (bánh chay hộp 2 bánh 1 trà)",
+        "slug": "banh-trung-thu-2025-thu-an-nhien-banh-chay-hop-2-banh-1-tra",
+        "mediaurl": "https://sieuthivina.com/assets/client/images/thumbs/banh-trung-thu-2025-thu-an-nhien-banh-chay-hop-2-banh-1-tra-1.webp",
+        "selling_price": 110700,
+        "original_price": 369000,
+        "shop_name": "Trung Tâm Bán Hàng Siêu Thị Vina",
+        "rating": null,
+        "sold": 472,
+        "discount_percent": 70
+      },
+      {
+        "id": 114,
+        "ten": "Kẹo Quả Sâm không đường Free Suger Ginseng Berry S candy 200g",
+        "slug": "keo-qua-sam-khong-duong-free-suger-ginseng-berry-s-candy-200g",
+        "mediaurl": "https://sieuthivina.com/assets/client/images/thumbs/keo-qua-sam-khong-duong-free-suger-ginseng-berry-s-candy-200g-1.webp",
+        "selling_price": 186750,
+        "original_price": 249000,
+        "shop_name": "Trung Tâm Bán Hàng Siêu Thị Vina",
+        "rating": null,
+        "sold": 187,
+        "discount_percent": 25
+      },
+      {
+        "id": 115,
+        "ten": "Dưỡng mi tế bào gốc C’Choi - Bio Placenta Lash Serum",
+        "slug": "duong-mi-te-bao-goc-cchoi-bio-placenta-lash-serum",
+        "mediaurl": "https://sieuthivina.com/assets/client/images/thumbs/duong-mi-te-bao-goc-cchoi-bio-placenta-lash-serum-1.webp",
+        "selling_price": 231000,
+        "original_price": 330000,
+        "shop_name": "C'CHOI",
+        "rating": null,
+        "sold": 84,
+        "discount_percent": 30
+      },
+      {
+        "id": 116,
+        "ten": "Yến tổ Nest100 (Hộp 50g + túi)",
+        "slug": "yen-to-nest100-hop-50g-tui",
+        "mediaurl": "https://sieuthivina.com/assets/client/images/thumbs/yen-to-nest100-hop-50g-tui-1.webp",
+        "selling_price": 3230000,
+        "original_price": 3400000,
+        "shop_name": "NEST100",
+        "rating": null,
+        "sold": 50,
+        "discount_percent": 5
+      },
+      {
+        "id": 117,
+        "ten": "Thực phẩm bảo vệ sức khỏe: Midu MenaQ7 180mcg",
+        "slug": "thuc-pham-bao-ve-suc-khoe-midu-menaq7-180mcg",
+        "mediaurl": "https://sieuthivina.com/assets/client/images/thumbs/thuc-pham-bao-ve-suc-khoe-midu-menaq7-180mcg-1.webp",
+        "selling_price": 234000,
+        "original_price": 260000,
+        "shop_name": "Trung Tâm Bán Hàng Siêu Thị Vina",
+        "rating": null,
+        "sold": 30,
+        "discount_percent": 10
+      },
+      {
+        "id": 118,
+        "ten": "Keo ong xanh Tracybee Propolis Mint & Honey – Giảm đau rát họng",
+        "slug": "keo-ong-xanh-tracybee-propolis-mint-honey",
+        "mediaurl": "https://sieuthivina.com/assets/client/images/thumbs/keo-ong-xanh-tracybee-propolis-mint-honey-giam-dau-rat-hong-ho-viem-hong-vi-bac-ha-1.webp",
+        "selling_price": 243000,
+        "original_price": 270000,
+        "shop_name": "Trung Tâm Bán Hàng Siêu Thị Vina",
+        "rating": null,
+        "sold": 0,
+        "discount_percent": 10
+      },
+      {
+        "id": 119,
+        "ten": "Mật ong Tây Bắc đông trùng hạ thảo X3 (Hũ 240g)",
+        "slug": "mat-ong-tay-bac-dong-trung-ha-thao-x3-hu-240g",
+        "mediaurl": "https://sieuthivina.com/assets/client/images/thumbs/mat-ong-tay-bac-dong-trung-ha-thao-x3-hu-240g-1.webp",
+        "selling_price": 308000,
+        "original_price": 385000,
+        "shop_name": "Trung Tâm Bán Hàng Siêu Thị Vina",
+        "rating": null,
+        "sold": 0,
+        "discount_percent": 20
+      },
+      {
+        "id": 120,
+        "ten": "Tinh dầu tràm tự nhiên ECO - Lọ 30ml",
+        "slug": "tinh-dau-tram-tu-nhien-eco-30ml",
+        "mediaurl": "https://sieuthivina.com/assets/client/images/thumbs/tinh-dau-tram-tu-nhien-eco-ho-tro-giam-ho-cam-cum-so-mui-cam-lanh-lo-30ml-1.webp",
+        "selling_price": 39000,
+        "original_price": 260000,
+        "shop_name": "Trung Tâm Bán Hàng Siêu Thị Vina",
+        "rating": null,
+        "sold": 0,
+        "discount_percent": 85
+      }
+    ]
+  },
+  "api_sanphams": {
+    "status": true,
+    "data": [
+      {
+        "id": 101,
+        "ten": "Instax Mini 12",
+        "slug": "instax-mini-12"
+      },
+      {
+        "id": 102,
+        "ten": "Tai nghe XYZ",
+        "slug": "tai-nghe-xyz"
+      },
+      {
+        "id": 201,
+        "ten": "Kem dưỡng ABC",
+        "slug": "kem-duong-abc"
+      },
+      {
+        "id": 202,
+        "ten": "Sữa tắm DEF",
+        "slug": "sua-tam-def"
+      },
+      {
+        "id": 301,
+        "ten": "Máy sấy tóc GHI",
+        "slug": "may-say-toc-ghi"
+      }
+    ]
+  },
+  "api_gift_events": {
+    "status": true,
+    "data": [
+      {
+        "id": 201,
+        "title": "Tặng 1 sản phẩm bách hóa khi mua 3 sản phẩm",
+        "slug": "tang-1-san-pham-bach-hoa-khi-mua-3",
+        "mediaurl": "/assets/images/gifts/gift-1.webp",
+        "valid_until": "2025-12-31T23:59:59Z",
+        "cta_link": "/san-pham?promo=gift1"
+      },
+      {
+        "id": 202,
+        "title": "Tặng quà Trung Thu khi mua 3 sản phẩm",
+        "slug": "tang-qua-trung-thu-khi-mua-3",
+        "mediaurl": "/assets/images/gifts/gift-2.webp",
+        "valid_until": "2025-09-30T23:59:59Z",
+        "cta_link": "/san-pham?promo=mid-autumn"
+      },
+      {
+        "id": 203,
+        "title": "Mua 2 tặng 1 - Siêu tiết kiệm",
+        "slug": "mua-2-tang-1-sieu-tiet-kiem",
+        "mediaurl": "/assets/images/gifts/gift-3.webp",
+        "valid_until": "2025-11-30T23:59:59Z",
+        "cta_link": "/san-pham?promo=buy2get1"
+      }
+    ]
+  },
+  "api_top_brands": {
+    "status": true,
+    "data": [
+      {
+        "id": 301,
+        "name": "Trung Tâm Bán Hàng Siêu Thị Vina",
+        "slug": "trung-tam-ban-hang-sieu-thi-vina",
+        "logo": "/assets/images/brands/trung-tam-ban-hang-sieu-thi-vina.png",
+        "link": "/trung-tam-ban-hang-sieu-thi-vina"
+      },
+      {
+        "id": 302,
+        "name": "Eco",
+        "slug": "eco",
+        "logo": "/assets/images/brands/eco.jpg",
+        "link": "/eco"
+      },
+      {
+        "id": 303,
+        "name": "Trung Nhân",
+        "slug": "trung-nhan",
+        "logo": "/assets/images/brands/trung-nhan.jpg",
+        "link": "/trung-nhan"
+      },
+      {
+        "id": 304,
+        "name": "Happy Nuts",
+        "slug": "happy-nuts",
+        "logo": "/assets/images/brands/happy-nuts.png",
+        "link": "/thuong-hieu/happy-nuts"
+      }
+    ]
+  },
+  "tukhoas": [
+    {
+      "id": 1,
+      "dulieu": "Chăm sóc cá nhân",
+      "soluot": 151,
+      "dayTao": "2025-10-02 11:23:58",
+      "dayCapNhat": "2025-10-17 01:40:51"
+    },
+    {
+      "id": 2,
+      "dulieu": "Làm đẹp",
+      "soluot": 203,
+      "dayTao": "2025-10-02 11:23:58",
+      "dayCapNhat": "2025-10-17 00:46:56"
+    },
+    {
+      "id": 3,
+      "dulieu": "Tìm kiếm sản phẩm",
+      "soluot": 85,
+      "dayTao": "2025-10-02 11:23:58",
+      "dayCapNhat": "2025-10-17 00:43:33"
+    },
+    {
+      "id": 4,
+      "dulieu": "Thực phâm thức năng",
+      "soluot": 131,
+      "dayTao": "2025-10-02 11:23:58",
+      "dayCapNhat": "2025-10-17 02:11:24"
+    },
+    {
+      "id": 5,
+      "dulieu": "Điện máy",
+      "soluot": 107,
+      "dayTao": "2025-10-02 11:23:58",
+      "dayCapNhat": "2025-10-23 02:50:53"
+    },
+    {
+      "id": 6,
+      "dulieu": "Mẹ và bé",
+      "soluot": 60,
+      "dayTao": "2025-10-02 11:23:58",
+      "dayCapNhat": "2025-10-02 11:23:58"
+    },
+    {
+      "id": 7,
+      "dulieu": "Gia dụng nhà bếp",
+      "soluot": 42,
+      "dayTao": "2025-10-02 11:23:58",
+      "dayCapNhat": "2025-10-17 04:21:56"
+    },
+    {
+      "id": 8,
+      "dulieu": "máy ảnh",
+      "soluot": 2,
+      "dayTao": "2025-10-17 00:49:03",
+      "dayCapNhat": "2025-10-17 01:17:47"
+    },
+    {
+      "id": 9,
+      "dulieu": "tai nghe",
+      "soluot": 9,
+      "dayTao": "2025-10-17 00:49:11",
+      "dayCapNhat": "2025-10-17 02:47:00"
+    },
+    {
+      "id": 10,
+      "dulieu": "điện thoại",
+      "soluot": 2,
+      "dayTao": "2025-10-17 01:02:14",
+      "dayCapNhat": "2025-10-17 01:30:31"
+    },
+    {
+      "id": 11,
+      "dulieu": "sony",
+      "soluot": 1,
+      "dayTao": "2025-10-17 01:04:53",
+      "dayCapNhat": "2025-10-17 01:04:53"
+    },
+    {
+      "id": 12,
+      "dulieu": "máy tính",
+      "soluot": 1,
+      "dayTao": "2025-10-17 01:30:17",
+      "dayCapNhat": "2025-10-17 01:30:17"
+    }
+  ],
+  "_dev": {
+    "run": "npx json-server --watch mock/db.json --port 3001",
+    "endpoints": [
+      "/sanphams",
+      "/danhmucs",
+      "/api_sanphams"
+    ],
+    "note": "Đảm bảo FRONTEND trỏ tới http://localhost:3001",
+    "next_run": "npm run dev",
+    "env_hint": "Đặt NEXT_PUBLIC_API_URL=http://localhost:3001 trong .env.local",
+    "concurrently_hint": "npm i -D concurrently && npx concurrently \"npm run mock\" \"npm run dev\"",
+    "scripts_suggestion": {
+      "mock": "json-server --watch mock/db.json --port 3001",
+      "dev_all": "concurrently \"npm run mock\" \"npm run dev\""
+    }
+  },
+  "orders": [
+    {
+      "id": "1761980184035",
+      "user_id": "guest",
+      "items": [
+        {
+          "id_bienthesp": 16,
+          "product": {
+            "id": 16,
+            "ten": "Sản phẩm #16",
+            "mediaurl": "/assets/images/thumbs/product-two-img3.png",
+            "gia": {
+              "current": 0,
+              "before_discount": 0
+            },
+            "store": {
+              "name": "Mock Store",
+              "icon_url": "/assets/images/thumbs/product-two-img2.png"
+            },
+            "rating": {
+              "average": 0,
+              "count": 0
+            }
+          },
+          "quantity": 1
+        }
+      ],
+      "amount": 0,
+      "status": "paid",
+      "paymentMethod": "online",
+      "created_at": "2025-11-01T06:56:24.035Z",
+      "paid_at": "2025-11-01T06:56:27.596Z"
+    },
+    {
+      "id": "1761982547629",
+      "user_id": "guest",
+      "items": [
+        {
+          "id_bienthesp": 16,
+          "product": {
+            "id": 16,
+            "ten": "Sản phẩm #16",
+            "mediaurl": "/assets/images/thumbs/product-two-img3.png",
+            "gia": {
+              "current": 0,
+              "before_discount": 0
+            },
+            "store": {
+              "name": "Mock Store",
+              "icon_url": "/assets/images/thumbs/product-two-img2.png"
+            },
+            "rating": {
+              "average": 0,
+              "count": 0
+            }
+          },
+          "quantity": 1
+        }
+      ],
+      "amount": 0,
+      "status": "pending",
+      "paymentMethod": "online",
+      "created_at": "2025-11-01T07:35:47.630Z"
+    },
+    {
+      "id": "1762031774832",
+      "user_id": "guest",
+      "items": [
+        {
+          "id_bienthesp": 16,
+          "product": {
+            "id": 16,
+            "ten": "Sản phẩm #16",
+            "mediaurl": "/assets/images/thumbs/product-two-img3.png",
+            "gia": {
+              "current": 0,
+              "before_discount": 0
+            },
+            "store": {
+              "name": "Mock Store",
+              "icon_url": "/assets/images/thumbs/product-two-img2.png"
+            },
+            "rating": {
+              "average": 0,
+              "count": 0
+            }
+          },
+          "quantity": 1
+        }
+      ],
+      "amount": 0,
+      "status": "paid",
+      "paymentMethod": "online",
+      "created_at": "2025-11-01T21:16:14.833Z",
+      "paid_at": "2025-11-01T21:16:16.545Z"
+    },
+    {
+      "id": "1762033752412",
+      "user_id": "guest",
+      "items": [
+        {
+          "id_bienthesp": 16,
+          "product": {
+            "id": 16,
+            "ten": "Sản phẩm #16",
+            "mediaurl": "/assets/images/thumbs/product-two-img3.png",
+            "gia": {
+              "current": 0,
+              "before_discount": 0
+            },
+            "store": {
+              "name": "Mock Store",
+              "icon_url": "/assets/images/thumbs/product-two-img2.png"
+            },
+            "rating": {
+              "average": 0,
+              "count": 0
+            }
+          },
+          "quantity": 1
+        }
+      ],
+      "amount": 0,
+      "status": "pending",
+      "paymentMethod": "online",
+      "created_at": "2025-11-01T21:49:12.412Z"
+    },
+    {
+      "id": "1762082113459",
+      "user_id": "guest",
+      "items": [
+        {
+          "id_bienthesp": 16,
+          "product": {
+            "id": 16,
+            "ten": "Sản phẩm #16",
+            "mediaurl": "/assets/images/thumbs/product-two-img3.png",
+            "gia": {
+              "current": 0,
+              "before_discount": 0
+            },
+            "store": {
+              "name": "Mock Store",
+              "icon_url": "/assets/images/thumbs/product-two-img2.png"
+            },
+            "rating": {
+              "average": 0,
+              "count": 0
+            }
+          },
+          "quantity": 1
+        }
+      ],
+      "amount": 0,
+      "status": "paid",
+      "paymentMethod": "online",
+      "created_at": "2025-11-02T11:15:13.459Z",
+      "paid_at": "2025-11-02T11:15:31.170Z"
+    },
+    {
+      "id": "1762082328348",
+      "user_id": "guest",
+      "items": [
+        {
+          "id_bienthesp": 16,
+          "product": {
+            "id": 16,
+            "ten": "Sản phẩm #16",
+            "mediaurl": "/assets/images/thumbs/product-two-img3.png",
+            "gia": {
+              "current": 0,
+              "before_discount": 0
+            },
+            "store": {
+              "name": "Mock Store",
+              "icon_url": "/assets/images/thumbs/product-two-img2.png"
+            },
+            "rating": {
+              "average": 0,
+              "count": 0
+            }
+          },
+          "quantity": 1
+        }
+      ],
+      "amount": 0,
+      "status": "pending",
+      "paymentMethod": "online",
+      "created_at": "2025-11-02T11:18:48.348Z"
+    },
+    {
+      "id": "1762082764009",
+      "user_id": "guest",
+      "items": [
+        {
+          "id_bienthesp": 16,
+          "product": {
+            "id": 16,
+            "ten": "Sản phẩm #16",
+            "mediaurl": "/assets/images/thumbs/product-two-img3.png",
+            "gia": {
+              "current": 0,
+              "before_discount": 0
+            },
+            "store": {
+              "name": "Mock Store",
+              "icon_url": "/assets/images/thumbs/product-two-img2.png"
+            },
+            "rating": {
+              "average": 0,
+              "count": 0
+            }
+          },
+          "quantity": 1
+        }
+      ],
+      "amount": 0,
+      "status": "pending",
+      "paymentMethod": "online",
+      "created_at": "2025-11-02T11:26:04.009Z"
+    },
+    {
+      "id": "1762284945136",
+      "user_id": "guest",
+      "items": [
+        {
+          "id_bienthesp": 16,
+          "product": {
+            "id": 16,
+            "ten": "Sản phẩm #16",
+            "mediaurl": "/assets/images/thumbs/product-two-img3.png",
+            "gia": {
+              "current": 0,
+              "before_discount": 0
+            },
+            "store": {
+              "name": "Mock Store",
+              "icon_url": "/assets/images/thumbs/product-two-img2.png"
+            },
+            "rating": {
+              "average": 0,
+              "count": 0
+            }
+          },
+          "quantity": 1
+        }
+      ],
+      "amount": 0,
+      "status": "pending",
+      "paymentMethod": "online",
+      "created_at": "2025-11-04T19:35:45.136Z"
+    },
+    {
+      "id": "1762605271384",
+      "user_id": "guest",
+      "items": [
+        {
+          "id_bienthesp": 16,
+          "product": {
+            "id": 16,
+            "ten": "Sản phẩm #16",
+            "mediaurl": "/assets/images/thumbs/product-two-img3.png",
+            "gia": {
+              "current": 0,
+              "before_discount": 0
+            },
+            "store": {
+              "name": "Mock Store",
+              "icon_url": "/assets/images/thumbs/product-two-img2.png"
+            },
+            "rating": {
+              "average": 0,
+              "count": 0
+            }
+          },
+          "quantity": 1
+        }
+      ],
+      "amount": 0,
+      "status": "pending",
+      "paymentMethod": "online",
+      "created_at": "2025-11-08T12:34:31.384Z"
+    },
+    {
+      "id": "1762605548110",
+      "user_id": "guest",
+      "items": [
+        {
+          "id_bienthesp": 16,
+          "product": {
+            "id": 16,
+            "ten": "Sản phẩm #16",
+            "mediaurl": "/assets/images/thumbs/product-two-img3.png",
+            "gia": {
+              "current": 0,
+              "before_discount": 0
+            },
+            "store": {
+              "name": "Mock Store",
+              "icon_url": "/assets/images/thumbs/product-two-img2.png"
+            },
+            "rating": {
+              "average": 0,
+              "count": 0
+            }
+          },
+          "quantity": 1
+        }
+      ],
+      "amount": 0,
+      "status": "pending",
+      "paymentMethod": "online",
+      "created_at": "2025-11-08T12:39:08.110Z"
+    },
+    {
+      "id": "1762607767480",
+      "user_id": "guest",
+      "items": [
+        {
+          "id_bienthesp": 16,
+          "product": {
+            "id": 16,
+            "ten": "Sản phẩm #16",
+            "mediaurl": "/assets/images/thumbs/product-two-img3.png",
+            "gia": {
+              "current": 0,
+              "before_discount": 0
+            },
+            "store": {
+              "name": "Mock Store",
+              "icon_url": "/assets/images/thumbs/product-two-img2.png"
+            },
+            "rating": {
+              "average": 0,
+              "count": 0
+            }
+          },
+          "quantity": 1
+        },
+        {
+          "id_bienthesp": 7,
+          "product": {
+            "id": 7,
+            "ten": "Sản phẩm #7",
+            "mediaurl": "/assets/images/thumbs/product-two-img1.png",
+            "gia": {
+              "current": 0,
+              "before_discount": 0
+            },
+            "store": {
+              "name": "Mock Store",
+              "icon_url": "/assets/images/thumbs/product-two-img4.png"
+            },
+            "rating": {
+              "average": 0,
+              "count": 0
+            }
+          },
+          "quantity": 1
+        }
+      ],
+      "amount": 0,
+      "status": "pending",
+      "paymentMethod": "online",
+      "created_at": "2025-11-08T13:16:07.480Z"
+    },
+    {
+      "id": "1762607798786",
+      "user_id": "guest",
+      "items": [
+        {
+          "id_bienthesp": 16,
+          "product": {
+            "id": 16,
+            "ten": "Sản phẩm #16",
+            "mediaurl": "/assets/images/thumbs/product-two-img3.png",
+            "gia": {
+              "current": 0,
+              "before_discount": 0
+            },
+            "store": {
+              "name": "Mock Store",
+              "icon_url": "/assets/images/thumbs/product-two-img2.png"
+            },
+            "rating": {
+              "average": 0,
+              "count": 0
+            }
+          },
+          "quantity": 1
+        }
+      ],
+      "amount": 0,
+      "status": "pending",
+      "paymentMethod": "online",
+      "created_at": "2025-11-08T13:16:38.787Z"
+    },
+    {
+      "id": "1762697506515",
+      "user_id": "guest",
+      "items": [
+        {
+          "id_bienthesp": 16,
+          "product": {
+            "id": 16,
+            "ten": "Sản phẩm #16",
+            "mediaurl": "/assets/images/thumbs/product-two-img3.png",
+            "gia": {
+              "current": 0,
+              "before_discount": 0
+            },
+            "store": {
+              "name": "Mock Store",
+              "icon_url": "/assets/images/thumbs/product-two-img2.png"
+            },
+            "rating": {
+              "average": 0,
+              "count": 0
+            }
+          },
+          "quantity": 1
+        }
+      ],
+      "amount": 0,
+      "status": "pending",
+      "paymentMethod": "online",
+      "created_at": "2025-11-09T14:11:46.515Z"
+    },
+    {
+      "id": "1762950603697",
+      "user_id": "guest",
+      "items": [
+        {
+          "id_bienthesp": 16,
+          "product": {
+            "id": 16,
+            "ten": "Sản phẩm #16",
+            "mediaurl": "/assets/images/thumbs/product-two-img3.png",
+            "gia": {
+              "current": 0,
+              "before_discount": 0
+            },
+            "store": {
+              "name": "Mock Store",
+              "icon_url": "/assets/images/thumbs/product-two-img2.png"
+            },
+            "rating": {
+              "average": 0,
+              "count": 0
+            }
+          },
+          "quantity": 1
+        },
+        {
+          "id_bienthesp": 7,
+          "product": {
+            "id": 7,
+            "ten": "Sản phẩm #7",
+            "mediaurl": "/assets/images/thumbs/product-two-img1.png",
+            "gia": {
+              "current": 0,
+              "before_discount": 0
+            },
+            "store": {
+              "name": "Mock Store",
+              "icon_url": "/assets/images/thumbs/product-two-img4.png"
+            },
+            "rating": {
+              "average": 0,
+              "count": 0
+            }
+          },
+          "quantity": 1
+        },
+        {
+          "id_bienthesp": "16",
+          "product": {
+            "id": 16,
+            "ten": "Sản phẩm #16",
+            "mediaurl": "/assets/images/thumbs/product-two-img3.png",
+            "gia": {
+              "current": 0,
+              "before_discount": 0
+            },
+            "store": {
+              "name": "Mock Store",
+              "icon_url": "/assets/images/thumbs/product-two-img6.png"
+            },
+            "rating": {
+              "average": 0,
+              "count": 0
+            }
+          },
+          "quantity": 1
+        }
+      ],
+      "amount": 0,
+      "status": "pending",
+      "paymentMethod": "online",
+      "created_at": "2025-11-12T12:30:03.697Z"
+    }
+  ]
 }

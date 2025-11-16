@@ -1,272 +1,196 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
+import React from "react";
+import AccountShell from "@/components/AccountShell";
+import ProductCardV2 from "@/components/ProductCardV2";
+import { useWishlist } from "@/hooks/useWishlist";
 import FullHeader from "@/components/FullHeader";
-import BenefitsStrip from "@/components/BenefitsStrip";
 
-/* =======================
-   Kiểu dữ liệu (khớp tối thiểu với BE)
-======================= */
-// Product rút gọn (đủ để hiển thị trong bảng)
-type BienThe = { gia: string; giagiam: string; soluong?: number };
-type AnhSP   = { media: string };
-type DanhGia = { diem: number };
-type ApiProduct = {
-  id: number;
-  ten: string;
-  mediaurl?: string | null;
-  anhsanphams?: AnhSP[];
-  bienthes?: BienThe[];
-  danhgias?: DanhGia[];
-  conhang?: boolean; // nếu BE có
+/** Kiểu tối thiểu cho item trả về từ API */
+type WishProduct = {
+  id?: number | string;
+  product_id?: number | string;
+  product?: { id?: number | string };
+  slug?: string;
+  ten?: string;
+  name?: string;
+  title?: string;
+  mediaurl?: string;
+  anhsanphams?: { media?: string }[];
+  selling_price?: number;
+  original_price?: number;
+  is_free?: boolean;
+  gia?: { current?: number; before_discount?: number };
+  bienthes?: { gia?: number | string; giagiam?: number | string }[];
 };
 
-// Mục wishlist có thể là product trực tiếp HOẶC { product: ApiProduct }
-type WishlistItem = ApiProduct | { product: ApiProduct };
+export default function WishlistPage() {
+  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://localhost:4000";
 
-/* =======================
-   Helpers
-======================= */
-const num = (v?: string): number => {
-  const n = parseFloat(v ?? "0");
-  return Number.isFinite(n) ? n : 0;
-};
-const firstImage = (p: ApiProduct) =>
-  p.mediaurl || p.anhsanphams?.[0]?.media || "/assets/images/thumbs/product-two-img7.png";
-const firstPrice = (p: ApiProduct) => {
-  const gia = num(p.bienthes?.[0]?.gia);
-  const giagiam = num(p.bienthes?.[0]?.giagiam);
-  // giagiam < gia => giagiam là GIÁ BÁN; ngược lại là số tiền giảm
-  const selling = giagiam > 0 && giagiam < gia ? giagiam : Math.max(gia - giagiam, 0);
-  return { gia, selling };
-};
-const avgRating = (p: ApiProduct) => {
-  const arr = p.danhgias || [];
-  if (!arr.length) return { avg: 0, count: 0 };
-  const sum = arr.reduce((s, r) => s + (Number(r.diem) || 0), 0);
-  return { avg: Math.round((sum / arr.length) * 10) / 10, count: arr.length };
-};
-const unwrap = (w: WishlistItem): ApiProduct => ("product" in w ? w.product : w);
+  // ✅ Gọi hook đúng chuẩn – không bọc IIFE
+  const { ids, isWished, toggle } = useWishlist();
 
-/* =======================
-   Page
-======================= */
-export default function Page() {
-  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://127.0.0.1:8000"; // ADDED
+  const [loading, setLoading] = React.useState(true);
+  const [items, setItems] = React.useState<WishProduct[]>([]);
 
-  const [loading, setLoading] = useState(true); // ADDED
-  const [rows, setRows] = useState<ApiProduct[]>([]); // ADDED
+  // Helpers
+  const toNum = (v: unknown): number | undefined => {
+    if (typeof v === "number" && Number.isFinite(v)) return v;
+    if (typeof v === "string") {
+      const n = parseInt(v, 10);
+      if (Number.isFinite(n)) return n;
+    }
+    return undefined;
+  };
 
-  // ADDED: tải danh sách yêu thích
-  useEffect(() => {
+  const getPid = React.useCallback((row: WishProduct): number => {
+    const cand =
+      toNum(row.product_id) ?? toNum(row.product?.id) ?? toNum(row.id);
+    return typeof cand === "number" ? cand : 0;
+  }, []);
+
+  React.useEffect(() => {
     let alive = true;
+    const listIds = Array.from(ids) as number[]; // ids từ hook: Set<number>
+
+    if (listIds.length === 0) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+
+    const fetchOne = async (id: number): Promise<WishProduct> => {
+      const r = await fetch(`${API}/api/sanphams/${id}`, {
+        headers: { Accept: "application/json" },
+      });
+      const j = await r.json();
+      return (j?.data ?? j) as WishProduct;
+    };
+
     (async () => {
       try {
-        const res = await fetch(`${API}/api/yeuthichs`, {
-          headers: { Accept: "application/json" },
-          credentials: "include", // nếu dùng session/cookie
-        });
-        const json = await res.json();
-        // data có thể là mảng product hoặc mảng {product: {...}}
-        const arr: WishlistItem[] = Array.isArray(json?.data)
-          ? json.data
-          : json?.data?.data || [];
-        const products = (arr as WishlistItem[]).map(unwrap);
-        if (alive) setRows(products);
+        const settled = await Promise.allSettled(listIds.map(fetchOne));
+        const ok = settled
+          .filter(
+            (s): s is PromiseFulfilledResult<WishProduct> =>
+              s.status === "fulfilled"
+          )
+          .map((s) => s.value);
+        if (alive) setItems(ok);
       } finally {
         if (alive) setLoading(false);
       }
     })();
+
     return () => {
       alive = false;
     };
-  }, [API]);
-
-  // ADDED: xoá khỏi wishlist (DELETE)
-  const removeFromWishlist = async (pid: number) => {
-    // lạc quan: cập nhật UI trước
-    setRows((prev) => prev.filter((p) => p.id !== pid));
-    try {
-      await fetch(`${API}/api/yeuthichs/${pid}`, {
-        method: "DELETE",
-        headers: { Accept: "application/json" },
-        credentials: "include",
-      });
-    } catch {
-      // thất bại thì… (tuỳ) khôi phục; để đơn giản bỏ qua
-    }
-  };
-
-  // CHANGED: chuẩn bị dữ liệu hiển thị
-  const tableData = useMemo(() => {
-    return rows.map((p) => {
-      const { gia, selling } = firstPrice(p);
-      const { avg, count } = avgRating(p);
-      const inStock =
-        typeof p.conhang === "boolean" ? p.conhang : (p.bienthes?.[0]?.soluong ?? 0) > 0;
-      return {
-        id: p.id,
-        name: p.ten,
-        img: firstImage(p),
-        price: selling,
-        oldPrice: gia > selling ? gia : undefined,
-        rating: { avg, count },
-        stockLabel: inStock ? "In Stock" : "Out of Stock",
-        detailsHref: `/product/sp-${p.id}-${encodeURIComponent(p.ten)}`,
-      };
-    });
-  }, [rows]);
+  }, [API, ids]);
 
   return (
     <>
-      {/* Header */}
-      <FullHeader showTopNav={false} showCategoriesBar={false} />
+    <FullHeader showClassicTopBar={true} showTopNav={false} />
+    <AccountShell title="Yêu thích" current="wishlist">
+      {loading ? (
+        <div>Đang tải…</div>
+      ) : items.length === 0 ? (
+        <div>Danh sách trống.</div>
+      ) : (
+        <div className="row g-12">
+          {items.map((p) => {
+            const pid = getPid(p);
+            const img =
+              p.mediaurl ||
+              p?.anhsanphams?.[0]?.media ||
+              "/assets/images/thumbs/product-two-img1.png";
+            const name = p.ten || p.name || p.title || `Sản phẩm #${pid}`;
 
-      {/* Breadcrumb block */}
-      <div className="mb-0 breadcrumb py-26 bg-main-two-50">
-        <div className="container container-lg">
-          <div className="flex-wrap gap-16 breadcrumb-wrapper flex-between">
-            <h6 className="mb-0">My Wishlist</h6>
-            <ul className="flex-wrap gap-8 flex-align">
-              <li className="text-sm">
-                <Link href="/" className="gap-8 text-gray-900 flex-align hover-text-main-600">
-                  <i className="ph ph-house"></i>
-                  Home
-                </Link>
-              </li>
-              <li className="flex-align">
-                <i className="ph ph-caret-right"></i>
-              </li>
-              <li className="text-sm text-main-600"> Wishlist </li>
-            </ul>
-          </div>
-        </div>
-      </div>
+            // Lấy giá: ưu tiên selling_price → giá biến thể → gia.current
+            const toNumLoose = (x: unknown): number =>
+              typeof x === "string"
+                ? parseFloat(x)
+                : typeof x === "number"
+                ? x
+                : 0;
 
-      {/* Wishlist Table */}
-      <section className="cart py-80">
-        <div className="container container-lg">
-          <div className="row gy-4">
-            <div className="col-lg-11">
-              <div className="border border-gray-100 cart-table rounded-8">
-                <div className="overflow-x-auto scroll-sm scroll-sm-horizontal">
-                  <table className="table overflow-hidden rounded-8">
-                    <thead>
-                      <tr className="border-bottom border-neutral-100">
-                        <th className="px-40 py-32 mb-0 text-lg h6 fw-bold border-end border-neutral-100">Delete</th>
-                        <th className="px-40 py-32 mb-0 text-lg h6 fw-bold border-end border-neutral-100">Product Name</th>
-                        <th className="px-40 py-32 mb-0 text-lg h6 fw-bold border-end border-neutral-100">Unit Price</th>
-                        <th className="px-40 py-32 mb-0 text-lg h6 fw-bold border-end border-neutral-100">Stock Status</th>
-                        <th className="px-40 py-32 mb-0 text-lg h6 fw-bold"></th>
-                      </tr>
-                    </thead>
+            const v0 = p?.bienthes?.[0];
+            const baseGia = v0
+              ? { gia: toNumLoose(v0.gia), giagiam: toNumLoose(v0.giagiam) }
+              : {
+                  gia: toNumLoose(p?.gia?.before_discount),
+                  giagiam: toNumLoose(p?.gia?.current),
+                };
 
-                    <tbody>
-                      {/* CHANGED: render data thật hoặc trạng thái trống */}
-                      {loading ? (
-                        <tr>
-                          <td colSpan={5} className="px-40 py-32 text-center text-gray-500">
-                            Đang tải danh sách yêu thích…
-                          </td>
-                        </tr>
-                      ) : tableData.length === 0 ? (
-                        <tr>
-                          <td colSpan={5} className="px-40 py-32 text-center text-gray-500">
-                            Bạn chưa yêu thích sản phẩm nào.
-                          </td>
-                        </tr>
-                      ) : (
-                        tableData.map((row) => (
-                          <tr key={row.id}>
-                            <td className="px-40 py-32 border-end border-neutral-100">
-                              <button
-                                type="button"
-                                onClick={() => removeFromWishlist(row.id)}
-                                className="gap-12 remove-tr-btn flex-align hover-text-danger-600"
-                                aria-label={`Remove ${row.name} from wishlist`}
-                              >
-                                <i className="text-2xl ph ph-x-circle d-flex"></i>
-                                Remove
-                              </button>
-                            </td>
+            const sellingFromVariant = v0
+              ? baseGia.giagiam > 0 && baseGia.giagiam < baseGia.gia
+                ? baseGia.giagiam
+                : Math.max(baseGia.gia - baseGia.giagiam, 0)
+              : undefined;
 
-                            <td className="px-40 py-32 border-end border-neutral-100">
-                              <div className="gap-24 table-product d-flex align-items-center">
-                                <Link
-                                  href={row.detailsHref}
-                                  className="border border-gray-100 table-product__thumb rounded-8 flex-center "
-                                >
-                                  <Image src={row.img} alt={row.name} width={96} height={96} />
-                                </Link>
-                                <div className="table-product__content text-start">
-                                  <h6 className="mb-8 text-lg title fw-semibold">
-                                    <Link href={row.detailsHref} className="link text-line-2">
-                                      {row.name}
-                                    </Link>
-                                  </h6>
-                                  <div className="gap-16 mb-16 flex-align">
-                                    <div className="gap-6 flex-align">
-                                      <span className="text-md fw-medium text-warning-600 d-flex">
-                                        <i className="ph-fill ph-star"></i>
-                                      </span>
-                                      <span className="text-gray-900 text-md fw-semibold">
-                                        {row.rating.avg.toFixed(1)}
-                                      </span>
-                                    </div>
-                                    <span className="text-sm text-gray-200 fw-medium">|</span>
-                                    <span className="text-sm text-neutral-600">
-                                      {row.rating.count} Reviews
-                                    </span>
-                                  </div>
-                                  {/* (tuỳ) tags/thuộc tính… */}
-                                </div>
-                              </div>
-                            </td>
+            const price =
+              typeof p.selling_price === "number"
+                ? p.selling_price
+                : sellingFromVariant ??
+                  (typeof p?.gia?.current === "number" ? p.gia.current! : 0);
 
-                            <td className="px-40 py-32 border-end border-neutral-100">
-                              {row.oldPrice ? (
-                                <div className="d-flex flex-column">
-                                  <span className="text-sm text-gray-500 text-decoration-line-through">
-                                    {row.oldPrice.toLocaleString("vi-VN")} đ
-                                  </span>
-                                  <span className="mb-0 text-lg h6 fw-semibold">
-                                    {row.price.toLocaleString("vi-VN")} đ
-                                  </span>
-                                </div>
-                              ) : (
-                                <span className="mb-0 text-lg h6 fw-semibold">
-                                  {row.price.toLocaleString("vi-VN")} đ
-                                </span>
-                              )}
-                            </td>
+            const oldPrice =
+              typeof p.original_price === "number"
+                ? p.original_price
+                : typeof p?.gia?.before_discount === "number"
+                ? p.gia!.before_discount!
+                : sellingFromVariant !== undefined
+                ? baseGia.gia
+                : undefined;
 
-                            <td className="px-40 py-32 border-end border-neutral-100">
-                              <span className="mb-0 text-lg h6 fw-semibold">{row.stockLabel}</span>
-                            </td>
+            const isFree = price === 0 || p.is_free === true;
+            const discount =
+              !isFree && typeof oldPrice === "number" && oldPrice > price
+                ? oldPrice - price
+                : 0;
 
-                            <td className="px-40 py-32">
-                              <Link href="/cart" className="px-64 btn btn-main-two rounded-8">
-                                Add To Cart <i className="ph ph-shopping-cart"></i>
-                              </Link>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+            const badge = isFree
+              ? { text: "Miễn phí", color: "primary" as const }
+              : discount > 0
+              ? {
+                  text: `Giảm ${discount.toLocaleString("vi-VN")} đ`,
+                  color: "warning" as const,
+                }
+              : undefined;
+
+            return (
+              <div
+                key={pid || String(p.id)}
+                className="col-xxl-3 col-xl-4 col-lg-4 col-sm-6"
+              >
+                <ProductCardV2
+                  href={`/products/${p.slug || pid}`}
+                  img={img}
+                  title={name}
+                  price={price}
+                  oldPrice={oldPrice}
+                  variantId={pid || undefined}
+                  badge={badge}
+                  showHeart
+                  isWished={pid !== 0 && isWished(pid)}
+                  onToggleWish={() => {
+                    const currently = pid !== 0 && isWished(pid);
+                    if (currently)
+                      setItems((prev) => prev.filter((it) => getPid(it) !== pid));
+                    if (pid !== 0) toggle(pid);
+                  }}
+                  showUnwishButton
+                  onUnwish={() => {
+                    if (pid !== 0 && isWished(pid))
+                      setItems((prev) => prev.filter((it) => getPid(it) !== pid));
+                    if (pid !== 0) toggle(pid);
+                  }}
+                />
               </div>
-
-              {/* (tuỳ chọn) phân trang thật: đọc res.meta & res.links từ BE*/}
-            </div>
-          </div>
+            );
+          })}
         </div>
-      </section>
-
-      {/* Benefits strip */}
-      <BenefitsStrip />
+      )}
+    </AccountShell>
     </>
   );
 }

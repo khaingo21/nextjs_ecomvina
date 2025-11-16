@@ -1,0 +1,43 @@
+{
+    "status": true,
+    "message": "Test product",
+    "data": [
+        {
+            "id": 999,
+            "ten": "Tai nghe Bluetooth Sony WH-1000XM5",
+            "slug": "tai-nghe-bluetooth-sony",
+            "mediaurl": "/assets/images/thumbs/product-two-img1.png",
+            "selling_price": 450000,
+            "original_price": 650000,
+            "discount_amount": 200000,
+            "discount_percent": 31,
+            "rating_average": 4.8,
+            "rating_count": 250,
+            "danhmuc_id": 2,
+            "mota": "Tai nghe Bluetooth Sony chất lượng cao, chống ồn tuyệt vời. Sản phẩm điện tử, điện máy cao cấp. Pin 30 giờ, âm thanh sống động.",
+            "hashtags": [
+                "tai nghe",
+                "bluetooth",
+                "sony",
+                "điện tử",
+                "điện máy",
+                "chống ồn"
+            ],
+            "total_sold": 5000,
+            "monthly_sold": 450,
+            "view_count": 25000,
+            "conversion_rate": 0.25,
+            "shop_response_rate": 0.95,
+            "return_rate": 0.02,
+            "cancel_rate": 0.01,
+            "shop_rating": 4.9,
+            "is_mall": true,
+            "is_favorite": true,
+            "has_video": true,
+            "image_count": 8,
+            "is_ad": false,
+            "is_flash_sale": true,
+            "flash_sale_priority": 1
+        }
+    ]
+}

@@ -576,118 +576,6 @@
         {
           breakpoint: 1399,
           settings: {
-            slidesToShow: 3,
-            arrows: false,
-          },
-        },
-        {
-          breakpoint: 1199,
-          settings: {
-            slidesToShow: 2,
-            arrows: false,
-          },
-        },
-        {
-          breakpoint: 575,
-          settings: {
-            slidesToShow: 1,
-            arrows: false,
-          },
-        },
-      ],
-    });
-    // ========================= hot deals Slider Js End ===================
-
-    // ========================= hot deals Slider Js Start ==============
-    $(".top-selling-product-slider").slick({
-      slidesToShow: 5,
-      slidesToScroll: 1,
-      autoplay: true,
-      autoplaySpeed: 1200,
-      speed: 1500,
-      dots: false,
-      pauseOnHover: false,
-      arrows: true,
-      draggable: true,
-      rtl: $("html").attr("dir") === "rtl" ? true : false,
-      speed: 900,
-      infinite: true,
-      nextArrow: "#top-selling-next",
-      prevArrow: "#top-selling-prev",
-      responsive: [
-        {
-          breakpoint: 1399,
-          settings: {
-            slidesToShow: 3,
-            arrows: false,
-          },
-        },
-        {
-          breakpoint: 1199,
-          settings: {
-            slidesToShow: 2,
-            arrows: false,
-          },
-        },
-        {
-          breakpoint: 575,
-          settings: {
-            slidesToShow: 1,
-            arrows: false,
-          },
-        },
-      ],
-    });
-    // ========================= hot deals Slider Js End ===================
-
-    // ========================= hot deals Slider Js Start ==============
-    $(".organic-food__slider").slick({
-      slidesToShow: 6,
-      slidesToScroll: 1,
-      autoplay: true,
-      autoplaySpeed: 2000,
-      speed: 1500,
-      dots: false,
-      pauseOnHover: true,
-      arrows: true,
-      draggable: true,
-      rtl: $("html").attr("dir") === "rtl" ? true : false,
-      speed: 900,
-      infinite: true,
-      nextArrow: "#organic-next",
-      prevArrow: "#organic-prev",
-      responsive: [
-        {
-          breakpoint: 1599,
-          settings: {
-            slidesToShow: 6,
-            arrows: false,
-          },
-        },
-        {
-          breakpoint: 1399,
-          settings: {
-            slidesToShow: 4,
-            arrows: false,
-          },
-        },
-        {
-          breakpoint: 992,
-          settings: {
-            slidesToShow: 3,
-            arrows: false,
-          },
-        },
-        {
-          breakpoint: 575,
-          settings: {
-            slidesToShow: 2,
-            arrows: false,
-          },
-        },
-        {
-          breakpoint: 424,
-          settings: {
             slidesToShow: 1,
             arrows: false,
           },
@@ -1084,9 +972,9 @@
       });
       $("#amount").val(
         "$" +
-          $("#slider-range").slider("values", 0) +
-          " - $" +
-          $("#slider-range").slider("values", 1)
+        $("#slider-range").slider("values", 0) +
+        " - $" +
+        $("#slider-range").slider("values", 1)
       );
     });
     // ========================== Range Slider Js End =====================
@@ -1157,7 +1045,6 @@
       }
     });
     // ========================= Password Show Hide Js End ===========================
-
     // ========================= Background Image Js Start ===================
     $(".bg-img").css("background-image", function () {
       var bg = "url(" + $(this).data("background-image") + ")";
@@ -1166,24 +1053,23 @@
     // ========================= Background Image Js End ===================
 
     // ========================== Text Slide Js Start =====================
-    $(".text-slider").marquee({
-      pauseOnHover: true,
-      allowCss3Support: true,
-      css3easing: "linear",
-      easing: "linear",
-      delayBeforeStart: 0,
-      duration: 7000,
-      gap: 20,
-      pauseOnCycle: false,
-      startVisible: true,
-    });
+    if ($.fn && $.fn.marquee && $(".text-slider").length) {
+      $(".text-slider").marquee({
+        pauseOnHover: true,
+        allowCss3Support: true,
+        css3easing: "linear",
+        easing: "linear",
+        delayBeforeStart: 0,
+        duration: 7000,
+        gap: 20,
+        pauseOnCycle: false,
+        startVisible: true,
+      });
+    }
     // ========================== Text Slide Js End =====================
 
-    // ========================== Trending Products Js Strt =====================
-    $(".expand-btn").on("click", function () {
-      $(this).toggleClass("bg-main-two-600 text-white");
-      $(this).parent().find(".expand-icons").toggleClass("d-flex");
-
+    // ========================== Accordion Js Start =====================
+    $(".accordion-button").on("click", function () {
       if ($(this).children("i").hasClass("ph ph-plus")) {
         $(this).children("i").removeClass("ph ph-plus");
         $(this).children("i").addClass("ph ph-x");

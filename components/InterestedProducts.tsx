@@ -123,7 +123,7 @@ const InterestedProducts = () => {
   ];
 
   return (
-    <section className="trending-productss pt-60 overflow-hidden">
+    <section className="trending-productss pt-24 overflow-hidden">
       <div className="container">
         <div className="border border-gray-100 p-24 rounded-16">
           <div className="section-heading mb-24">

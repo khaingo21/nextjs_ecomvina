@@ -4,8 +4,12 @@ import { useRouter } from "next/navigation";
 
 type Keyword = { id: number; dulieu: string; soluot: number };
 
-export default function SearchBox() {
-  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://127.0.0.1:8000";
+type SearchBoxProps = {
+  placeholder?: string;
+};
+
+export default function SearchBox({ placeholder = "Thuốc giảm cân dành cho người béo..." }: SearchBoxProps) {
+  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://localhost:4000";
   const [q, setQ] = React.useState("");
   const [open, setOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
@@ -28,7 +32,7 @@ export default function SearchBox() {
       })
         .then((r) => r.json())
         .then((res) => setItems(Array.isArray(res?.data) ? res.data : []))
-        .catch(() => {})
+        .catch(() => { })
         .finally(() => setLoading(false));
     }, 200);
     return () => {
@@ -46,7 +50,7 @@ export default function SearchBox() {
     // tăng lượt cho keyword đã có
     try {
       await fetch(`${API}/api/tukhoas/${k.id}`, { method: "PUT" });
-    } catch {}
+    } catch { }
     setQ(k.dulieu);
     setOpen(false);
     goResult(k.dulieu);
@@ -69,7 +73,7 @@ export default function SearchBox() {
           body: JSON.stringify({ dulieu: kw, soluot: 1 }),
         });
       }
-    } catch {}
+    } catch { }
     setOpen(false);
     goResult(kw);
   };
@@ -86,7 +90,7 @@ export default function SearchBox() {
           }}
           onFocus={() => q && setOpen(true)}
           className="py-10 text-sm shadow-none form-control fw-normal placeholder-italic bg-neutral-30 placeholder-fw-normal placeholder-light ps-30 pe-60"
-          placeholder="Thuốc giảm cân dành cho người béo...."
+          placeholder={placeholder}
           aria-label="Tìm kiếm sản phẩm"
         />
         <button type="submit"

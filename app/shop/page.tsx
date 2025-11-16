@@ -67,7 +67,7 @@ const avgRating = (p: ApiProduct) => {
   return { avg: Math.round((sum / arr.length) * 10) / 10, count: arr.length };
 };
 
-const toHref = (p: ApiProduct) => `/product/${slugify(p.ten, `sp-${p.id}`)}-${p.id}`;
+const toHref = (p: ApiProduct) => `/products/${slugify(p.ten, `sp-${p.id}`)}-${p.id}`;
 
 /* =======================
    Page
@@ -76,7 +76,7 @@ export default function Page() {
   const searchParams = useSearchParams();
 
   // ===== ADDED: base API & đọc mọi tham số query =====
-  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://127.0.0.1:8000";
+  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://localhost:4000";
 
   // GIỮ TƯƠNG THÍCH CŨ: view=hot  → source=hot_sales (không phá link cũ)
   const source   = (searchParams.get("source") || (searchParams.get("view") === "hot" ? "hot_sales" : "")).toLowerCase(); // ADDED

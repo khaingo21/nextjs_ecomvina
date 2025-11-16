@@ -1,46 +1,33 @@
 "use client";
-import React from "react";
+
+import React, { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { addToCart } from "@/utils/cartClient";
+import { flyToCart } from "@/utils/flyToCart";
 
 type BadgeColor = "primary" | "danger" | "warning";
-
-type SoldInfo =
-  | string                    // ví dụ "18/35" (giữ tương thích)
-  | { current: number; total: number } // sẽ tính % = current/total
-  | number;                   // % đã bán (0..100)
+type SoldInfo = string | { current: number; total: number } | number;
 
 type Props = {
-  /** Link đích cho thumb + title (fallback: /product-details) */
   href?: string;
-
-  /** Ảnh hiển thị (absolute/relative) */
   img: string;
-
-  /** Tiêu đề sản phẩm */
   title: string;
-
-  /** Giá hiển thị: có thể truyền number (tự format VND) hoặc string đã format */
   price: number | string;
-
-  /** Giá gốc (tuỳ chọn): number (tự format) hoặc string */
   oldPrice?: number | string;
-
-  /** Thông tin đã bán: "18/35" | {current,total} | number(%) */
   sold?: SoldInfo;
-
-  /** Đánh giá: ưu tiên dùng dạng số; fallback: chuỗi cũ */
-  ratingAverage?: number; // ví dụ 4.8
-  ratingCount?: number;   // ví dụ 17000
-  rating?: string;        // fallback cũ: "4.8"
-  reviews?: string;       // fallback cũ: "(17k)"
-  /** Tuỳ chọn hiển thị nút yêu thích (tim) */
-  showHeart?: boolean;        // hiện nút tim
-  isWished?: boolean;         // trạng thái đã yêu thích
-  onToggleWish?: () => void;  // callback toggle
-
-  /** Badge trạng thái (giảm giá/miễn phí/v.v.) */
-  badge?: { text: string; color: BadgeColor };
+  ratingAverage?: number;
+  ratingCount?: number;
+  rating?: string;     // fallback text (vd: "4.8")
+  reviews?: string;    // fallback text (vd: "(17k)")
+  showHeart?: boolean;
+  isWished?: boolean;
+  onToggleWish?: () => void;
+  // Optional secondary action to explicitly remove from wishlist
+  showUnwishButton?: boolean;
+  onUnwish?: () => void;
+  badge?: { text: string; color: BadgeColor }; // vd: { text: "Miễn phí", color: "primary" }
+  variantId?: number; // id biến thể chuẩn để AddToCart chính xác
 };
 
 const colorMap: Record<BadgeColor, string> = {
@@ -49,22 +36,16 @@ const colorMap: Record<BadgeColor, string> = {
   warning: "bg-warning-600",
 };
 
-/** Format VND khi nhận giá dạng number */
-const fmtVND = (v: number | string | undefined): string | undefined => {
-  if (typeof v === "number") return v.toLocaleString("vi-VN") + " đ";
-  return v;
-};
+const fmtVND = (v?: number | string) =>
+  typeof v === "number" ? v.toLocaleString("vi-VN") + " đ" : v;
 
-/** Tính phần trăm & label cho 'Sold' */
 const deriveSold = (sold?: SoldInfo): { percent: number; label: string } => {
   if (sold == null) return { percent: 35, label: "Sold: 18/35" };
-
   if (typeof sold === "number") {
     const p = Math.max(0, Math.min(100, Math.round(sold)));
     return { percent: p, label: `Sold: ${p}%` };
   }
   if (typeof sold === "string") {
-    // cố thử parse "a/b" -> %; nếu không parse được thì để 35%
     const m = sold.match(/^(\d+)\s*\/\s*(\d+)$/);
     if (m) {
       const cur = parseInt(m[1], 10);
@@ -74,76 +55,127 @@ const deriveSold = (sold?: SoldInfo): { percent: number; label: string } => {
     }
     return { percent: 35, label: `Sold: ${sold}` };
   }
-  // {current,total}
   const cur = Math.max(0, Math.round(sold.current));
   const tot = Math.max(1, Math.round(sold.total));
   const p = Math.max(0, Math.min(100, Math.round((cur / tot) * 100)));
   return { percent: p, label: `Sold: ${cur}/${tot}` };
 };
 
-export default function ProductCardV2({
-  href,
-  img,
-  title,
-  price,
-  oldPrice,
-  sold,
-  ratingAverage,
-  ratingCount,
-  rating,
-  reviews,
-  badge,
-  showHeart,       //  ADDED
-  isWished,        //  ADDED
-  onToggleWish,    //  ADDED
-}: Props) {
+export default function ProductCardV2(props: Props) {
+  const {
+    href,
+    img,
+    title,
+    price,
+    oldPrice,
+    sold,
+    ratingAverage,
+    ratingCount,
+    rating,
+    reviews,
+    badge,
+    showHeart = true,
+    isWished,
+    onToggleWish,
+    variantId,
+    showUnwishButton,
+    onUnwish,
+  } = props;
+
   const dest = href || "/product-details";
-
-  const priceText = fmtVND(price)!;
+  const priceText = fmtVND(price) || "";
   const oldText = fmtVND(oldPrice);
-
-  // rating/reviews: ưu tiên số -> chuỗi
   const ratingText =
     typeof ratingAverage === "number" ? ratingAverage.toFixed(1) : (rating ?? "4.8");
   const reviewsText =
     typeof ratingCount === "number" ? `(${ratingCount})` : (reviews ?? "(17k)");
-
   const soldInfo = deriveSold(sold);
 
-  return (
-    <div className="p-16 border border-gray-100 product-card h-100 hover-border-main-600 rounded-16 position-relative transition-2">
-      <Link href={dest} className="product-card__thumb flex-center rounded-8 bg-gray-50 position-relative">
+  const thumbRef = useRef<HTMLAnchorElement | null>(null);
+
+  const handleAdd = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.nativeEvent.stopImmediatePropagation();
+
+    try {
+      let id = variantId;
+      if (!id) {
+        const url = new URL(dest, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+        const last = url.pathname.split('/').pop();
+        const parsed = last ? parseInt(last, 10) : NaN;
+        if (Number.isFinite(parsed)) id = parsed;
+      }
+      if (!id) {
+        console.error("❌ Không xác định được sản phẩm");
+        return;
+      }
+
+      await addToCart(id, 1);
+      const el = thumbRef.current;
+      if (el) flyToCart(el);
+    } catch (err) {
+      console.error("❌ ProductCardV2: Error:", err);
+    }
+  }; return (
+    <div
+      className="p-16 bg-white border border-gray-100 product-card h-100 hover-border-main-600 rounded-16 position-relative transition-2"
+      style={{ position: "relative" }} // mốc định vị cho badge + tim
+    >
+      {/* === BADGE (ví dụ: Miễn phí) — góc trái trên === */}
+      {badge ? (
+        <span
+          className={`product-card__badge ${colorMap[badge.color]} text-white text-sm px-8 py-4 position-absolute inset-block-start-0 inset-inline-start-0`}
+          style={{ lineHeight: 1, zIndex: 50, top: 8, left: 8 }}
+        >
+          {badge.text}
+        </span>
+      ) : null}
+
+      {/* === WISHLIST: đặt NGOÀI <Link>, mirror sang góc phải trên (logical inset) === */}
+      {showHeart && (
+        <button
+          data-wish
+          type="button"
+          aria-label={isWished ? "Bỏ yêu thích" : "Yêu thích"}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleWish?.(); }}
+          className={isWished
+            ? "bg-danger-600 text-white flex-center rounded-circle w-36 h-36"
+            : "bg-white text-gray-700 flex-center rounded-circle w-36 h-36"}
+          style={{
+            position: "absolute",
+            top: 8,          // <-- bắt buộc có
+            right: 8,        // <-- bắt buộc có
+            left: "auto",
+            bottom: "auto",
+            transform: "none",
+            zIndex: 60,
+            boxShadow: "0 2px 8px rgba(0,0,0,.06)",
+            cursor: "pointer",
+          }}
+        >
+          <i className={isWished ? "ph-fill ph-heart" : "ph ph-heart"} />
+        </button>
+      )}
+
+
+      {/* === THUMBNAIL === */}
+      <Link
+        href={dest}
+        ref={thumbRef}
+        className="overflow-hidden product-card__thumb flex-center rounded-8 bg-gray-50 position-relative"
+      >
         <Image
           src={img}
           alt={title}
           width={220}
           height={180}
           className="w-auto"
-          // hiển thị ngay ảnh ngoài domain (nếu chưa cấu hình next.config.images)
           unoptimized={/^https?:\/\//.test(img)}
         />
-        {showHeart && (
-          <button
-            type="button"
-            aria-label={isWished ? "Bỏ yêu thích" : "Yêu thích"}
-            onClick={(e) => { e.preventDefault(); onToggleWish?.(); }}
-            className={`position-absolute top-8 end-8 w-36 h-36 rounded-circle flex-center
-                        ${isWished ? "bg-danger-600 text-white" : "bg-white text-gray-700"}
-                        hover-bg-danger-600 hover-text-white transition-1`}
-            style={{ boxShadow: "0 2px 8px rgba(0,0,0,.06)" }}
-          >
-            <i className={isWished ? "ph-fill ph-heart" : "ph ph-heart"} />
-          </button>
-        )}
-        {badge ? (
-          <span
-            className={`product-card__badge ${colorMap[badge.color]} px-8 py-4 text-sm text-white position-absolute inset-inline-start-0 inset-block-start-0`}
-          >
-            {badge.text}
-          </span>
-        ) : null}
       </Link>
 
+      {/* === CONTENT === */}
       <div className="mt-16 product-card__content">
         <h6 className="mt-12 mb-8 text-lg title fw-semibold">
           <Link href={dest} className="link text-line-2">
@@ -154,7 +186,7 @@ export default function ProductCardV2({
         <div className="gap-6 mt-16 mb-20 flex-align">
           <span className="text-xs text-gray-500 fw-medium">{ratingText}</span>
           <span className="text-xs fw-medium text-warning-600 d-flex">
-            <i className="ph-fill ph-star"></i>
+            <i className="ph-fill ph-star" />
           </span>
           <span className="text-xs text-gray-500 fw-medium">{reviewsText}</span>
         </div>
@@ -186,12 +218,31 @@ export default function ProductCardV2({
           </span>
         </div>
 
-        <Link
-          href="/cart"
-          className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-8 flex-center fw-medium"
-        >
-          Add To Cart <i className="ph ph-shopping-cart"></i>
-        </Link>
+        <div className="gap-8 d-flex">
+          <button
+            type="button"
+            onClick={handleAdd}
+            className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-8 flex-center fw-medium flex-grow-1"
+            style={{
+              pointerEvents: 'auto',
+              cursor: 'pointer',
+              position: 'relative',
+              zIndex: 100
+            }}
+          >
+            Thêm vào giỏ hàng <i className="ph ph-shopping-cart" />
+          </button>
+          {showUnwishButton && (
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onUnwish?.(); }}
+              className="gap-8 px-16 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-8 flex-center fw-medium"
+              title="Bỏ yêu thích"
+            >
+              <i className="ph ph-heart-break" />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

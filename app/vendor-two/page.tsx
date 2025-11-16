@@ -15,15 +15,15 @@ export default function Page() {
   }, []);
 
   const vendors = [
-    { name: "e-Mart Shop", followers: "480589", rating: "4.8", phone: "083 308 1888" },
-    { name: "Baishakhi", followers: "480589", rating: "4.8", phone: "083 308 1888" },
-    { name: "e-zone Shop", followers: "480589", rating: "4.8", phone: "083 308 1888" },
-    { name: "Cloth & Fashion Shop", followers: "480589", rating: "4.8", phone: "083 308 1888" },
-    { name: "New Market Shop", followers: "480589", rating: "4.8", phone: "083 308 1888" },
-    { name: "Zeilla Shop", followers: "480589", rating: "4.8", phone: "083 308 1888" },
-    { name: "Ever Green Shop", followers: "480589", rating: "4.8", phone: "083 308 1888" },
-    { name: "Maple Shop", followers: "480589", rating: "4.8", phone: "083 308 1888" },
-    { name: "New Mart", followers: "480589", rating: "4.8", phone: "083 308 1888" },
+    { ten: "e-Mart Shop", followers: "480589", rating: "4.8", phone: "083 308 1888" },
+    { ten: "Baishakhi", followers: "480589", rating: "4.8", phone: "083 308 1888" },
+    { ten: "e-zone Shop", followers: "480589", rating: "4.8", phone: "083 308 1888" },
+    { ten: "Cloth & Fashion Shop", followers: "480589", rating: "4.8", phone: "083 308 1888" },
+    { ten: "New Market Shop", followers: "480589", rating: "4.8", phone: "083 308 1888" },
+    { ten: "Zeilla Shop", followers: "480589", rating: "4.8", phone: "083 308 1888" },
+    { ten: "Ever Green Shop", followers: "480589", rating: "4.8", phone: "083 308 1888" },
+    { ten: "Maple Shop", followers: "480589", rating: "4.8", phone: "083 308 1888" },
+    { ten: "New Mart", followers: "480589", rating: "4.8", phone: "083 308 1888" },
   ];
 
   return (
@@ -167,7 +167,7 @@ export default function Page() {
                       </div>
                       <div className="mt-16">
                         <h6 className="text-white fw-semibold mb-12">
-                          <Link href="/vendor-two-details" className="">{v.name}</Link>
+                          <Link href="/vendor-two-details" className="">{v.ten}</Link>
                         </h6>
                         <div className="flex-align gap-6">
                           <div className="flex-align gap-8">

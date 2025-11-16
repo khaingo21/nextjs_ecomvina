@@ -1,162 +1,172 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, Navigation } from "swiper/modules";
-import type { Swiper as SwiperInstance } from "swiper/types";
 
-/* =======================
-   Types khớp API hot_sales (không any)
-======================= */
-type Review = { id: number; diem: number };
-type Variant = { gia: string; giagiam: string; soluong?: number };
-type ProductImage = { media: string };
-type Brand = { id?: number; ten?: string };
+type ApiTopBrand = {
+  id: number | string;
+  name?: string;
+  slug?: string;
+  logo?: string;
+  link?: string;
+};
 
 type ApiProduct = {
   id: number;
-  ten: string;
+  ten?: string;
   slug?: string | null;
   mediaurl?: string | null;
-  anhsanphams?: ProductImage[];
-  bienthes?: Variant[];
-  danhgias?: Review[];
-  thuonghieu?: Brand;
-};
-
-type UIProduct = {
-  id: number;
-  name: string;
-  href: string;
-  image: string;
-  originalPrice: number;
-  sellingPrice: number;
-  isDiscounted: boolean;
-  discountPercent: number;
-  ratingAverage: number;
-  ratingCount: number;
-  brandName: string;
+  anhsanphams?: { media?: string }[];
+  bienthes?: { gia?: string | number; giagiam?: string | number }[];
+  thuonghieu?: { ten?: string };
 };
 
 type UIBrand = {
-  brand: string;       // tên thương hiệu
-  sample: UIProduct;   // 1 sản phẩm tiêu biểu để render card
-  productCount: number;
-  score: number;       // điểm xếp hạng (discount + rating)
+  id: string;
+  name: string;
+  logo: string;
+  link: string;
 };
 
-/* =======================
-   Helpers mapping
-======================= */
-const asNumber = (v: unknown, fallback = 0): number => {
-  if (typeof v === "number" && Number.isFinite(v)) return v;
-  if (typeof v === "string") {
-    const n = parseFloat(v);
-    return Number.isFinite(n) ? n : fallback;
-  }
-  return fallback;
-};
-
-const pickImage = (p: ApiProduct): string =>
+const pickProductImage = (p: ApiProduct): string =>
   p.mediaurl || p.anhsanphams?.[0]?.media || "/assets/images/thumbs/product-two-img7.png";
 
-const toUIProduct = (p: ApiProduct): UIProduct => {
-  const gia = asNumber(p.bienthes?.[0]?.gia, 0);
-  const giagiam = asNumber(p.bienthes?.[0]?.giagiam, 0);
-  // Heuristic: giagiam < gia -> giagiam là GIÁ BÁN; ngược lại là SỐ TIỀN GIẢM
-  const selling = giagiam > 0 && giagiam < gia ? giagiam : Math.max(gia - giagiam, 0);
-  const isDiscounted = gia > 0 && selling < gia;
-  const discountPercent = isDiscounted ? Math.round(((gia - selling) / gia) * 100) : 0;
+export default function TopBrandsSection({ title = "Thương hiệu hàng đầu" }: { title?: string }) {
+  const API_ROOT = (process.env.NEXT_PUBLIC_SERVER_API || "http://127.0.0.1:4000").replace(/\/$/, "");
+  const [brands, setBrands] = React.useState<UIBrand[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(true);
 
-  const reviews = p.danhgias ?? [];
-  const ratingCount = reviews.length;
-  const ratingAvg = ratingCount
-    ? Math.round((reviews.reduce((s, r) => s + asNumber(r.diem, 0), 0) / ratingCount) * 10) / 10
-    : 0;
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
+  const autoplayRef = React.useRef<number | null>(null);
+  const [isHover, setIsHover] = React.useState(false);
 
-  const brandName = p.thuonghieu?.ten?.trim() || "Khác";
-
-  return {
-    id: p.id,
-    name: p.ten,
-    href: `/product/${encodeURIComponent(p.ten.toLowerCase().replace(/\s+/g, "-"))}-${p.id}`,
-    image: pickImage(p),
-    originalPrice: gia,
-    sellingPrice: selling,
-    isDiscounted,
-    discountPercent,
-    ratingAverage: ratingAvg,
-    ratingCount,
-    brandName,
-  };
-};
-
-export default function TopBrandsSection() {
-  const [brands, setBrands] = useState<UIBrand[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  const viewAllHref = "/products?source=hot_sales&sort=popular";
-
-  // Refs cho nav + swiper instance
-  const prevRef = useRef<HTMLButtonElement | null>(null);
-  const nextRef = useRef<HTMLButtonElement | null>(null);
-  const swiperRef = useRef<SwiperInstance | null>(null);
-
-  useEffect(() => {
+  React.useEffect(() => {
     let alive = true;
-    const API = process.env.NEXT_PUBLIC_SERVER_API || "http://127.0.0.1:8000";
-    fetch(`${API}/api/sanphams-selection?selection=hot_sales&per_page=60`)
-      .then((r) => r.json() as Promise<{ status: boolean; data: ApiProduct[] }>)
-      .then((res) => {
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_ROOT}/api/top_brands`, { headers: { Accept: "application/json" }, cache: "no-store" });
+        const json = await res.json();
         if (!alive) return;
-        const list = res?.status && Array.isArray(res.data) ? res.data : [];
-        const ui = list.map(toUIProduct);
+        const data: ApiTopBrand[] = Array.isArray(json) ? json : Array.isArray(json?.data) ? json.data : [];
+        if (data.length > 0) {
+          const ui = data.map((b) => ({
+            id: String(b.id ?? b.slug ?? b.name ?? Math.random()),
+            name: b.name ?? b.slug ?? "Thương hiệu",
+            logo: b.logo ?? "/assets/images/brands/default.png",
+            link: b.link ?? (b.slug ? `/shop/${encodeURIComponent(b.slug)}` : `/shop/${encodeURIComponent(String(b.id))}`),
+          }));
+          setBrands(ui);
+          setLoading(false);
+          return;
+        }
+      } catch {
+        // fallback next
+      }
 
-        // Group theo thương hiệu, chọn sample có điểm tốt nhất
-        const grouped = new Map<string, UIBrand>();
-        for (const p of ui) {
-          const key = p.brandName;
-          const score = p.discountPercent * 2 + p.ratingAverage * 10; // ưu tiên giảm giá + rating
-          const cur = grouped.get(key);
-          if (!cur) {
-            grouped.set(key, { brand: key, sample: p, productCount: 1, score });
-          } else {
-            grouped.set(key, {
-              brand: key,
-              sample: score > cur.score ? p : cur.sample,
-              productCount: cur.productCount + 1,
-              score: Math.max(score, cur.score),
+      // fallback: group from hot_sales products
+      try {
+        const pRes = await fetch(`${API_ROOT}/api/sanphams-selection?selection=hot_sales&per_page=60`, { headers: { Accept: "application/json" }, cache: "no-store" });
+        const pJson = await pRes.json();
+        if (!alive) return;
+        const list: ApiProduct[] = Array.isArray(pJson) ? pJson : Array.isArray(pJson?.data) ? pJson.data : [];
+        const map = new Map<string, UIBrand>();
+        for (const p of list) {
+          const brandName = p.thuonghieu?.ten?.trim() || "Khác";
+          if (!map.has(brandName)) {
+            map.set(brandName, {
+              id: String(brandName),
+              name: brandName,
+              logo: pickProductImage(p),
+              link: `/products?brand=${encodeURIComponent(brandName)}`,
             });
           }
         }
-
-        // Sắp xếp & lấy Top 5
-        const top = Array.from(grouped.values())
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 5);
-
-        setBrands(top);
-      })
-      .finally(() => alive && setLoading(false));
+        setBrands(Array.from(map.values()).slice(0, 12));
+      } catch {
+        setBrands([]);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    }
+    load();
     return () => {
       alive = false;
     };
-  }, []);
+  }, [API_ROOT]);
 
-  // Gắn navigation cho Swiper sau khi instance + buttons sẵn sàng
-  useEffect(() => {
-    const s = swiperRef.current;
-    if (!s) return;
-    if (typeof s.params.navigation === "object") {
-      s.params.navigation.prevEl = prevRef.current;
-      s.params.navigation.nextEl = nextRef.current;
-      s.navigation.init();
-      s.navigation.update();
-    }
-  }, [brands.length]); // khi danh sách đổi, cập nhật lại navigation
+  // autoplay scroll
+  React.useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const start = () => {
+      stop();
+      autoplayRef.current = window.setInterval(() => {
+        if (!el || isHover) return;
+        const step = Math.max(el.clientWidth * 0.9, 300);
+        el.scrollBy({ left: step, behavior: "smooth" });
+      }, 3000);
+    };
+    const stop = () => {
+      if (autoplayRef.current !== null) {
+        window.clearInterval(autoplayRef.current);
+        autoplayRef.current = null;
+      }
+    };
+    start();
+    return stop;
+  }, [brands.length, isHover]);
 
-  const progress = (b: UIBrand) => Math.min(100, Math.round((b.sample.ratingAverage / 5) * 100));
+  const scrollPrev = () => {
+    const el = containerRef.current;
+    if (!el) return;
+    const step = Math.max(el.clientWidth * 0.9, 300);
+    el.scrollBy({ left: -step, behavior: "smooth" });
+  };
+  const scrollNext = () => {
+    const el = containerRef.current;
+    if (!el) return;
+    const step = Math.max(el.clientWidth * 0.9, 300);
+    el.scrollBy({ left: step, behavior: "smooth" });
+  };
+
+  if (loading) {
+    return (
+      <section className="overflow-hidden top-selling-products pt-80">
+        <div className="container">
+          <div className="p-24 border border-gray-100 rounded-16">
+            <div className="mb-24 section-heading">
+              <div className="flex-wrap gap-8 flex-between">
+                <h6 className="mb-0">
+                  <i className="ph-bold ph-storefront text-main-600" /> {title}
+                </h6>
+              </div>
+            </div>
+            <div className="py-24 text-center text-gray-500">Đang tải thương hiệu…</div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!brands.length) {
+    return (
+      <section className="overflow-hidden top-selling-products pt-80">
+        <div className="container">
+          <div className="p-24 border border-gray-100 rounded-16">
+            <div className="mb-24 section-heading">
+              <div className="flex-wrap gap-8 flex-between">
+                <h6 className="mb-0">
+                  <i className="ph-bold ph-storefront text-main-600" /> {title}
+                </h6>
+              </div>
+            </div>
+            <div className="py-24 text-center text-gray-500">Không có thương hiệu hiển thị.</div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="overflow-hidden top-selling-products pt-80">
@@ -165,166 +175,92 @@ export default function TopBrandsSection() {
           <div className="mb-24 section-heading">
             <div className="flex-wrap gap-8 flex-between">
               <h6 className="mb-0">
-                <i className="ph-bold ph-storefront text-main-600"></i> Thương hiệu hàng đầu
+                <i className="ph-bold ph-storefront text-main-600" /> {title}
               </h6>
               <div className="gap-16 flex-align">
-                <Link
-                  href={viewAllHref}
-                  className="text-sm text-gray-700 fw-semibold hover-text-main-600 hover-text-decoration-underline"
-                >
+                <Link href="/products?source=hot_sales&sort=popular" className="text-sm text-gray-700 fw-semibold hover-text-main-600 hover-text-decoration-underline">
                   Xem đầy đủ
                 </Link>
                 <div className="gap-8 flex-align">
-                  <button
-                    ref={prevRef}
-                    type="button"
-                    aria-label="Prev"
-                    className="text-xl border border-gray-100 slick-prev slick-arrow flex-center rounded-circle hover-border-neutral-600 hover-bg-neutral-600 hover-text-white transition-1"
-                  >
-                    <i className="ph ph-caret-left"></i>
+                  <button type="button" onClick={scrollPrev} aria-label="Prev brands" className="text-xl border border-gray-100 rounded-circle flex-center">
+                    <i className="ph ph-caret-left" />
                   </button>
-                  <button
-                    ref={nextRef}
-                    type="button"
-                    aria-label="Next"
-                    className="text-xl border border-gray-100 slick-next slick-arrow flex-center rounded-circle hover-border-neutral-600 hover-bg-neutral-600 hover-text-white transition-1"
-                  >
-                    <i className="ph ph-caret-right"></i>
+                  <button type="button" onClick={scrollNext} aria-label="Next brands" className="text-xl border border-gray-100 rounded-circle flex-center">
+                    <i className="ph ph-caret-right" />
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
-          {loading ? (
-            <div className="py-24 text-center text-gray-500">Đang tải thương hiệu…</div>
-          ) : (
-            <Swiper
-              modules={[Autoplay, Navigation]}
-              onSwiper={(s) => {
-                swiperRef.current = s;
-              }}
-              navigation   // kích hoạt module Navigation
-              autoplay={{ delay: 2500, disableOnInteraction: false, pauseOnMouseEnter: true }}
-              loop={brands.length > 5}
-              speed={500}
-              spaceBetween={16}
-              breakpoints={{
-                0: { slidesPerView: 1 },
-                480: { slidesPerView: 2 },
-                768: { slidesPerView: 3 },
-                1024: { slidesPerView: 5 },
-              }}
-              className="top-brands-swiper"
-            >
-              {brands.map((b, idx) => {
-                const p = b.sample;
-                const showDiscount = p.isDiscounted;
-                const bestSale = idx === 0 && showDiscount;
+          <div
+            ref={containerRef}
+            className="flex px-2 py-6 overflow-x-auto"
+            style={{
+              gap: 22, // each gap = 22px -> total spacing for 5 items = 88px => 5*220 + 88 = 1188
+              scrollSnapType: "x mandatory",
+              WebkitOverflowScrolling: "touch",
+              msOverflowStyle: "none",
+              scrollbarWidth: "none",
+            }}
+             onMouseEnter={() => setIsHover(true)}
+             onMouseLeave={() => setIsHover(false)}
+             tabIndex={0}
+             onKeyDown={(e) => {
+               if (e.key === "ArrowRight") scrollNext();
+               if (e.key === "ArrowLeft") scrollPrev();
+             }}
+           >
+            {brands.map((b) => (
+              <div
+                key={b.id}
+                className="border border-gray-100 rounded-12 position-relative transition-2"
+                style={{
+                  width: 220, // fixed block width
+                  flex: "0 0 auto",
+                  scrollSnapAlign: "start",
+                  padding: 12,
+                  boxSizing: "border-box",
+                }}
+              >
+                <Link
+                  href={b.link}
+                  className="product-card__thumb rounded-8 position-relative bg-gray-50 d-block"
+                  aria-label={b.name}
+                  style={{
+                    height: 128, // image block height
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    overflow: "hidden",
+                    borderRadius: 8,
+                  }}
+                >
+                  <Image
+                    src={b.logo}
+                    alt={b.name}
+                    width={220}
+                    height={128}
+                    className="object-contain"
+                    unoptimized={!b.logo.startsWith("/")}
+                  />
+                </Link>
 
-                return (
-                  <SwiperSlide key={`${b.brand}-${p.id}`}>
-                    <div className="p-16 border border-gray-100 product-card hover-card-shadows h-100 hover-border-main-600 rounded-16 position-relative transition-2">
-                      <Link href={p.href} className="product-card__thumb flex-center rounded-8 position-relative bg-gray-50">
-                        {showDiscount && (
-                          <span className="px-8 py-4 text-sm text-white product-card__badge bg-danger-600 position-absolute inset-inline-start-0 inset-block-start-0">
-                            Sale {p.discountPercent}%
-                          </span>
-                        )}
-                        {bestSale && (
-                          <span className="px-8 py-4 text-sm text-white product-card__badge bg-primary-600 position-absolute inset-inline-start-0 inset-block-start-0">
-                            Best Sale
-                          </span>
-                        )}
-                        <Image
-                          src={p.image}
-                          alt={p.name}
-                          width={240}
-                          height={200}
-                          className="w-auto max-w-unset"
-                          unoptimized={/^https?:\/\//.test(p.image)}
-                        />
-                      </Link>
-
-                      <div className="mt-16 product-card__content w-100">
-                        <h6 className="mt-12 mb-8 text-lg title fw-semibold">
-                          <Link href={p.href} className="link text-line-2">
-                            {p.name}
-                          </Link>
-                        </h6>
-
-                        <div className="gap-6 flex-align">
-                          <span className="text-xs text-gray-500 fw-medium">{p.ratingAverage.toFixed(1)}</span>
-                          <span className="text-xs fw-medium text-warning-600 d-flex">
-                            <i className="ph-fill ph-star"></i>
-                          </span>
-                          <span className="text-xs text-gray-500 fw-medium">({p.ratingCount})</span>
-                        </div>
-
-                        <div className="gap-4 mt-8 flex-align">
-                          <span className="text-tertiary-600 text-md d-flex">
-                            <i className="ph-fill ph-storefront"></i>
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            By {b.brand} • {b.productCount} items
-                          </span>
-                        </div>
-
-                        <div className="mt-8">
-                          <div
-                            className="h-4 progress w-100 bg-color-three rounded-pill"
-                            role="progressbar"
-                            aria-label="Top brand rating"
-                            aria-valuenow={Math.round((p.ratingAverage / 5) * 100)}
-                            aria-valuemin={0}
-                            aria-valuemax={100}
-                          >
-                            <div
-                              className="progress-bar bg-tertiary-600 rounded-pill"
-                              style={{ width: `${Math.round((p.ratingAverage / 5) * 100)}%` }}
-                            />
-                          </div>
-                          <span className="mt-8 text-xs text-gray-900 fw-medium d-block">
-                            Rating: {p.ratingAverage.toFixed(1)}/5
-                          </span>
-                        </div>
-
-                        <div className="my-12 border-gray-100 border-top" />
-
-                        <div className="mb-10 d-flex justify-content-end">
-                          <Link
-                            href={`/products?brand=${encodeURIComponent(b.brand)}&sort=popular`}
-                            className="text-xs text-gray-600 hover-text-main-600 hover-text-decoration-underline"
-                          >
-                            Xem tất cả của {b.brand}
-                          </Link>
-                        </div>
-
-                        <div className="my-10 product-card__price">
-                          {showDiscount && (
-                            <span className="text-gray-400 text-md fw-semibold text-decoration-line-through">
-                              {p.originalPrice.toLocaleString("vi-VN")} đ
-                            </span>
-                          )}
-                          <span className="text-heading text-md fw-semibold ms-8">
-                            {p.sellingPrice.toLocaleString("vi-VN")} đ{" "}
-                            <span className="text-gray-500 fw-normal">/Qty</span>
-                          </span>
-                        </div>
-
-                        <Link
-                          href="/cart"
-                          className="gap-8 px-24 product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 rounded-pill flex-center fw-medium"
-                        >
-                          Add To Cart <i className="ph ph-shopping-cart"></i>
-                        </Link>
-                      </div>
-                    </div>
-                  </SwiperSlide>
-                );
-              })}
-            </Swiper>
-          )}
+                <div className="mt-10 product-card__content w-100" style={{ paddingLeft: 4, paddingRight: 4 }}>
+                  <h6 className="mb-0 text-sm fw-semibold" style={{ lineHeight: "1.1", height: 36, overflow: "hidden" }}>
+                    <Link href={b.link} className="link text-line-2">
+                      {b.name}
+                    </Link>
+                  </h6>
+                  <div className="mt-6 d-flex justify-content-end">
+                    <Link href={`/products?brand=${encodeURIComponent(b.name)}&sort=popular`} className="text-xs text-gray-600 hover-text-main-600 hover-text-decoration-underline">
+                      Xem tất cả
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

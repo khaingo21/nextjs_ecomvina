@@ -15,7 +15,7 @@ type Ctx = {
 const WishlistContext = createContext<Ctx | null>(null);
 
 function useWishlistCore(): Ctx {
-  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://127.0.0.1:8000";
+  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://localhost:4000";
   const [ids, setIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
 
@@ -55,16 +55,21 @@ function useWishlistCore(): Ctx {
       };
 
       const toId = (row: unknown): number | null => {
+        // 1) { product: { id } }
         if (hasProduct(row) && hasId((row as { product: unknown }).product)) {
           return toNumber((row as { product: { id: unknown } }).product.id);
         }
+        // 2) { product_id }
+        if (typeof row === "object" && row !== null && "product_id" in (row as Record<string, unknown>)) {
+          return toNumber((row as { product_id: unknown }).product_id);
+        }
+        // 3) { id } – fallback
         if (hasId(row)) return toNumber((row as { id: unknown }).id);
         return null;
       };
 
       const arr = Array.isArray(raw) ? raw : [];
       const idList = arr.map(toId).filter((n): n is number => n !== null);
-      // -------------------------------------
 
       if (alive) setIds(new Set(idList));
     } finally {
@@ -77,7 +82,7 @@ function useWishlistCore(): Ctx {
   };
 }, [API]);
 
-
+  // persist guest wishlist ids
   const persistGuest = useCallback((next: Set<number>) => {
     localStorage.setItem("guest_wishlist", JSON.stringify(Array.from(next)));
   }, []);

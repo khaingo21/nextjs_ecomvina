@@ -1,0 +1,33 @@
+﻿
+
+StatusCode        : 200
+StatusDescription : OK
+Content           : {
+                      "status": true,
+                      "message": "Danh sách sản phẩm",
+                      "data": [
+                        {
+                          "id": 1,
+                          "ten": "Vitamin C 500mg",
+                          "mota": "Viên uống tăng sức đề kháng.",
+                          "xuatxu": "Mỹ",
+                          "sanxu...
+RawContent        : HTTP/1.1 200 OK
+                    Vary: Origin, Accept-Encoding
+                    Access-Control-Allow-Credentials: true
+                    Pragma: no-cache
+                    Connection: keep-alive
+                    Keep-Alive: timeout=5
+                    Content-Length: 13089
+                    Cache-Control: no-cache...
+Forms             : 
+Headers           : {[Vary, Origin, Accept-Encoding], [Access-Control-Allow-Credentials, true], 
+                    [Pragma, no-cache], [Connection, keep-alive]...}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : 
+RawContentLength  : 13089
+
+
+

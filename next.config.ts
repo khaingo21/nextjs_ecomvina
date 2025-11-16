@@ -9,12 +9,23 @@ module.exports = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "example.com" },
-      // thêm các domain ảnh thật sự dùng
       {
-        protocol: "http",          // vì đang là http
+        protocol: "http",          
         hostname: "localhost",
-        port: "8000",              // cổng API
-        pathname: "/**",           // cho phép mọi đường dẫn ảnh
+        port: "8000",              
+        pathname: "/**",           
+      },
+      {
+        protocol: "http",
+        hostname: "127.0.0.1",
+        port: "8000",
+        pathname: "/**",
+      },
+      {
+        protocol: 'http',
+        hostname: '148.230.100.215', // Thêm IP server mới
+        port: '',
+        pathname: '/**',
       },
     ],
   },

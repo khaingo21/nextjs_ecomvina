@@ -73,7 +73,7 @@
 //   return {
 //     id: p.id,
 //     name: p.ten,
-//     href: `/product/${slug}-${p.id}`,
+//     href: `/products/${slug}-${p.id}`,
 //     image: pickImage(p),
 //     originalPrice: original,
 //     sellingPrice: selling,
