@@ -254,7 +254,7 @@ export default function Page() {
                   </div>
                 </div>
 
-                <Link href="/cart" className="gap-8 py-16 mt-48 btn btn-main flex-center rounded-8 fw-normal">
+                <Link href="/gio-hang" className="gap-8 py-16 mt-48 btn btn-main flex-center rounded-8 fw-normal">
                   <i className="text-lg ph ph-shopping-cart-simple" /> Thêm vào giỏ hàng
                 </Link>
 
@@ -330,7 +330,7 @@ export default function Page() {
                         <span className="text-15 fw-bold text-warning-600 d-flex"><i className="ph-fill ph-star" /></span>
                         <span className="text-xs text-gray-600 fw-bold">(17k)</span>
                       </div>
-                      <Link href="/cart" className="gap-8 px-24 mt-24 product-card__cart btn bg-main-50 text-main-600 hover-bg-main-600 hover-text-white py-11 rounded-pill flex-align w-100 justify-content-center">
+                      <Link href="/gio-hang" className="gap-8 px-24 mt-24 product-card__cart btn bg-main-50 text-main-600 hover-bg-main-600 hover-text-white py-11 rounded-pill flex-align w-100 justify-content-center">
                         Thêm giỏ hàng <i className="ph ph-shopping-cart" />
                       </Link>
                     </div>

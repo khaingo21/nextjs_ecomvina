@@ -1,24 +1,45 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Navigation } from "swiper/modules";
+import { type HotCategory } from "@/lib/api";
+import { useHomeData } from "@/hooks/useHomeData";
 
-const categories = [
-    { label: "Sức khỏe", img: "/assets/images/categories/suc-khoe.svg" },
-    { label: "Thực phẩm chức năng", img: "/assets/images/categories/thuc-pham-chuc-nang.svg" },
-    { label: "Chăm sóc cá nhân", img: "/assets/images/categories/cham-soc-ca-nhan.svg" },
-    { label: "Làm đẹp", img: "/assets/images/categories/lam-dep.svg" },
-    { label: "Điện máy", img: "/assets/images/categories/dien-may.svg" },
-    { label: "Thiết bị y tế", img: "/assets/images/categories/thiet-bi-y-te.svg" },
-    { label: "Bách hóa", img: "/assets/images/categories/bach-hoa.svg" },
-    { label: "Nội thất - Trang trí", img: "/assets/images/categories/noi-that-trang-tri.svg" },
-    { label: "Mẹ & bé", img: "/assets/images/categories/me-va-be.svg" },
-    { label: "Thời trang", img: "/assets/images/categories/thoi-trang.svg" },
-    { label: "Thực phẩm - đồ ăn", img: "/assets/images/categories/thuc-pham-do-an.svg" },
-];
+const CATEGORY_ICONS: { [key: string]: string } = {
+    "Sức khỏe": "ph-heart",
+    "Thực phẩm chức năng": "ph-jar",
+    "Chăm sóc cá nhân": "ph-user-focus",
+    "Làm đẹp": "ph-magic-wand",
+    "Điện máy": "ph-newspaper",
+    "Thiết bị y tế": "ph-first-aid-kit",
+    "Bách hóa": "ph-storefront",
+    "Nội thất - Trang trí": "ph-couch",
+    "Mẹ & bé": "ph-baby-carriage",
+    "Thời trang": "ph-t-shirt",
+    "Thực phẩm - đồ ăn": "ph-fork-knife",
+};
 
 export default function CategoriesSlider() {
+    const { data: homeData, loading: homeLoading } = useHomeData();
+    const [categories, setCategories] = useState<HotCategory[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!homeData) return;
+
+        try {
+            const hotCategories = homeData.data?.hot_categories || [];
+            setCategories(hotCategories);
+        } catch (error) {
+            console.error('Error processing categories:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [homeData]);
+
+    if (loading) return null;
+    if (categories.length === 0) return null;
     return (
         <section className="categories-slider py-24">
             <div className="container container-lg">
@@ -45,16 +66,33 @@ export default function CategoriesSlider() {
                         }}
                         className="categories-swiper"
                     >
-                        {categories.map((c) => (
-                            <SwiperSlide key={c.label}>
-                                <div className="d-flex flex-column align-items-center text-center p-12">
-                                    <div className="category-circle mb-12">
-                                        <Image src={c.img} alt={c.label} width={64} height={64} unoptimized />
-                                    </div>
-                                    <div className="text-sm fw-medium text-gray-900 text-line-2">{c.label}</div>
-                                </div>
-                            </SwiperSlide>
-                        ))}
+                        {categories.map((cat) => {
+                            const iconClass = CATEGORY_ICONS[cat.ten] || "ph-squares-four";
+                            return (
+                                <SwiperSlide key={cat.id}>
+                                    <a
+                                        href={`/products?category=${cat.slug}`}
+                                        className="d-flex flex-column align-items-center text-center p-12 text-decoration-none"
+                                    >
+                                        <div
+                                            className="category-circle mb-12 flex-center rounded-circle"
+                                            style={{
+                                                width: "64px",
+                                                height: "64px",
+                                                backgroundColor: "#f0f9ff",
+                                                border: "1px solid #e5e7eb",
+                                            }}
+                                        >
+                                            <i
+                                                className={`ph-bold ${iconClass}`}
+                                                style={{ fontSize: "28px", color: "#374151" }}
+                                            ></i>
+                                        </div>
+                                        <div className="text-sm fw-medium text-gray-900 text-line-2">{cat.ten}</div>
+                                    </a>
+                                </SwiperSlide>
+                            );
+                        })}
                     </Swiper>
                 </div>
             </div>

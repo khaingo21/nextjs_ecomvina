@@ -22,7 +22,7 @@ export default function ProductCard({
       <h6 className="mt-12 mb-8">{title}</h6>
       <div className="mt-auto d-flex align-items-center justify-content-between">
         <span className="fw-semibold text-main-600">{price}</span>
-        <Link href="/cart" className="btn btn-main-two rounded-8 px-16 py-6">Thêm</Link>
+        <Link href="/gio-hang" className="btn btn-main-two rounded-8 px-16 py-6">Thêm</Link>
       </div>
     </div>
   );

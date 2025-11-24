@@ -1,0 +1,3 @@
+Các routes trong api thì được bảo vệ bằng corf cho lấy api từ các domain khác 
+mà tạm thời chưa lên cùng domain nên tôi thả config/corf của laravel là '*' chấp nhận tất c ả.
+vd: Các routes /domain/api

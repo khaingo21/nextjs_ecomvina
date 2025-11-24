@@ -12,7 +12,7 @@
 - Tự động **sync** giỏ hàng local lên server khi người dùng đăng nhập
 - Cung cấp các hàm: `addItem`, `updateQuantity`, `removeItem`, `clearCart`
 
-### 2. **Cập nhật `utils/cartClient.ts`**
+### 2. **Cập nhật `utils/gio-hangClient.ts`**
 - Kiểm tra trạng thái đăng nhập trước khi thêm vào giỏ
 - Nếu **chưa đăng nhập**: lưu vào localStorage
 - Nếu **đã đăng nhập**: gọi API server như cũ
@@ -22,7 +22,7 @@
 - Hiển thị số lượng từ server khi đã đăng nhập
 - Tự động cập nhật khi có sự thay đổi
 
-### 4. **Cập nhật `app/cart/page.tsx`**
+### 4. **Cập nhật `app/gio-hang/page.tsx`**
 - Sử dụng `useCart` hook thay vì logic cũ
 - Hiển thị giỏ hàng cho cả người đã/chưa đăng nhập
 - Cho phép chỉnh sửa giỏ hàng trước khi đăng nhập
@@ -48,7 +48,7 @@
 ### Khi thanh toán:
 1. User click "Thanh toán"
 2. Hệ thống kiểm tra đăng nhập
-3. Nếu **chưa đăng nhập**: redirect về `/dangnhap?redirect=/thanh-toan`
+3. Nếu **chưa đăng nhập**: redirect về `/dang-nhap?redirect=/thanh-toan`
 4. Sau khi đăng nhập: giỏ hàng được merge và redirect về checkout
 
 ## 🗄️ Cấu trúc dữ liệu localStorage
@@ -87,7 +87,7 @@
 
 ### Test 2: Xem giỏ hàng khi chưa đăng nhập
 1. Có sản phẩm trong localStorage
-2. Vào trang `/cart`
+2. Vào trang `/gio-hang`
 3. Kiểm tra hiển thị đầy đủ thông tin (có thể thiếu ảnh/giá)
 
 ### Test 3: Đăng nhập với giỏ hàng có sẵn
@@ -99,7 +99,7 @@
 ### Test 4: Thanh toán khi chưa đăng nhập
 1. Có sản phẩm trong giỏ
 2. Click "Thanh toán"
-3. Redirect về `/dangnhap?redirect=/thanh-toan`
+3. Redirect về `/dang-nhap?redirect=/thanh-toan`
 4. Đăng nhập
 5. Redirect về `/thanh-toan`
 6. Giỏ hàng vẫn còn

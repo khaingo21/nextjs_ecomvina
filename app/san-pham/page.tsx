@@ -236,7 +236,7 @@ export default function Page() {
                             type="button"
                             className="btn btn-outline btn-sm"
                             onClick={() => {
-                              // fallback add-to-cart client action — bạn có thể thay bằng hàm dispatch/cart action
+                              // fallback add-to-cart client action — bạn có thể thay bằng hàm dispatch/gio-hang action
                               fetch(`/api/cart/add`, {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },

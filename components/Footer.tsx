@@ -6,7 +6,7 @@ import Image from "next/image";
 export default function Footer() {
   return (
     <>
-      <footer className="footer py-40 overflow-hidden">
+      <footer className="footer py-40 overflow-hidden" style={{ marginTop: -112 }}>
         <div className="container container-lg">
           <div className="row gy-4">
             {/* Brand & contact */}
@@ -68,7 +68,7 @@ export default function Footer() {
                   <li className="mb-16"><Link href="/account" className="text-gray-600 hover-text-main-600">Truy cập tài khoản</Link></li>
                   <li className="mb-16"><Link href="/orders" className="text-gray-600 hover-text-main-600">Lịch sử đơn hàng</Link></li>
                   <li className="mb-16"><Link href="/wishlist" className="text-gray-600 hover-text-main-600">Danh sách yêu thích</Link></li>
-                  <li className="mb-16"><Link href="/cart" className="text-gray-600 hover-text-main-600">Giỏ hàng của bạn</Link></li>
+                  <li className="mb-16"><Link href="/gio-hang" className="text-gray-600 hover-text-main-600">Giỏ hàng của bạn</Link></li>
                 </ul>
               </div>
             </div>
@@ -112,23 +112,18 @@ export default function Footer() {
       </footer>
 
       {/* bottom Footer */}
-      <div className="bottom-footer bg-color-three py-8">
+      <div className="bottom-footer bg-color-three py-8" style={{ marginTop: -48 }}>
         <div className="container container-lg">
-          <div className="bottom-footer__inner d-flex justify-content-center align-items-center flex-wrap gap-16 py-16 text-center">
-            <p className="bottom-footer__text">Siêu Thị Vina © 2024. All Rights Reserved</p>
-            <div className="flex-align gap-8 flex-wrap justify-content-center">
-              <span className="text-heading text-sm">Chấp nhận thanh toán</span>
-              <Image
-                src="/assets/images/thumbs/payment-method.png"
-                alt="Payment methods"
-                width={220}
-                height={28}
-                unoptimized
-              />
+          <div className="bottom-footer__inner flex-between flex-wrap gap-16 py-16">
+            <p className="bottom-footer__text wow fadeInLeftBig" style={{ visibility: 'visible', animationName: 'fadeInLeftBig' }}>Bản quyền thuộc về Sieuthivina.com </p>
+            <div className="flex-align gap-8 flex-wrap wow fadeInRightBig" style={{ visibility: 'visible', animationName: 'fadeInRightBig' }}>
+              <span className="text-heading text-sm">Hỗ trợ thanh toán</span>
+              <img src="https://sieuthivina.com/assets/client/images/thumbs/payment-method.png" alt="" />
             </div>
           </div>
         </div>
       </div>
+
     </>
   );
 }

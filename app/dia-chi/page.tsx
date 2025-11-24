@@ -1,0 +1,394 @@
+"use client";
+
+import React, { JSX, useState, useEffect } from "react";
+import Cookies from "js-cookie";
+import FullHeader from "@/components/FullHeader";
+import AccountShell from "@/components/AccountShell";
+import BenefitsStrip from "@/components/BenefitsStrip";
+import { useAuth } from "@/hooks/useAuth";
+
+// 1. Cập nhật Type khớp với API Laravel & DOCX
+type Address = {
+  id: number; // Laravel ID thường là number
+  ten_nguoinhan: string;
+  sodienthoai: string;
+  diachi: string;
+  tinhthanh: string; // API nhận/trả tên tỉnh (vd: "Thành phố Đà Nẵng")
+  trangthai?: string; // API trả về "Mặc định" hoặc null/khác
+};
+
+type Tinh = {
+  id: number;
+  ten: string;
+  code?: string;
+};
+
+const PROVINCES_FALLBACK: Tinh[] = [
+  { id: 1, ten: "Thành phố Hà Nội", code: "01" },
+  { id: 2, ten: "Tỉnh Hà Giang", code: "02" },
+  { id: 3, ten: "Tỉnh Cao Bằng", code: "04" },
+  { id: 4, ten: "Tỉnh Bắc Kạn", code: "06" },
+  { id: 5, ten: "Tỉnh Tuyên Quang", code: "08" },
+  { id: 6, ten: "Tỉnh Lào Cai", code: "10" },
+  { id: 7, ten: "Tỉnh Điện Biên", code: "11" },
+  { id: 8, ten: "Tỉnh Lai Châu", code: "12" },
+  { id: 9, ten: "Tỉnh Sơn La", code: "14" },
+  { id: 10, ten: "Tỉnh Yên Bái", code: "15" },
+  { id: 11, ten: "Tỉnh Hoà Bình", code: "17" },
+  { id: 12, ten: "Tỉnh Thái Nguyên", code: "19" },
+  { id: 13, ten: "Tỉnh Lạng Sơn", code: "20" },
+  { id: 14, ten: "Tỉnh Quảng Ninh", code: "22" },
+  { id: 15, ten: "Tỉnh Bắc Giang", code: "24" },
+  { id: 16, ten: "Tỉnh Phú Thọ", code: "25" },
+  { id: 17, ten: "Tỉnh Vĩnh Phúc", code: "26" },
+  { id: 18, ten: "Tỉnh Bắc Ninh", code: "27" },
+  { id: 19, ten: "Tỉnh Hải Dương", code: "30" },
+  { id: 20, ten: "Thành phố Hải Phòng", code: "31" },
+  { id: 21, ten: "Tỉnh Hưng Yên", code: "33" },
+  { id: 22, ten: "Tỉnh Thái Bình", code: "34" },
+  { id: 23, ten: "Tỉnh Hà Nam", code: "35" },
+  { id: 24, ten: "Tỉnh Nam Định", code: "36" },
+  { id: 25, ten: "Tỉnh Ninh Bình", code: "37" },
+  { id: 26, ten: "Tỉnh Thanh Hóa", code: "38" },
+  { id: 27, ten: "Tỉnh Nghệ An", code: "40" },
+  { id: 28, ten: "Tỉnh Hà Tĩnh", code: "42" },
+  { id: 29, ten: "Tỉnh Quảng Bình", code: "44" },
+  { id: 30, ten: "Tỉnh Quảng Trị", code: "45" },
+  { id: 31, ten: "Tỉnh Thừa Thiên Huế", code: "46" },
+  { id: 32, ten: "Thành phố Đà Nẵng", code: "48" },
+  { id: 33, ten: "Tỉnh Quảng Nam", code: "49" },
+  { id: 34, ten: "Tỉnh Quảng Ngãi", code: "51" },
+  { id: 35, ten: "Tỉnh Bình Định", code: "52" },
+  { id: 36, ten: "Tỉnh Phú Yên", code: "54" },
+  { id: 37, ten: "Tỉnh Khánh Hòa", code: "56" },
+  { id: 38, ten: "Tỉnh Ninh Thuận", code: "58" },
+  { id: 39, ten: "Tỉnh Bình Thuận", code: "60" },
+  { id: 40, ten: "Tỉnh Kon Tum", code: "62" },
+  { id: 41, ten: "Tỉnh Gia Lai", code: "64" },
+  { id: 42, ten: "Tỉnh Đắk Lắk", code: "66" },
+  { id: 43, ten: "Tỉnh Đắk Nông", code: "67" },
+  { id: 44, ten: "Tỉnh Lâm Đồng", code: "68" },
+  { id: 45, ten: "Tỉnh Bình Phước", code: "70" },
+  { id: 46, ten: "Tỉnh Tây Ninh", code: "72" },
+  { id: 47, ten: "Tỉnh Bình Dương", code: "74" },
+  { id: 48, ten: "Tỉnh Đồng Nai", code: "75" },
+  { id: 49, ten: "Tỉnh Bà Rịa - Vũng Tàu", code: "77" },
+  { id: 50, ten: "Thành phố Hồ Chí Minh", code: "79" },
+  { id: 51, ten: "Tỉnh Long An", code: "80" },
+  { id: 52, ten: "Tỉnh Tiền Giang", code: "82" },
+  { id: 53, ten: "Tỉnh Bến Tre", code: "83" },
+  { id: 54, ten: "Tỉnh Trà Vinh", code: "84" },
+  { id: 55, ten: "Tỉnh Vĩnh Long", code: "86" },
+  { id: 56, ten: "Tỉnh Đồng Tháp", code: "87" },
+  { id: 57, ten: "Tỉnh An Giang", code: "89" },
+  { id: 58, ten: "Tỉnh Kiên Giang", code: "91" },
+  { id: 59, ten: "Thành phố Cần Thơ", code: "92" },
+  { id: 60, ten: "Tỉnh Hậu Giang", code: "93" },
+  { id: 61, ten: "Tỉnh Sóc Trăng", code: "94" },
+  { id: 62, ten: "Tỉnh Bạc Liêu", code: "95" },
+  { id: 63, ten: "Tỉnh Cà Mau", code: "96" }
+];
+
+export default function Page(): JSX.Element {
+  const { user } = useAuth(); // Lấy thông tin user để truyền vào AccountShell
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [editing, setEditing] = useState<Address | null>(null);
+  
+  // State tạm để lưu ID tỉnh đang chọn trong form (vì Address chỉ lưu tên)
+  const [selectedProvinceId, setSelectedProvinceId] = useState<number | string>("");
+
+  // Hàm lấy token
+  const getToken = () => Cookies.get("access_token");
+
+  // 2. FETCH: Lấy danh sách địa chỉ từ API Laravel
+  const fetchAddresses = async () => {
+    setLoading(true);
+    try {
+      const token = getToken();
+      if (!token) return;
+
+      const res = await fetch("http://148.230.100.215/api/toi/diachis", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Accept": "application/json"
+        }
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        // API có thể trả về { data: [...] } hoặc [...]
+        const data = Array.isArray(json) ? json : (json.data || []);
+        setAddresses(data);
+      }
+    } catch (e) {
+      console.error("Lỗi tải địa chỉ:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAddresses();
+  }, []);
+
+  // 3. DELETE: Xóa địa chỉ theo API mới
+  const handleDelete = async (id: number) => {
+    if (!confirm("Bạn có chắc muốn xóa địa chỉ này không?")) return;
+
+    try {
+      const res = await fetch(`http://148.230.100.215/api/toi/diachis/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${getToken()}`,
+          "Accept": "application/json"
+        }
+      });
+
+      if (res.ok) {
+        // Cập nhật UI ngay lập tức bằng cách lọc bỏ item đã xóa
+        setAddresses((prev) => prev.filter((a) => a.id !== id));
+      } else {
+        alert("Không thể xóa địa chỉ này.");
+      }
+    } catch (e) {
+      console.error("Lỗi xóa địa chỉ:", e);
+      alert("Đã có lỗi xảy ra.");
+    }
+  };
+
+  // 4. SET DEFAULT: Đặt mặc định
+  const handleSetDefault = async (id: number) => {
+    try {
+      const res = await fetch(`http://148.230.100.215/api/toi/diachis/${id}/macdinh`, {
+        method: "PATCH",
+        headers: {
+          "Authorization": `Bearer ${getToken()}`,
+          "Accept": "application/json"
+        }
+      });
+
+      if (res.ok) {
+        // Reload lại để server cập nhật trạng thái các địa chỉ khác thành không mặc định
+        fetchAddresses();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Chuẩn bị form Thêm mới
+  const handleAdd = () => {
+    setEditing({
+      id: 0, // ID 0 đánh dấu là thêm mới
+      ten_nguoinhan: user?.hoten || "",
+      sodienthoai: user?.sodienthoai || "",
+      diachi: "",
+      tinhthanh: "",
+      trangthai: ""
+    });
+    setSelectedProvinceId("");
+  };
+
+  // Chuẩn bị form Chỉnh sửa
+  const handleEdit = (a: Address) => {
+    setEditing({ ...a });
+    // Tìm ID tỉnh dựa vào tên tỉnh (reverse lookup) để hiển thị đúng trên Select
+    const foundProvince = PROVINCES_FALLBACK.find(p => p.ten === a.tinhthanh);
+    setSelectedProvinceId(foundProvince ? foundProvince.id : "");
+  };
+
+  // 5. SAVE: Lưu (Thêm hoặc Sửa)
+  const handleSaveEdit = async () => {
+    if (!editing) return;
+    
+    // Validate cơ bản
+    if (!editing.ten_nguoinhan || !editing.sodienthoai || !editing.diachi || !editing.tinhthanh) {
+      alert("Vui lòng điền đầy đủ thông tin (bao gồm Tỉnh/Thành)");
+      return;
+    }
+
+    const isEdit = editing.id !== 0;
+    const url = isEdit 
+      ? `http://148.230.100.215/api/toi/diachis/${editing.id}` 
+      : `http://148.230.100.215/api/toi/diachis`;
+    
+    const method = isEdit ? "PUT" : "POST";
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Authorization": `Bearer ${getToken()}`,
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          ten_nguoinhan: editing.ten_nguoinhan,
+          sodienthoai: editing.sodienthoai,
+          diachi: editing.diachi,
+          tinhthanh: editing.tinhthanh,
+          // Nếu thêm mới, có thể gửi kèm trạng thái nếu user muốn (tuỳ logic UI)
+        })
+      });
+
+      if (res.ok) {
+        setEditing(null);
+        fetchAddresses();
+      } else {
+        alert("Lỗi khi lưu địa chỉ. Vui lòng thử lại.");
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  return (
+    <>
+      <FullHeader showClassicTopBar={true} showTopNav={false} />
+
+      <AccountShell title="Sổ địa chỉ" current="addresses">
+        <span className="m-0 h5">Sổ địa chỉ</span>
+        <div className="mt-12 mb-12 d-flex align-items-center justify-content-between">
+          <div>
+            <button className="px-24 btn btn-primary rounded-pill" onClick={handleAdd}>
+              + Thêm địa chỉ mới
+            </button>
+          </div>
+        </div>
+
+        <div className="p-16 border-0 shadow-sm card">
+          {loading ? (
+            <div className="py-5 text-center">Đang tải...</div>
+          ) : addresses.length === 0 ? (
+            <div className="py-24 text-center text-muted">
+              Chưa có địa chỉ. Thêm địa chỉ giao hàng để sử dụng khi đặt hàng.
+            </div>
+          ) : (
+            <div className="gap-16 d-flex flex-column">
+              {addresses
+                // Sắp xếp: Mặc định lên đầu
+                .sort((a, b) => (a.trangthai === "Mặc định" ? -1 : 1))
+                .map((a) => {
+                  const isDefault = a.trangthai === "Mặc định";
+                  return (
+                    <div 
+                      key={a.id} 
+                      className={`p-16 rounded-12 border ${isDefault ? 'border-success-200 bg-success-50' : 'border-gray-200'}`}
+                    >
+                      <div className="d-flex justify-content-between align-items-start">
+                        <div>
+                          <div className="gap-8 text-lg fw-bold d-flex align-items-center">
+                            {a.ten_nguoinhan} 
+                            <span className="text-sm fw-normal text-muted">| {a.sodienthoai}</span>
+                            {isDefault && <span className="badge bg-success rounded-pill">Mặc định</span>}
+                          </div>
+                          <div className="mt-4 text-gray-600">
+                            {a.diachi}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {a.tinhthanh}
+                          </div>
+                        </div>
+                        <div className="gap-8 d-flex flex-column flex-sm-row">
+                          <button 
+                            className="border-0 btn btn-sm btn-outline-primary" 
+                            onClick={() => handleEdit(a)}
+                          >
+                            Cập nhật
+                          </button>
+                          {!isDefault && (
+                            <>
+                              <button 
+                                className="border-0 btn btn-sm btn-outline-danger" 
+                                onClick={() => handleDelete(a.id)}
+                              >
+                                Xóa
+                              </button>
+                              <button 
+                                className="border-0 btn btn-sm btn-outline-secondary" 
+                                onClick={() => handleSetDefault(a.id)}
+                              >
+                                Thiết lập mặc định
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </div>
+
+        {/* Form Sửa / Thêm (Modal hoặc Drawer) */}
+        {editing && (
+          <div className="top-0 position-fixed start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ zIndex: 1050, background: "rgba(0,0,0,0.5)" }}>
+            <div className="p-24 bg-white rounded-16 w-100" style={{ maxWidth: 500 }}>
+              <h4 className="mb-16">{editing.id === 0 ? "Thêm địa chỉ mới" : "Cập nhật địa chỉ"}</h4>
+              
+              <div className="mb-12">
+                <label className="form-label fw-medium">Tên người nhận</label>
+                <input 
+                  className="form-control" 
+                  value={editing.ten_nguoinhan} 
+                  onChange={(e) => setEditing({ ...editing, ten_nguoinhan: e.target.value })} 
+                  placeholder="Ví dụ: Nguyễn Văn A"
+                />
+              </div>
+              
+              <div className="mb-12">
+                <label className="form-label fw-medium">Số điện thoại</label>
+                <input 
+                  className="form-control" 
+                  value={editing.sodienthoai} 
+                  onChange={(e) => setEditing({ ...editing, sodienthoai: e.target.value })} 
+                  placeholder="Ví dụ: 0909xxxxxx"
+                />
+              </div>
+              
+              <div className="mb-12">
+                <label className="form-label fw-medium">Tỉnh / Thành phố</label>
+                <select 
+                  className="form-select" 
+                  value={selectedProvinceId} 
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setSelectedProvinceId(val);
+                    // Tìm tên tỉnh dựa vào ID để lưu vào state editing
+                    const province = PROVINCES_FALLBACK.find(p => p.id === val);
+                    setEditing({ ...editing, tinhthanh: province ? province.ten : "" });
+                  }}
+                >
+                  <option value="">-- Chọn Tỉnh/Thành --</option>
+                  {PROVINCES_FALLBACK.map((t) => (
+                    <option key={t.id} value={t.id}>{t.ten}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="mb-24">
+                <label className="form-label fw-medium">Địa chỉ chi tiết</label>
+                <textarea 
+                  className="form-control" 
+                  rows={3}
+                  value={editing.diachi} 
+                  onChange={(e) => setEditing({ ...editing, diachi: e.target.value })} 
+                  placeholder="Số nhà, tên đường, phường/xã, quận/huyện..."
+                />
+              </div>
+              
+              <div className="gap-12 d-flex justify-content-end">
+                <button className="px-24 btn btn-light rounded-pill" onClick={() => setEditing(null)}>Trở lại</button>
+                <button className="px-24 btn btn-primary rounded-pill" onClick={handleSaveEdit}>Hoàn thành</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </AccountShell>
+
+      <BenefitsStrip />
+    </>
+  );
+}

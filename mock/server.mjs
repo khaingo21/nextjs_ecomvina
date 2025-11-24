@@ -185,6 +185,28 @@ function productStub(id) {
   };
 }
 
+server.use((req, res, next) => {
+  if (!req.body || typeof req.body !== "object") return next();
+
+  const b = { ...req.body };
+
+  // map phổ biến (VN -> english/alias)
+  if (typeof b.hoten === "string" && !b.name) b.name = b.hoten;
+  if (typeof b.sodienthoai === "string" && !b.phone) b.phone = b.sodienthoai;
+  // client có thể gửi email (form) nhưng backend thực tế ghi email trong profile sau này
+  // vẫn giữ nếu có
+  if (typeof b.email === "string" && !b.email) b.email = b.email;
+  // password confirmation alias
+  if (typeof b.password_confirmation === "string" && !b.passwordConfirm) b.passwordConfirm = b.password_confirmation;
+
+  // order / checkout aliases
+  if (b.thanhtien != null && b.amount == null) b.amount = b.thanhtien;
+  if (b.madon && !b.orderId) b.orderId = b.madon;
+
+  req.body = b;
+  next();
+});
+
 // Mock endpoints cho AUTH để FE có thể đăng ký/đăng nhập
 server.post('/auth/register', (req, res) => {
   const { name, email, phone, password, confirmPassword } = req.body || {};
@@ -218,25 +240,39 @@ server.post('/auth/dang-nhap', (req, res) => {
 
 // ===== Vietnamese auth aliases used by the FE =====
 server.post('/api/auth/dang-ky', (req, res) => {
-  const { name, email, password, phone, gender, birthday, nationality } = req.body || {};
-  if (!name || !email || !password) return res.status(400).json({ message: 'Thiếu thông tin đăng ký' });
-  const users = router.db.get('users');
-  const exists = users.find({ email }).value();
-  if (exists) return res.status(409).json({ message: 'Email đã tồn tại' });
-  const newUser = { id: Date.now(), name, email, phone: phone || '', password };
-  users.push(newUser).write();
-  // create default profile
-  router.db.get('profiles').push({
-    id: Date.now() + 1,
-    user_id: String(newUser.id),
-    name,
-    gender: gender || 'unknown',
-    birthday: birthday || null,
-    email,
-    nationality: nationality || 'VN',
-    phone: phone || ''
-  }).write();
-  return res.status(200).json({ message: 'Đăng ký thành công', user: { id: newUser.id, name: newUser.name, email: newUser.email } });
+  try {
+    const payload = req.body || {};
+
+    // ensure users collection exists
+    if (!router.db.has('users').value()) router.db.set('users', []).write();
+    const users = router.db.get('users');
+
+    // create user record: keep fields in VN but store common keys for compatibility
+    const id = Date.now();
+    const user = {
+      id,
+      name: payload.name || payload.hoten || '',
+      username: payload.username || `user${id}`,
+      email: payload.email || null, // backend real may ignore; keep for mock
+      phone: payload.phone || payload.sodienthoai || null,
+      // do not store plain password in real apps; this is mock only
+      password: payload.password ? String(payload.password) : null,
+      created_at: new Date().toISOString(),
+    };
+
+    users.push(user).write();
+
+    // respond in shape front-end expects
+    return res.json({
+      success: true,
+      message: 'Đăng ký thành công (mock)',
+      token: null,
+      data: { id: user.id, username: user.username, name: user.name }
+    });
+  } catch (err) {
+    console.error('[mock] /api/auth/dang-ky error', err);
+    return res.status(500).json({ success: false, message: 'Lỗi mock khi đăng ký' });
+  }
 });
 
 server.post('/api/auth/dang-nhap', (req, res) => {
@@ -411,7 +447,7 @@ function resolveUserIdFromReq(req) {
   return null;
 }
 // ===== Profile endpoints (improved) =====
-server.get('/api/toi/hoso', (req, res) => {
+server.get('/api/auth/thong-tin-nguoi-dung', (req, res) => {
   const uid = resolveUserIdFromReq(req);
   if (!uid) return res.status(401).json({ message: 'Chưa đăng nhập (mock). Gửi cookie hoặc Authorization: Bearer <userId:ts>' });
 
@@ -456,11 +492,11 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-server.put('/api/toi/hoso', upload.single('avatar'), (req, res) => {
+server.put('/api/auth/thong-tin-nguoi-dung', upload.single('avatar'), (req, res) => {
   try {
-    console.debug('[mock] PUT /api/toi/hoso content-type=', req.headers['content-type']);
-    console.debug('[mock] PUT /api/toi/hoso req.file =', req.file);
-    console.debug('[mock] PUT /api/toi/hoso req.body keys =', Object.keys(req.body || {}));
+    console.debug('[mock] PUT /api/auth/thong-tin-nguoi-dung content-type=', req.headers['content-type']);
+    console.debug('[mock] PUT /api/auth/thong-tin-nguoi-dung req.file =', req.file);
+    console.debug('[mock] PUT /api/auth/thong-tin-nguoi-dung req.body keys =', Object.keys(req.body || {}));
 
     // resolve uid consistently (use existing helper)
     const uid = resolveUserIdFromReq(req) || (req.headers['x-user-id'] ? String(req.headers['x-user-id']) : null);
@@ -519,7 +555,7 @@ server.put('/api/toi/hoso', upload.single('avatar'), (req, res) => {
 
     return res.json({ status: true, data: after });
   } catch (err) {
-    console.error('[mock] error in PUT /api/toi/hoso', err);
+    console.error('[mock] error in PUT /api/auth/thong-tin-nguoi-dung', err);
     if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
     return res.status(500).json({ status: false, message: 'Internal mock error' });
   }
@@ -585,6 +621,11 @@ server.post(['/api/toi/donhang', '/api/toi/donhangs'], (req, res) => {
     const amount = Number(payload.amount ?? payload.total ?? payload.amount_paid ?? 0) || 0;
     const paymentMethod = String(payload.paymentMethod ?? payload.payment_method ?? payload.method ?? 'cod');
 
+    const generateMadon = () => {
+      // 9 digit random
+      const digits = Math.floor(100000000 + Math.random() * 900000000);
+      return `VINA${digits}`;
+    };
     // Build chitietdonhang[] according to frontend schema
     const chitiet = (Array.isArray(cart) ? cart : []).map((it) => {
       const prod = it.product || {};

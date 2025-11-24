@@ -85,6 +85,30 @@ export default function OrdersPage() {
   const API = process.env.NEXT_PUBLIC_SERVER_API || "http://localhost:4000";
   const router = useRouter();
 
+  const [searchMadon, setSearchMadon] = React.useState<string>("");
+  const [searchAccount, setSearchAccount] = React.useState<string>("");
+
+  const mapApiGroupsToOrders = (groupList: ApiGroup[] = []): Order[] => {
+    return groupList.flatMap((group: ApiGroup) => {
+      return (group.donhang || []).map((d: ApiDonHang) => ({
+        id: d.id,
+        madon: d.madon,
+        created_at: d.created_at || new Date().toISOString(),
+        trangthai: mapStatus(d.trangthai),
+        trangthai_goc: d.trangthai,
+        total: d.thanhtien,
+        paid: d.trangthaithanhtoan === "Đã thanh toán" || d.trangthaithanhtoan === "Đã hoàn tiền",
+        chitietdonhang: (d.chitietdonhang || []).map((item: ApiChiTietItem) => ({
+          id: item.id,
+          name: item.bienthe?.sanpham?.ten || "Sản phẩm không tên",
+          quantity: item.soluong,
+          price: item.dongia,
+          image: item.bienthe?.sanpham?.hinhanh || "/assets/images/thumbs/default.png"
+        })),
+        shipping: { trangthai: d.trangthai }
+      }));
+    });
+  };
   const [loading, setLoading] = React.useState(true);
   const [orders, setOrders] = React.useState<Order[]>([]);
   const [expanded, setExpanded] = React.useState<Set<number>>(new Set());
@@ -179,25 +203,26 @@ export default function OrdersPage() {
         let allOrders: Order[] = [];
 
         if (Array.isArray(groupList)) {
-          allOrders = groupList.flatMap((group: ApiGroup) => {
-            return (group.donhang || []).map((d: ApiDonHang) => ({
-              id: d.id,
-              madon: d.madon,
-              created_at: d.created_at || new Date().toISOString(),
-              trangthai: mapStatus(d.trangthai),
-              trangthai_goc: d.trangthai,
-              total: d.thanhtien,
-              paid: d.trangthaithanhtoan === "Đã thanh toán" || d.trangthaithanhtoan === "Đã hoàn tiền",
-              chitietdonhang: (d.chitietdonhang || []).map((item: ApiChiTietItem) => ({
-                id: item.id,
-                name: item.bienthe?.sanpham?.ten || "Sản phẩm không tên",
-                quantity: item.soluong,
-                price: item.dongia,
-                image: item.bienthe?.sanpham?.hinhanh || "/assets/images/thumbs/default.png"
-              })),
-              shipping: { trangthai: d.trangthai }
-            }));
-          });
+          // allOrders = groupList.flatMap((group: ApiGroup) => {
+          //   return (group.donhang || []).map((d: ApiDonHang) => ({
+          //     id: d.id,
+          //     madon: d.madon,
+          //     created_at: d.created_at || new Date().toISOString(),
+          //     trangthai: mapStatus(d.trangthai),
+          //     trangthai_goc: d.trangthai,
+          //     total: d.thanhtien,
+          //     paid: d.trangthaithanhtoan === "Đã thanh toán" || d.trangthaithanhtoan === "Đã hoàn tiền",
+          //     chitietdonhang: (d.chitietdonhang || []).map((item: ApiChiTietItem) => ({
+          //       id: item.id,
+          //       name: item.bienthe?.sanpham?.ten || "Sản phẩm không tên",
+          //       quantity: item.soluong,
+          //       price: item.dongia,
+          //       image: item.bienthe?.sanpham?.hinhanh || "/assets/images/thumbs/default.png"
+          //     })),
+          //     shipping: { trangthai: d.trangthai }
+          //   }));
+          // });
+          allOrders = mapApiGroupsToOrders(groupList);
         }
 
         if (!alive) return;
@@ -216,6 +241,55 @@ export default function OrdersPage() {
     return () => { alive = false; };
   }, [API]);
 
+  
+  const handleSearch = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!searchMadon && !searchAccount) return;
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (searchMadon) params.set("madon", searchMadon.trim());
+      if (searchAccount) {
+        const a = searchAccount.trim();
+        const isEmail = /\S+@\S+\.\S+/.test(a);
+        params.set(isEmail ? "email" : "username", a);
+      }
+      const url = `${API}/toi/theodoi-donhang?${params.toString()}`;
+      const r = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!r.ok) {
+        // try fallback without username/email if server requires different params
+        console.debug("Search request failed", r.status);
+        setOrders([]);
+        return;
+      }
+      const data = await r.json();
+      // data may be ApiGroup[] or ApiResponse-like; normalize
+      const groups: ApiGroup[] = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+      const mapped = mapApiGroupsToOrders(groups);
+      setOrders(mapped.sort((a, b) => b.id - a.id));
+    } catch (err) {
+      console.error("Search error:", err);
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleClearSearch = async () => {
+    setSearchMadon("");
+    setSearchAccount("");
+    setLoading(true);
+    // re-run initial list fetch by calling effect handler (simple: trigger by fetching same endpoint)
+    try {
+      const r = await fetch(`${API}/api/toi/theodoi-donhang`, { headers: { Accept: "application/json" } });
+      const j = r.ok ? await r.json() : [];
+      const groups: ApiGroup[] = Array.isArray(j) ? j : Array.isArray(j?.data) ? j.data : [];
+      setOrders(mapApiGroupsToOrders(groups).sort((a, b) => b.id - a.id));
+    } catch {
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
   // ... Các phần logic filter, pagination giữ nguyên ...
   const filteredOrders = React.useMemo(() => {
     return orders.filter((o) => {
@@ -284,6 +358,21 @@ export default function OrdersPage() {
       <FullHeader showClassicTopBar={true} showTopNav={false} />
       <AccountShell title="Đơn hàng của tôi" current="orders">
         
+        {/* Search box: tìm theo mã đơn + username/email */}
+        <div className="p-12 mb-12 bg-white border rounded-8">
+          <form className="row gy-3" onSubmit={handleSearch}>
+            <div className="col-5">
+              <input value={searchMadon} onChange={(ev) => setSearchMadon(ev.target.value)} placeholder="Mã đơn (VNA...)" className="common-input" />
+            </div>
+            <div className="col-5">
+              <input value={searchAccount} onChange={(ev) => setSearchAccount(ev.target.value)} placeholder="Tài khoản (username hoặc email)" className="common-input" />
+            </div>
+            <div className="col-2 d-flex" style={{ gap: 8 }}>
+              <button type="submit" className="btn btn-main-two" disabled={loading}>{loading ? "Tìm..." : "Tìm"}</button>
+              <button type="button" className="btn btn-secondary" onClick={handleClearSearch}>Xóa</button>
+            </div>
+          </form>
+        </div>
         {/* Filter Tabs */}
         <div className="p-12 mb-16 bg-white border rounded-8" style={{ marginTop: 4 }}>
           <div className="flex-wrap d-flex align-items-center justify-content-between" style={{ gap: 8 }}>

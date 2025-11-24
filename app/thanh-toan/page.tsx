@@ -93,7 +93,7 @@ export default function Page() {
     let alive = true;
     (async () => {
       try {
-        const res = await fetch(`${API}/api/toi/hoso`, { credentials: "include" });
+        const res = await fetch(`${API}/api/auth/thong-tin-nguoi-dung`, { credentials: "include" });
         const j = await res.json();
         if (!alive) return;
         setProfile((j?.data as Record<string, unknown>) ?? null);
@@ -310,7 +310,7 @@ export default function Page() {
   const itemCount = cartItems.length;
   const giftCount = cartItems.filter((it) => {
     const price =
-      Number(it.product?.gia?.current ?? it.gia?.current ?? it.price ?? it.selling_price ?? it.unit_price ?? 0) || 0;
+      Number(it.product?.gia?.hien_tai ?? it.gia?.hien_tai ?? it.price ?? it.selling_price ?? it.unit_price ?? 0) || 0;
     return price === 0;
   }).length;
 
@@ -394,8 +394,8 @@ export default function Page() {
                       "Sản phẩm";
                     const price =
                       Number(
-                        it.product?.gia?.current ??
-                          it.gia?.current ??
+                        it.product?.gia?.hien_tai ??
+                          it.gia?.hien_tai ??
                           it.price ??
                           it.selling_price ??
                           it.unit_price ??

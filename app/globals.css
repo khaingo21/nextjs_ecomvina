@@ -190,6 +190,94 @@
   --foreground: #171717;
 }
 
+.featured-products__viewport {
+  overflow: hidden;
+}
+
+.featured-products__track {
+  display: flex;
+  width: 100%;
+  will-change: transform;
+  transition: transform 0.8s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.featured-products__track.slide-prev,
+.featured-products__track.slide-next {
+  transition: transform 0.8s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.featured-products__slide {
+  flex: 0 0 100%;
+  padding-right: 0;
+}
+
+.featured-products__slide .row {
+  margin: 0;
+}
+
+.featured-products__slide .col-xxl-6,
+.featured-products__slide .col-lg-6 {
+  transition: opacity 0.4s ease;
+}
+
+.featured-products__slides {
+  display: grid;
+  gap: 24px;
+  transition: transform 0.6s ease, opacity 0.6s ease;
+}
+
+.featured-products__slides.slide-next {
+  animation: featured-slide-left 0.6s ease forwards;
+}
+
+.featured-products__slides.slide-prev {
+  animation: featured-slide-right 0.6s ease forwards;
+}
+
+@keyframes featured-slide-left {
+  from {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes featured-slide-right {
+  from {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.coupon-slider__viewport {
+  overflow: hidden;
+}
+
+.coupon-slider__track {
+  display: flex;
+  width: 100%;
+  will-change: transform;
+  transition: transform 0.8s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.coupon-slider__track.slide-next,
+.coupon-slider__track.slide-prev {
+  transition: transform 0.8s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.coupon-slider__slide {
+  flex: 0 0 100%;
+}
+
 /* @theme inline {  Disabled to prevent CSS warnings and conflicts
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -660,4 +748,36 @@
   background: #222;
   color: #fff;
   border-color: #222;
+}
+
+/* Featured Products Navigation Arrows */
+#featured-products-prev,
+#featured-products-next {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  border: 1px solid #e5e7eb !important;
+  background-color: #fff !important;
+  color: #222 !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  font-size: 20px !important;
+  padding: 0 !important;
+}
+
+#featured-products-prev:hover,
+#featured-products-next:hover {
+  background-color: #222 !important;
+  color: #fff !important;
+  border-color: #222 !important;
+}
+
+#featured-products-prev i,
+#featured-products-next i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

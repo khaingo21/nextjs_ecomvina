@@ -1,8 +1,87 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { type HomeHotSaleProduct } from '@/lib/api';
+import { useHomeData } from '@/hooks/useHomeData';
+
+interface Product {
+    id: number;
+    ten: string;
+    slug: string;
+    mediaurl: string;
+    selling_price: number;
+    original_price?: number;
+    shop_name: string;
+    rating: number;
+    sold: number;
+    discount_percent?: number;
+}
 
 export default function LatestProductsSection() {
+    const { data: homeData, loading: homeLoading } = useHomeData();
+    const [products, setProducts] = useState<Product[]>([]);
+    const loading = homeLoading;
+
+    useEffect(() => {
+        console.log('🆕 LatestProductsSection - homeData:', homeData);
+        if (!homeData) {
+            console.log('⚠️ LatestProductsSection - homeData is null/undefined');
+            return;
+        }
+
+        try {
+            console.log('📦 LatestProductsSection - homeData.data:', homeData.data);
+            console.log('📦 LatestProductsSection - new_launch array:', homeData.data?.new_launch);
+            console.log('📦 LatestProductsSection - new_launch length:', homeData.data?.new_launch?.length || 0);
+
+            const newLaunch = (homeData.data?.new_launch || []).slice().sort((a, b) => {
+                const soldA = parseInt(a.sold_count || "0");
+                const soldB = parseInt(b.sold_count || "0");
+                return soldB - soldA;
+            });
+
+            // Convert sang format của component
+            const converted: Product[] = newLaunch.map((item: HomeHotSaleProduct) => ({
+                id: item.id,
+                ten: item.ten,
+                slug: item.slug,
+                mediaurl: item.hinh_anh,
+                selling_price: item.gia.current,
+                original_price: item.gia.before_discount,
+                shop_name: item.thuonghieu,
+                rating: item.rating.average,
+                sold: parseInt(item.sold_count || "0"),
+                discount_percent: item.gia.discount_percent,
+            }));
+
+            console.log('✅ LatestProductsSection - converted products:', converted.length, converted);
+            setProducts(converted);
+        } catch (err) {
+            console.error('❌ LatestProductsSection - Error processing latest products:', err);
+            setProducts([]);
+        }
+    }, [homeData]);
+
+    const formatPrice = (price: number) => {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND',
+            minimumFractionDigits: 0,
+        }).format(price);
+    };
+
+    if (loading) {
+        return (
+            <section className="trending-productss pt-16 overflow-hidden fix-scale-100" style={{ paddingBottom: "0px", marginBottom: "0px" }}>
+                <div className="container container-lg px-0">
+                    <div className="section-heading mb-24">
+                        <h6 className="mb-0"><i className="ph-bold ph-hand-waving text-main-600"></i> Hàng mới chào sân</h6>
+                    </div>
+                    <div className="text-center py-40">Đang tải...</div>
+                </div>
+            </section>
+        );
+    }
     return (
-        <section className="trending-productss pt-16 overflow-hidden fix-scale-100">
+        <section className="trending-productss pt-16 overflow-hidden fix-scale-100" style={{ paddingBottom: "0px", marginBottom: "0px" }}>
             <div className="container container-lg px-0">
                 <div className="">
                     <div className="section-heading mb-24">
@@ -17,49 +96,29 @@ export default function LatestProductsSection() {
                     <div className="tab-content" id="pills-tabContent">
                         <div className="tab-pane fade show active" id="pills-all" role="tabpanel" aria-labelledby="pills-all-tab" tabIndex={0}>
                             <div className="row g-12">
-                                {/* Product cards will go here - keeping the structure compact */}
-                                {[
-                                    { href: "tam-lot-abena-pad-45x45", img: "tam-lot-abena-pad-45x45-1.webp", name: "Tấm lót Abena Pad (45x45)", sold: 74, price: "290.000 đ" },
-                                    { href: "hu-hit-thao-duoc-nhi-thien-duong-hu-5g", img: "hu-hit-thao-duoc-nhi-thien-duong-hu-5g-1.webp", name: "Hũ Hít Thảo Dược Nhị Thiên Đường - Hũ 5g", sold: 6, price: "42.000 đ" },
-                                    { href: "may-xong-khi-dung-cam-tay-kachi-ys35-giai-phap-ho-hap-linh-hoat-moi-luc-moi-noi", img: "may-xong-khi-dung-cam-tay-kachi-ys35-giai-phap-ho-hap-linh-hoat-moi-luc-moi-noi-1.webp", name: "Máy Xông Khí Dung Cầm Tay Kachi YS35: Giải Pháp Hô Hấp Linh Hoạt Mọi Lúc, Mọi Nơi", sold: 3, price: "799.000 đ" },
-                                    { href: "tam-lot-giuong-abena-pad-giat-duoc-85x90cm", img: "tam-lot-giuong-abena-pad-giat-duoc-85x90cm-1.webp", name: "Tấm lót giường Abena Pad (giặt được) 85x90cm", sold: 193, price: "490.000 đ" },
-                                    { href: "gang-lau-abena-wash-gloves-50-mienggoi", img: "gang-lau-abena-wash-gloves-50-mienggoi-1.webp", name: "Găng lau Abena Wash Gloves (50 miếng/gói)", sold: 67, price: "160.000 đ" },
-                                    { href: "nuoc-rua-chen-sa-chanh-come-on-lam-sach-bat-dia-an-toan-da-tay-1-lit", img: "nuoc-rua-chen-sa-chanh-come-on-lam-sach-bat-dia-an-toan-da-tay-1-lit-1.webp", name: "Nước rửa chén sả chanh COME ON làm sạch bát đĩa, an toàn da tay 1 lít", sold: 76, price: "69.000 đ" },
-                                    { href: "bot-matcha-gao-rang-nhat-ban-onelife-goi-100g", img: "bot-matcha-gao-rang-nhat-ban-onelife-goi-100g-1.webp", name: "Bột Matcha Gạo Rang Nhật Bản ONELIFE (Gói 100g)", sold: 17, price: "220.800 đ" },
-                                    { href: "keo-qua-sam-khong-duong-free-suger-ginseng-berry-s-candy-200g", img: "keo-qua-sam-khong-duong-free-suger-ginseng-berry-s-candy-200g-1.webp", name: "Kẹo Quả Sâm không đường Free Suger Ginseng Berry S candy 200g", sold: 187, price: "186.750 đ", discount: "-25%", oldPrice: "249.000 đ" },
-                                    { href: "hat-dieu-rang-muoi-loai-1-con-vo-lua-happy-nuts-500g", img: "hat-dieu-rang-muoi-loai-1-con-vo-lua-happy-nuts-500g-1.webp", name: "Hạt điều rang muối loại 1 (còn vỏ lụa) Happy Nuts 500g", sold: 782, price: "253.800 đ", discount: "-10%", oldPrice: "282.000 đ" },
-                                    { href: "banh-trung-thu-2025-thu-an-nhien-banh-chay-hop-2-banh-1-tra", img: "banh-trung-thu-2025-thu-an-nhien-banh-chay-hop-2-banh-1-tra-1.webp", name: "Bánh Trung Thu 2025 - Thu An Nhiên (bánh chay hộp 2 bánh 1 trà)", sold: 472, price: "110.700 đ", discount: "-70%", oldPrice: "369.000 đ" },
-                                    { href: "nuoc-rua-bat-bio-formula-bo-va-lo-hoi-tui-500ml", img: "nuoc-rua-bat-bio-formula-bo-va-lo-hoi-tui-500ml-1.webp", name: "Nước rửa bát Bio Formula - Bơ và Lô Hội (Túi 500ml)", sold: 142, price: "90.000 đ" },
-                                    { href: "duong-mi-te-bao-goc-cchoi-bio-placenta-lash-serum", img: "duong-mi-te-bao-goc-cchoi-bio-placenta-lash-serum-1.webp", name: "Dưỡng mi tế bào gốc C'Choi - Bio Placenta Lash Serum", vendor: "C'CHOI", sold: 84, price: "231.000 đ", discount: "-30%", oldPrice: "330.000 đ" },
-                                    { href: "vien-uong-bishin-tripeptide-collagen-nhat-ban-60v", img: "vien-uong-bishin-tripeptide-collagen-nhat-ban-60v-1.webp", name: "Viên uống Bishin Tripeptide Collagen Nhật Bản 60v", sold: 134, price: "500.000 đ" },
-                                    { href: "collagen-thuy-phan-ho-tro-da-mong-toc-acai-labs-marine-collagen-beauty-australia-90v", img: "collagen-thuy-phan-ho-tro-da-mong-toc-acai-labs-marine-collagen-beauty-australia-90v-1.webp", name: "Collagen thủy phân hỗ trợ Da Móng Tóc Acai Labs Marine Collagen Beauty Australia 90v", vendor: "ACACI LABS", sold: 10, price: "795.000 đ" },
-                                    { href: "thuc-pham-bao-ve-suc-khoe-midu-menaq7-180mcg", img: "thuc-pham-bao-ve-suc-khoe-midu-menaq7-180mcg-1.webp", name: "Thực phẩm bảo vệ sức khỏe: Midu MenaQ7 180mcg", sold: 30, price: "234.000 đ", discount: "-10%", oldPrice: "260.000 đ" },
-                                    { href: "hahahaha", img: "sam-ngoc-linh-truong-sinh-do-thung-24lon-1.webp", name: "hahaha", sold: 0, price: "216.000 đ", discount: "-20%", oldPrice: "270.000 đ" },
-                                    { href: "sua-non-to-yen-papamilk-height-gain-giup-tang-can-tang-chieu-cao-cho-tre-tu-1-19-tuoi-lon-830g", img: "sua-non-to-yen-papamilk-height-gain-giup-tang-can-tang-chieu-cao-cho-tre-tu-1-19-tuoi-lon-830g-1.webp", name: "Sữa non tổ yến Papamilk Height & Gain giúp tăng cân tăng chiều cao cho Trẻ từ 1-19 tuổi - Lon 830G", sold: 0, price: "409.600 đ", discount: "-20%", oldPrice: "512.000 đ" },
-                                    { href: "tinh-dau-tram-tu-nhien-eco-ho-tro-giam-ho-cam-cum-so-mui-cam-lanh-lo-30ml", img: "tinh-dau-tram-tu-nhien-eco-ho-tro-giam-ho-cam-cum-so-mui-cam-lanh-lo-30ml-1.webp", name: "Tinh dầu tràm tự nhiên ECO - Hỗ trợ giảm ho, cảm cúm, sổ mũi, cảm lạnh (Lọ 30ml)", sold: 0, price: "39.000 đ", discount: "-85%", oldPrice: "260.000 đ" }
-                                ].map((product, index) => (
-                                    <div key={index} className="col-xxl-2 col-xl-3 col-lg-4 col-xs-6">
+                                {products.map((product) => (
+                                    <div key={product.id} className="col-xxl-2 col-xl-3 col-lg-4 col-xs-6">
                                         <div className="product-card h-100 border border-gray-100 hover-border-main-600 rounded-6 position-relative transition-2">
-                                            <a href={`san-pham/${product.href}`} className="flex-center rounded-8 bg-gray-50 position-relative">
-                                                <img src={`assets/images/thumbs/${product.img}`} alt={product.name} className="w-100 rounded-top-2" />
+                                            <a href={`/product-details/${product.slug}?category=${encodeURIComponent("Hàng mới chào sân")}`} className="flex-center rounded-8 bg-gray-50 position-relative" style={{ minHeight: '250px' }}>
+                                                <img src={product.mediaurl} alt={product.ten} className="w-100 rounded-top-2" style={{ objectFit: 'cover', maxHeight: '250px' }} />
                                             </a>
                                             <div className="product-card__content w-100 h-100 align-items-stretch flex-column justify-content-between d-flex mt-10 px-10 pb-8">
                                                 <div>
                                                     <div className="flex-align justify-content-between mt-5">
                                                         <div className="flex-align gap-4 w-100">
                                                             <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
-                                                            <span className="text-gray-500 text-xs" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%", display: "inline-block" }} title={product.vendor || "Trung Tâm Bán Hàng Siêu Thị Vina"}>
-                                                                {product.vendor || "Trung Tâm Bán Hàng Siêu Thị Vina"}
+                                                            <span className="text-gray-500 text-xs" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%", display: "inline-block" }} title={product.shop_name}>
+                                                                {product.shop_name}
                                                             </span>
                                                         </div>
                                                     </div>
                                                     <h6 className="title text-lg fw-semibold mt-2 mb-2">
-                                                        <a href={`san-pham/${product.href}`} className="link text-line-2" tabIndex={0}>{product.name}</a>
+                                                        <a href={`/product-details/${product.slug}?category=${encodeURIComponent("Hàng mới chào sân")}`} className="link text-line-2" tabIndex={0}>{product.ten}</a>
                                                     </h6>
                                                     <div className="flex-align justify-content-between mt-2">
                                                         <div className="flex-align gap-6">
                                                             <span className="text-xs fw-medium text-gray-500">Đánh giá</span>
-                                                            <span className="text-xs fw-medium text-gray-500">4.8 <i className="ph-fill ph-star text-warning-600"></i></span>
+                                                            <span className="text-xs fw-medium text-gray-500">{product.rating?.toFixed(1)} <i className="ph-fill ph-star text-warning-600"></i></span>
                                                         </div>
                                                         <div className="flex-align gap-4">
                                                             <span className="text-xs fw-medium text-gray-500">{product.sold}</span>
@@ -68,16 +127,16 @@ export default function LatestProductsSection() {
                                                     </div>
                                                 </div>
                                                 <div className="product-card__price mt-5">
-                                                    {product.discount && (
+                                                    {(product.discount_percent || 0) > 0 && (
                                                         <div className="flex-align gap-4 text-main-two-600">
-                                                            <i className="ph-fill ph-seal-percent text-sm"></i> {product.discount}
+                                                            <i className="ph-fill ph-seal-percent text-sm"></i> -{product.discount_percent}%
                                                             <span className="text-gray-400 text-sm fw-semibold text-decoration-line-through">
-                                                                {product.oldPrice}
+                                                                {formatPrice(product.original_price || 0)}
                                                             </span>
                                                         </div>
                                                     )}
                                                     <span className="text-heading text-lg fw-semibold">
-                                                        {product.price}
+                                                        {formatPrice(product.selling_price)}
                                                     </span>
                                                 </div>
                                             </div>
@@ -87,7 +146,11 @@ export default function LatestProductsSection() {
                             </div>
                         </div>
                         <div className="mx-auto w-100 text-center aos-init aos-animate" data-aos="fade-up" data-aos-duration="200">
-                            <a href="san-pham?sortby=latest" className="btn border-main-600 text-main-600 hover-bg-main-600 hover-border-main-600 hover-text-white rounded-8 px-32 py-12 mt-40">
+                            <a
+                                href="/shop?source=new_launch"
+                                className="btn border-main-600 text-main-600 hover-bg-main-600 hover-border-main-600 hover-text-white rounded-8 px-32 py-12 mt-40"
+                                style={{ marginBottom: 0 }}
+                            >
                                 Xem thêm sản phẩm
                             </a>
                         </div>

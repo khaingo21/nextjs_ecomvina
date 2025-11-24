@@ -7,15 +7,8 @@ import SearchBox from "@/components/SearchBox";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useAuth } from "@/hooks/useAuth";
 import { initCartAnchorBySelector, setCartAnchor } from "@/utils/flyToCart";
+import Cookies from "js-cookie";
 
-
-/**
- * NOTE:
- * - Không dùng jQuery, không dùng "javascript:void(0)".
- * - Dùng <button> cho trigger dropdown để tăng accessibility.
- * - Đóng mở bằng React state; auto-close khi click ra ngoài / nhấn Esc.
- * - Mobile menu toggle thuần React (không cần main.js).
- */
 
 type FullHeaderProps = {
   showTopNav?: boolean;
@@ -78,6 +71,92 @@ export default function FullHeader({
   };
   const [cats, setCats] = useState<DanhMuc[]>([]);
 
+  // Render dropdown danh mục
+  const renderCategoryDropdown = () => {
+    if (!showCategoryMenu || !categoryButtonRef.current) return null;
+
+    const rect = categoryButtonRef.current.getBoundingClientRect();
+
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          top: `${rect.bottom + 4}px`,
+          left: `${rect.left}px`,
+          background: '#fff',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          minWidth: '280px',
+          maxHeight: '400px',
+          overflowY: 'auto',
+          zIndex: 999999,
+          padding: '8px 0'
+        }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {[
+          { icon: 'suc-khoe.svg', label: 'Sức khỏe', value: 'suc-khoe' },
+          { icon: 'thuc-pham-chuc-nang.svg', label: 'Thực phẩm chức năng', value: 'thuc-pham-chuc-nang' },
+          { icon: 'cham-soc-ca-nhan.svg', label: 'Chăm sóc cá nhân', value: 'cham-soc-ca-nhan' },
+          { icon: 'lam-dep.svg', label: 'Làm đẹp', value: 'lam-dep' },
+          { icon: 'dien-may.svg', label: 'Điện máy', value: 'dien-may' },
+          { icon: 'thiet-bi-y-te.svg', label: 'Thiết bị y tế', value: 'thiet-bi-y-te' },
+          { icon: 'bach-hoa.svg', label: 'Bách hóa', value: 'bach-hoa' },
+          { icon: 'noi-that-trang-tri.svg', label: 'Nội thất - Trang trí', value: 'noi-that-trang-tri' },
+          { icon: 'me-va-be.svg', label: 'Mẹ & bé', value: 'me-va-be' },
+          { icon: 'thoi-trang.svg', label: 'Thời trang', value: 'thoi-trang' },
+          { icon: 'thuc-pham-do-an.svg', label: 'Thực phẩm - đồ ăn', value: 'thuc-pham-do-an' }
+        ].map((cat) => (
+          <Link
+            key={cat.value}
+            href={`/shop?category=${cat.value}`}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px 16px',
+              color: '#666',
+              textDecoration: 'none',
+              fontSize: '15px',
+              transition: 'background 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = '#f5f5f5'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+          >
+            <span style={{ display: 'flex', width: '24px', height: '24px' }}>
+              <img
+                src={`https://sieuthivina.com/assets/client/images/categories/${cat.icon}`}
+                alt={cat.label}
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
+            </span>
+            <span>{cat.label}</span>
+          </Link>
+        ))}
+      </div>
+    );
+  };
+  const [showCategoryMenu, setShowCategoryMenu] = useState<boolean>(false);
+  const categoryButtonRef = useRef<HTMLLIElement>(null);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Hàm xử lý đóng dropdown với delay
+  const handleMouseLeave = () => {
+    closeTimeoutRef.current = setTimeout(() => {
+      setShowCategoryMenu(false);
+    }, 1500);
+  };
+
+  // Hàm xử lý giữ dropdown mở
+  const handleMouseEnter = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setShowCategoryMenu(true);
+  };
+
   
 
   // Chuẩn hoá host để cookie không rớt (localhost ↔ 127.0.0.1)
@@ -126,6 +205,16 @@ export default function FullHeader({
       String.fromCodePoint(base + c.charCodeAt(0))
     );
     return chars.join("");
+  };
+
+  const getDisplayName = (u?: typeof user) => {
+    if (!u) return "Tài khoản";
+    return u.hoten || u.username || "Tài khoản";
+  };
+
+  // helper avatar src (nếu có)
+  const getAvatarSrc = (u?: typeof user) => {
+    return u?.avatar ? String(u.avatar) : null;
   };
 
   // ===== refs & click-away =====
@@ -191,7 +280,8 @@ export default function FullHeader({
   const readServerCartCount = async () => {
     try {
       // Lấy token từ localStorage
-      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      // const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const token = Cookies.get("access_token");
       const headers: Record<string, string> = { Accept: "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
 
@@ -237,6 +327,7 @@ export default function FullHeader({
 
   return (
     <>
+      {renderCategoryDropdown()}
       {/* HEADER MIDDLE */}
       {showTopNav && (
         <header
@@ -328,18 +419,26 @@ export default function FullHeader({
                     }
                     className="gap-10 px-20 py-10 text-center text-white d-flex justify-content-center flex-align align-content-around fw-medium bg-success-600 rounded-pill line-height-1 hover-bg-success-500 hover-text-white btn-reset"
                   >
-                    <span className="line-height-1" aria-hidden>
+                    <span className="line-height-1" aria-hidden style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
                       {isLoggedIn ? (
-                        <span style={{ fontSize: 18 }}>
-                          {flagEmoji(user?.countryCode)}
-                        </span>
+                        getAvatarSrc(user) ? (
+                          <Image
+                            src={getAvatarSrc(user) as string}
+                            alt={getDisplayName(user)}
+                            width={32}
+                            height={32}
+                            className="rounded-circle"
+                          />
+                        ) : (
+                          <i className="ph-bold ph-user" style={{ fontSize: 18 }} />
+                        )
                       ) : (
                         <i className="ph-bold ph-user" />
                       )}
                     </span>
-                    {isLoggedIn
-                      ? user?.name || user?.email || "Tài khoản"
-                      : "Tài khoản"}
+                    <span style={{ marginLeft: 8 }}>
+                      {isLoggedIn ? getDisplayName(user) : "Tài khoản"}
+                    </span>
                   </button>
                   {userOpen && (
                     <ul
@@ -370,7 +469,7 @@ export default function FullHeader({
                             role="none"
                           >
                             <Link
-                              href="/account"
+                              href="/dang-nhap"
                               role="menuitem"
                               className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100"
                             >
@@ -415,7 +514,7 @@ export default function FullHeader({
                             role="none"
                           >
                             <Link
-                              href="/account"
+                              href="/dang-nhap"
                               role="menuitem"
                               className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100"
                             >
@@ -428,7 +527,7 @@ export default function FullHeader({
                             role="none"
                           >
                             <Link
-                              href="/account"
+                              href="/dang-nhap"
                               role="menuitem"
                               className="common-dropdown__link nav-submenu__link text-heading-two hover-bg-neutral-100"
                             >
@@ -456,6 +555,7 @@ export default function FullHeader({
         </header>
       )}
 
+      
       {/* SECOND HEADER (categories/search/actions) */}
       {showTopNav ? (
         showCategoriesBar ? (
@@ -562,7 +662,7 @@ export default function FullHeader({
                     <span className="text-nowrap">Compare</span>
                   </Link>
                   <Link
-                    href="/cart"
+                    href="/gio-hang"
                     className="gap-8 text-gray-900 d-flex align-items-center text-nowrap"
                     data-cart-icon
                   >
@@ -579,7 +679,7 @@ export default function FullHeader({
                     </span>
                     <span className="text-nowrap">Cart</span>
                   </Link>
-                  {/* removed duplicate user dropdown to avoid double account menu */}
+                  {/* removed duplicate user dropdown to avoid double dang-nhap menu */}
                 </div>
               </nav>
 
@@ -666,28 +766,22 @@ export default function FullHeader({
 
                   <ul className="flex-wrap gap-16 header-top__right flex-align">
                     {/* Danh mục */}
-                    <li className="flex-shrink-0 d-block on-hover-item text-white-6" ref={catRefTopBar} onMouseLeave={() => setCatOpen(false)}>
+                    <li 
+                      className="flex-shrink-0 d-block on-hover-item text-white-6" 
+                      ref={categoryButtonRef}
+                      onMouseEnter={handleMouseEnter}
+                      onMouseLeave={handleMouseLeave}
+                    >
                       <button
                         className="gap-4 text-sm category__button flex-align text-white-6 rounded-top js-open-menu"
                         type="button"
-                        onClick={() => setCatOpen(v => !v)}
-                        aria-expanded={catOpen}
+                        aria-expanded={showCategoryMenu} 
                       >
-                        <span className="text-sm icon d-md-flex d-none"><i className="ph ph-squares-four"></i></span>
+                        <span className="text-sm icon d-md-flex d-none">
+                          <i className="ph ph-squares-four"></i>
+                        </span>
                         <span className="d-sm-flex d-none">Danh mục</span>
                       </button>
-
-                      <div className="category-menu" style={catOpen ? { display: "block" } : undefined}>
-                        <ul className="category-menu__list">
-                          {cats.map((c) => (
-                            <li key={(c.id ?? c.slug) as React.Key}>
-                              <Link href={`/category/${c.slug ?? c.id}`} className="category-menu__link">
-                                {c.ten ?? c.name}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
                     </li>
 
                     <li className="flex-align">
@@ -696,7 +790,7 @@ export default function FullHeader({
                       </Link>
                     </li>
                     <li className="flex-align">
-                      <Link href="/cart" className="text-sm text-white-6 hover-text-white" data-cart-icon>
+                      <Link href="/gio-hang" className="text-sm text-white-6 hover-text-white" data-cart-icon>
                         <i className="ph-bold ph-shopping-cart"></i> Giỏ hàng
                         <span className="badge bg-success-600 rounded-circle ms-6">{cartCount}</span>
                       </Link>
@@ -766,14 +860,18 @@ export default function FullHeader({
                           className="line-height-1"
                           aria-hidden
                           style={{
-                            fontSize: "0.85rem", // icon nhỏ hơn chữ
-                            flex: "0 0 14%",     // icon chỉ chiếm ~1/5 nút
+                            fontSize: "0.70rem", // icon nhỏ hơn chữ
+                            flex: "0 0 30%",     // icon chỉ chiếm ~1/3 nút
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                           }}
                         >
-                          {flagEmoji(user?.countryCode)}
+                          {getAvatarSrc(user) ? (
+                            <Image src={getAvatarSrc(user) as string} alt={getDisplayName(user)} width={28} height={28} className="rounded-circle" />
+                          ) : (
+                            <i className="ph-bold ph-user" style={{ fontSize: 18 }} />
+                          )}
                         </span>
                         <span
                           style={{
@@ -783,7 +881,7 @@ export default function FullHeader({
                             whiteSpace: "nowrap",
                           }}
                         >
-                          {user?.name || user?.email || "Tài khoản"}
+                          {getDisplayName(user)}
                         </span>
                       </button>
                       {userOpen && (
@@ -843,7 +941,7 @@ export default function FullHeader({
                     </div>
                   ) : (
                     <Link
-                      href="/account"
+                      href="/dang-nhap"
                       style={{
                         background: "#FCE9E8",
                         color: "#E53935",
@@ -891,7 +989,7 @@ export default function FullHeader({
                         </Link>
                       </li>
                       <li>
-                        <Link href="/cart" onClick={() => setMobileOpen(false)}>
+                        <Link href="/gio-hang" onClick={() => setMobileOpen(false)}>
                           Giỏ hàng
                         </Link>
                       </li>

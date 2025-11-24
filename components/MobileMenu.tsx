@@ -13,8 +13,8 @@ export default function MobileMenu({ visible, onClose }: Props) {
         <i className="ph ph-x"></i>
       </button>
       <div className="mobile-menu__inner logo">
-        <a href="index.html" className="mobile-menu__logo">
-          <img src="assets/images/logo/logo_nguyenban.png" alt="Logo" />
+        <a href="/" className="mobile-menu__logo" aria-label="Trang chủ Siêu Thị Vina">
+          <img src="/assets/images/logo/logo_nguyenban.png" alt="Logo" />
         </a>
         <div className="mobile-menu__menu">
           <ul className="nav-menu flex-align nav-menu--mobile">

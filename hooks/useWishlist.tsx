@@ -96,6 +96,9 @@ function useWishlistCore(): Ctx {
       return next;
     });
     try {
+	  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json", Accept: "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
       const res = await fetch(`${API}/api/yeuthichs`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -118,6 +121,9 @@ function useWishlistCore(): Ctx {
       return next;
     });
     try {
+	  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const headers: Record<string, string> = { Accept: "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
       const res = await fetch(`${API}/api/yeuthichs/${id}`, {
         method: "DELETE",
         headers: { Accept: "application/json" },

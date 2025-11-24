@@ -7,7 +7,7 @@ import GlobalFooter from "@/components/GlobalFooter";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAuth = pathname?.startsWith("/dangnhap") || pathname?.startsWith("/dangky");
+  const isAuth = pathname?.startsWith("/dang-nhap") || pathname?.startsWith("/dang-ky");
 
   console.log('AppShell pathname:', pathname);
   console.log('AppShell isAuth:', isAuth);

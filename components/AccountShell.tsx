@@ -2,44 +2,45 @@
 
 import React from "react";
 import Link from "next/link";
-import FullHeader from "@/components/FullHeader";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth"; // 1. Import hook useAuth
 
 export type AccountShellProps = {
   title?: string;
   current?: "wishlist" | "cart" | "orders" | "profile" | string;
   children: React.ReactNode;
-  // optional: pass user from /account/page.tsx so AccountShell shows exact values from that page
-  user?: {
-    username: string;
-    fullname: string;
-    avatar?: string;
-  };
 };
 
 export default function AccountShell({
   title = "Tài khoản",
   current = "wishlist",
   children,
-  user: userProp,
 }: AccountShellProps) {
   const router = useRouter();
+  
+  // 2. Lấy thông tin user và hàm logout từ AuthContext toàn cục
+  // Dữ liệu này đã được đồng bộ từ Server (layout.tsx) nên sẽ có ngay lập tức
+  const { user, logout } = useAuth();
 
-  // Prefer user passed from /account/page.tsx (userProp).
-  // Fallback: try to read from localStorage when client-side.
-  const user = React.useMemo(() => {
-    if (userProp && userProp.username) return userProp;
-    if (typeof window !== "undefined") {
-      return {
-        username: localStorage.getItem("username") ?? "hotb",
-        fullname: localStorage.getItem("fullname") ?? "Trần Bá Hộ",
-        avatar: localStorage.getItem("avatar") ?? "/assets/images/default-avatar.png",
-      };
-    }
-    return { username: "hotb", fullname: "Trần Bá Hộ", avatar: "/assets/images/default-avatar.png" };
-  }, [userProp]);
+  // 3. Helper xử lý ảnh Avatar (giống logic FullHeader)
+  const getAvatarUrl = (path?: string) => {
+    const defaultAvatar = "/assets/images/default-avatar.png";
+    if (!path) return defaultAvatar;
+    
+    // Nếu ảnh đã là link tuyệt đối (google, facebook...) thì giữ nguyên
+    if (path.startsWith("http")) return path;
+    
+    // Nếu ảnh từ server Laravel (tương đối), nối thêm domain
+    // Bạn có thể thay hardcode IP bằng process.env.NEXT_PUBLIC_SERVER_API
+    return `http://148.230.100.215${path.startsWith('/') ? '' : '/'}${path}`;
+  };
 
-  // Notification counts - replace with real values from API/state
+  // 4. Chuẩn bị dữ liệu hiển thị
+  const avatarSrc = getAvatarUrl(user?.avatar);
+  const displayName = user?.hoten || user?.username || "Khách";
+  const displayUsername = user?.username ? `@${user.username}` : "";
+
+  // Mock notification counts
   const notifications = {
     unread: 1,
     orders: 0,
@@ -49,24 +50,17 @@ export default function AccountShell({
 
   const tabs: { key: AccountShellProps["current"]; label: string; href: string; icon: string }[] = [
     { key: "profile", label: "Thông tin cá nhân", href: "/account", icon: "ph ph-user" },
-    { key: "notifications", label: "Hiện thông báo", href: "/account/notifications", icon: "ph ph-bell" },
+    { key: "notifications", label: "Hiện thông báo", href: "/thong-bao", icon: "ph ph-bell" },
     { key: "orders", label: "Đơn hàng của tôi", href: "/orders", icon: "ph ph-notepad" },
-    { key: "addresses", label: "Sổ địa chỉ", href: "/account/addresses", icon: "ph ph-map-pin" },
+    { key: "addresses", label: "Sổ địa chỉ", href: "/dia-chi", icon: "ph ph-map-pin" },
     { key: "reviews", label: "Đánh giá sản phẩm", href: "/account/reviews", icon: "ph ph-star" },
     { key: "wishlist", label: "Sản phẩm yêu thích", href: "/wishlist", icon: "ph ph-heart" },
-    { key: "cart", label: "Giỏ hàng", href: "/cart", icon: "ph ph-shopping-cart" },
+    { key: "cart", label: "Giỏ hàng", href: "/gio-hang", icon: "ph ph-shopping-cart" },
     { key: "support", label: "Hỗ trợ khách hàng", href: "/account/support", icon: "ph ph-headset" },
   ];
 
   const handleLogout = () => {
-    try {
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("username");
-        localStorage.removeItem("fullname");
-      }
-    } catch {}
-    router.push("/");
+    logout(); // Gọi hàm logout chuẩn của useAuth (xóa cookie, reset state, redirect)
   };
 
   return (
@@ -94,12 +88,13 @@ export default function AccountShell({
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={user.avatar}
+                    src={avatarSrc}
+                    // Không cần suppressHydrationWarning nữa vì server/client đã khớp dữ liệu
                     alt="avatar"
                     width={72}
                     height={72}
                     style={{
-                      borderRadius: 12, // more rounded to separate from the card
+                      borderRadius: 12,
                       objectFit: "cover",
                       border: "2px solid rgba(255,255,255,0.9)",
                       boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
@@ -107,8 +102,12 @@ export default function AccountShell({
                     }}
                   />
                   <div style={{ minWidth: 0, marginLeft: 12 }}>
-                    <div className="fw-bold" style={{ fontSize: 16, lineHeight: 1 }}>{user.fullname}</div>
-                    <div className="text-sm text-muted" style={{ marginTop: 2 }}>@{user.username}</div>
+                    <div className="fw-bold" style={{ fontSize: 16, lineHeight: 1 }}>
+                        {displayName}
+                    </div>
+                    <div className="text-sm text-muted" style={{ marginTop: 2 }}>
+                        {displayUsername}
+                    </div>
                   </div>
                 </div>
 
@@ -149,12 +148,11 @@ export default function AccountShell({
                 </nav>
 
                 <div style={{ flex: 1 }} />
-
-                
               </div>
+              
               {/* Logout button */}
               <div>
-                <button type="button" onClick={handleLogout} className="btn w-100 btn-danger">{/* outline- xuất hiện ở giữa btn-danger khiến nút này bị ẩn cho đến khi hover */}
+                <button type="button" onClick={handleLogout} className="btn w-100 btn-danger">
                   <i className="ph ph-sign-out" /> <span className="ms-8">Đăng xuất</span>
                 </button>
               </div>

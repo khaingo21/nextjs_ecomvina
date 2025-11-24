@@ -39,6 +39,30 @@ type CartRow = {
   quantity?: number;
 };
 
+type Address = {
+  id: number;
+  hoten: string;
+  sodienthoai: string;
+  diachi: string;
+  tinhthanh?: string;
+  trangthai?: string;
+};
+
+type AuthUser = {
+  id?: number;
+  username?: string;
+  sodienthoai?: string;
+  hoten?: string;
+  name?: string;
+  email?: string;
+  gioitinh?: string;
+  ngaysinh?: string;
+  avatar?: string;
+  vaitro?: string;
+  trangthai?: string;
+  diachi?: Address[];
+};
+
 export default function Page() {
   const router = useRouter();
   const search = useSearchParams();
@@ -119,7 +143,8 @@ export default function Page() {
   const [, setCart] = useState<CartRow[]>([]);
   const [, setOrders] = useState<Order[]>([]);
 
-  const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
+  // const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
+  const [profile, setProfile] = useState<AuthUser | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   useEffect(() => {
     const src = (profile && (profile.avatar as string)) || (user && (user.avatar as string)) || null;
@@ -136,21 +161,31 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    if (!isLoggedIn) return;
     let alive = true;
+    // 1) seed profile from useAuth.user so UI updates immediately after login
+    if (user) {
+      setProfile((user as AuthUser) ?? null);
+    }
+
+    // 2) fetch detailed profile (diachi etc.) only when logged in
+    if (!isLoggedIn) return () => { alive = false; };
     (async () => {
       try {
-        const res = await fetch(`${API}/api/toi/hoso`, { credentials: "include" });
+        const res = await fetch(`${API}/api/auth/thong-tin-nguoi-dung`, { credentials: "include" });
         if (!alive) return;
+        if (!res.ok) return;
         const j = await res.json();
-        setProfile((j?.data as Record<string, unknown>) ?? null);
+        const remote = (j?.data ?? j?.user ?? j) as AuthUser | null;
+        if (remote && alive) {
+          // merge to keep any fields already in user (avoid dropping token/other)
+          setProfile((prev) => ({ ...(prev ?? {}), ...(remote ?? {}) }));
+        }
       } catch {
         // ignore
       }
     })();
     return () => { alive = false; };
-  }, [isLoggedIn, API]);
-
+  }, [user, isLoggedIn, API]);
   // Khi đã đăng nhập, nếu đang ở tab login/register thì chuyển sang wishlist
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -175,9 +210,9 @@ export default function Page() {
           const j = await res.json();
           setOrders((j?.data as Order[]) ?? []);
         } else if (tab === "profile") {
-          const res = await fetch(`${API}/api/toi/hoso`, { credentials: "include" });
+          const res = await fetch(`${API}/api/auth/thong-tin-nguoi-dung`, { credentials: "include" });
           const j = await res.json();
-          setProfile((j?.data as Record<string, unknown>) ?? null);
+          setProfile((j?.data as AuthUser) ?? null);
         }
       } catch {
         // ignore
@@ -192,64 +227,69 @@ export default function Page() {
     setNotice(null);
     const formEl = e.currentTarget;
 
-    const payload = {
-      name: String(new FormData(formEl).get("name") || ""),
-      gender: String(new FormData(formEl).get("gender") || "unknown"),
-      birthday: String(new FormData(formEl).get("birthday") || ""),
-      email: String(new FormData(formEl).get("email") || ""),
-      nationality: String(new FormData(formEl).get("nationality") || "VN"),
-      phone: String(new FormData(formEl).get("phone") || ""),
-      address_street: String(new FormData(formEl).get("address_street") || ""),
-      address_district: String(new FormData(formEl).get("address_district") || ""),
-      address_city: String(new FormData(formEl).get("address_city") || ""),
-      address_postal: String(new FormData(formEl).get("address_postal") || ""),
-    };
-
     try {
-      let res: Response;
+    const formData = new FormData(formEl);
+    const fd = new FormData();
 
-      // IMPORTANT: select the file input explicitly to avoid hitting the hidden input[name="avatar"]
-      const fileInput = formEl.querySelector<HTMLInputElement>('input[type="file"][name="avatar"]');
-      const avatarFile = fileInput?.files?.[0];
+    const hoten = String(formData.get("name") || "");
+    const sodienthoai = String(formData.get("phone") || formData.get("sodienthoai") || "");
+    const ngaysinh = String(formData.get("birthday") || "");
+    const gioitinh = String(formData.get("gender") || formData.get("gioitinh") || "");
+    const email = String(formData.get("email") || "");
+    const tinhthanh = String(formData.get("address_city") || formData.get("tinhthanh") || "");
+    const diachi = String(formData.get("address_street") || formData.get("address") || "");
+    const trangthai_diachi = String(formData.get("address_state") || formData.get("trangthai_diachi") || "Mặc định");
 
-      if (avatarFile && avatarFile.size > 0) {
-        const fd = new FormData();
-        Object.entries(payload).forEach(([k, v]) => fd.append(k, String(v ?? "")));
-        fd.append("avatar", avatarFile);
-        res = await fetch(`${API}/api/toi/hoso`, {
-          method: "PUT",
-          credentials: "include",
-          body: fd, // do NOT set Content-Type manually
-        });
-      } else {
-        res = await fetch(`${API}/api/toi/hoso`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(payload),
-        });
-      }
+    fd.append("hoten", hoten);
+    if (sodienthoai) fd.append("sodienthoai", sodienthoai);
+    if (ngaysinh) fd.append("ngaysinh", ngaysinh);
+    if (gioitinh) fd.append("gioitinh", gioitinh);
+    if (email) fd.append("email", email);
+    if (tinhthanh) fd.append("tinhthanh", tinhthanh);
+    if (diachi) fd.append("diachi", diachi);
+    fd.append("trangthai_diachi", trangthai_diachi);
 
-      if (!res.ok) throw new Error("Cập nhật thất bại");
-      const j = await res.json();
-      const newProfile = (j?.data as Record<string, unknown>) ?? payload;
-      setProfile(newProfile);
+    // avatar file (if user selected one)
+    const fileInput = formEl.querySelector<HTMLInputElement>('input[type="file"][name="avatar"]');
+    const avatarFile = fileInput?.files?.[0];
+    if (avatarFile) fd.append("avatar", avatarFile);
+
+    // send as multipart/form-data (let browser set Content-Type)
+    const res = await fetch(`${API}/api/auth/cap-nhat-thong-tin`, {
+      method: "POST",
+      credentials: "include",
+      body: fd,
+    });
+
+    if (!res.ok) throw new Error("Cập nhật thất bại");
+    const j = await res.json();
+      const newProfile = (j?.user ?? j?.data ?? j) as AuthUser | null;
+      if (newProfile) setProfile(newProfile);
 
       // update avatar preview + persist for AccountShell/sidebar
-      if (newProfile.avatar && typeof newProfile.avatar === "string") {
+      if (newProfile?.avatar && typeof newProfile.avatar === "string") {
         setAvatarPreview(String(newProfile.avatar));
         try { localStorage.setItem("avatar", String(newProfile.avatar)); } catch {}
       }
 
       // persist display name / username so sidebar shows immediately
-      if (newProfile.name && typeof newProfile.name === "string") {
-        try { localStorage.setItem("fullname", String(newProfile.name)); } catch {}
+      if (newProfile?.hoten && typeof newProfile.hoten === "string") {
+        try { localStorage.setItem("fullname", String(newProfile.hoten)); } catch {}
       }
-      if (newProfile.username && typeof newProfile.username === "string") {
+      if (newProfile?.username && typeof newProfile.username === "string") {
         try { localStorage.setItem("username", String(newProfile.username)); } catch {}
       }
 
-      setNotice({ type: "success", msg: "Đã lưu thông tin cá nhân" });
+      // if backend returns diachi array, remind user to add address if empty
+      const diachiArr = Array.isArray(newProfile?.diachi) ? (newProfile!.diachi as Address[]) : undefined;
+      if (!diachiArr || diachiArr.length === 0) {
+        setNotice({
+          type: "success",
+          msg: "Đã lưu thông tin. Bạn chưa có địa chỉ giao hàng — vui lòng thêm ở Sổ địa chỉ để sử dụng khi đặt hàng.",
+        });
+      } else {
+        setNotice({ type: "success", msg: "Đã lưu thông tin cá nhân" });
+      }
     } catch (err: unknown) {
       setNotice({
         type: "error",
@@ -280,34 +320,133 @@ export default function Page() {
     } catch {}
   };
 
+  // const handleLogin: React.FormEventHandler<HTMLFormElement> = async (e) => {
+  //   e.preventDefault();
+  //   const form = new FormData(e.currentTarget);
+  //   const identifier = String(form.get("identifier") || "").trim();
+  //   const password = String(form.get("password") || "").trim();
+  //   setLoading(true);
+  //   setNotice(null);
+  //   try {
+  //     await login({ identifier, password });
+
+  //     // useCart hook sẽ tự động sync giỏ hàng khi isLoggedIn thay đổi
+  //     // Không cần gọi syncGuestCart ở đây nữa
+  //     await syncGuestWishlist();
+
+  //     router.replace("/");
+  //   } catch (err: unknown) {
+  //     setNotice({
+  //       type: "error",
+  //       msg: pickErrorMessage(
+  //         err,
+  //         "Đăng nhập thất bại. Vui lòng kiểm tra thông tin và thử lại."
+  //       ),
+  //     });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // const handleRegister: React.FormEventHandler<HTMLFormElement> = async (e) => {
+  //   e.preventDefault();
+  //   const form = new FormData(e.currentTarget);
+  //   const name = String(form.get("name") || "").trim();
+  //   const email = String(form.get("email") || "").trim();
+  //   const password = String(form.get("password") || "").trim();
+  //   const phone = String(form.get("phone") || "").trim();
+  //   const gender = String(form.get("gender") || "unknown");
+  //   const birthday = String(form.get("birthday") || "").trim();
+  //   const nationality = String(form.get("nationality") || "VN").trim();
+  //   setLoading(true);
+  //   setNotice(null);
+  //   try {
+  //     await register({ name, email, password, phone, gender, birthday, nationality });
+  //     setNotice({
+  //       type: "success",
+  //       msg: "Đăng ký thành công. Vui lòng đăng nhập để tiếp tục.",
+  //     });
+  //     if (typeof window !== "undefined") {
+  //       window.location.replace("/account?tab=login");
+  //     } else {
+  //       setTab("login");
+  //     }
+  //   } catch (err: unknown) {
+  //     setNotice({
+  //       type: "error",
+  //       msg: pickErrorMessage(
+  //         err,
+  //         "Đăng ký thất bại. Email hoặc SĐT có thể đã tồn tại."
+  //       ),
+  //     });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   const handleLogin: React.FormEventHandler<HTMLFormElement> = async (e) => {
-    e.preventDefault();
+   e.preventDefault();
     const form = new FormData(e.currentTarget);
-    const identifier = String(form.get("identifier") || "").trim();
+    const username = String(form.get("username") || "").trim();
     const password = String(form.get("password") || "").trim();
     setLoading(true);
     setNotice(null);
     try {
-      await login({ identifier, password });
-
-      // useCart hook sẽ tự động sync giỏ hàng khi isLoggedIn thay đổi
-      // Không cần gọi syncGuestCart ở đây nữa
+      // gọi useAuth.login với key 'username'
+      await login({ username, password });
       await syncGuestWishlist();
-
       router.replace("/");
     } catch (err: unknown) {
       setNotice({
         type: "error",
-        msg: pickErrorMessage(
-          err,
-          "Đăng nhập thất bại. Vui lòng kiểm tra thông tin và thử lại."
-        ),
+        msg: pickErrorMessage(err, "Đăng nhập thất bại. Vui lòng kiểm tra thông tin và thử lại."),
       });
     } finally {
       setLoading(false);
     }
   };
+  const handleRegister: React.FormEventHandler<HTMLFormElement> = async (e) => {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    const hoten = String(form.get("hoten") || "").trim();
+    const username = String(form.get("username") || "").trim();
+    const email = String(form.get("email") || "").trim();
+    const password = String(form.get("password") || "").trim();
+    const password_confirmation = String(form.get("password_confirmation") || "").trim();
+    const sodienthoai = String(form.get("sodienthoai") || "").trim();
 
+    setLoading(true);
+    setNotice(null);
+    try {
+      // gửi payload thuần tiếng Việt theo API ví dụ
+      const payload: Record<string, unknown> = {
+        hoten,
+        username: username || hoten,
+        password,
+        password_confirmation: password_confirmation || password,
+      };
+      if (email) payload.email = email;
+      if (sodienthoai) payload.sodienthoai = sodienthoai;
+
+      const res = await fetch(`${API}/api/auth/dang-ky`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.message ?? `Đăng ký thất bại (HTTP ${res.status})`);
+      }
+      const j = await res.json();
+      setNotice({ type: "success", msg: j?.message ?? "Đăng ký thành công. Vui lòng đăng nhập." });
+      // chuyển sang trang đăng nhập
+      if (typeof window !== "undefined") window.location.replace("/account?tab=login");
+      else setTab("login");
+    } catch (err: unknown) {
+      setNotice({ type: "error", msg: pickErrorMessage(err, "Đăng ký thất bại. Kiểm tra và thử lại.") });
+    } finally {
+      setLoading(false);
+    }
+  };
   const handleRemoveWish = async (productId: number) => {
     try {
       await fetch(`${API}/api/yeuthichs/${productId}`, {
@@ -318,42 +457,6 @@ export default function Page() {
         prev.filter((w) => (w.product?.id ?? w.product_id) !== productId)
       );
     } catch {}
-  };
-
-  const handleRegister: React.FormEventHandler<HTMLFormElement> = async (e) => {
-    e.preventDefault();
-    const form = new FormData(e.currentTarget);
-    const name = String(form.get("name") || "").trim();
-    const email = String(form.get("email") || "").trim();
-    const password = String(form.get("password") || "").trim();
-    const phone = String(form.get("phone") || "").trim();
-    const gender = String(form.get("gender") || "unknown");
-    const birthday = String(form.get("birthday") || "").trim();
-    const nationality = String(form.get("nationality") || "VN").trim();
-    setLoading(true);
-    setNotice(null);
-    try {
-      await register({ name, email, password, phone, gender, birthday, nationality });
-      setNotice({
-        type: "success",
-        msg: "Đăng ký thành công. Vui lòng đăng nhập để tiếp tục.",
-      });
-      if (typeof window !== "undefined") {
-        window.location.replace("/account?tab=login");
-      } else {
-        setTab("login");
-      }
-    } catch (err: unknown) {
-      setNotice({
-        type: "error",
-        msg: pickErrorMessage(
-          err,
-          "Đăng ký thất bại. Email hoặc SĐT có thể đã tồn tại."
-        ),
-      });
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (
@@ -389,12 +492,12 @@ export default function Page() {
             <form onSubmit={handleLogin}>
               <div className="row gy-4">
                 <div className="col-12">
-                  <label className="text-sm text-gray-900 fw-medium">Email hoặc SĐT *</label>
-                  <input name="identifier" type="text" className="common-input" placeholder="you@example.com" required />
+                  <label htmlFor="login-username" className="text-sm text-gray-900 fw-medium">Email hoặc SĐT *</label>
+                  <input id="login-username" name="username" type="text" className="common-input" placeholder="tên đăng nhập / email / sđt" autoComplete="username" required />
                 </div>
                 <div className="col-12">
-                  <label className="text-sm text-gray-900 fw-medium">Mật khẩu</label>
-                  <input name="password" type="password" className="common-input" placeholder="••••••••" required />
+                  <label htmlFor="login-password" className="text-sm text-gray-900 fw-medium">Mật khẩu</label>
+                  <input id="login-password" name="password" type="password" className="common-input" placeholder="••••••••" required />
                 </div>
                 <div className="col-12">
                   <button disabled={loading} type="submit" className="btn btn-main-two">
@@ -407,36 +510,29 @@ export default function Page() {
             <form onSubmit={handleRegister}>
               <div className="row gy-4">
                 <div className="col-12">
-                  <label className="text-sm text-gray-900 fw-medium">Họ tên *</label>
-                  <input name="name" type="text" className="common-input" placeholder="Nguyễn Văn A" required />
+                  <label htmlFor="reg-hoten" className="text-sm text-gray-900 fw-medium">Họ tên *</label>
+                  <input id="reg-hoten" name="hoten" type="text" autoComplete="name" className="common-input" placeholder="Nguyễn Văn A" required />
                 </div>
                 <div className="col-12">
-                  <label className="text-sm text-gray-900 fw-medium">Email *</label>
-                  <input name="email" type="email" className="common-input" placeholder="you@example.com" required />
+                  <label htmlFor="reg-username" className="text-sm text-gray-900 fw-medium">Tên tài khoản (username)</label>
+                  <input id="reg-username" name="username" type="text" autoComplete="username" className="common-input" placeholder="tùy chọn — để trống sẽ dùng họ tên" />
+                  <small className="text-xs text-muted">Bạn có thể đăng nhập bằng username, email hoặc số điện thoại.</small>
                 </div>
                 <div className="col-12">
-                  <label className="text-sm text-gray-900 fw-medium">Mật khẩu *</label>
-                  <input name="password" type="password" className="common-input" placeholder="••••••••" required />
+                  <label htmlFor="reg-email" className="text-sm text-gray-900 fw-medium">Email</label>
+                  <input id="reg-email" name="email" type="email" autoComplete="email" className="common-input" placeholder="you@example.com" />
+               </div>
+                <div className="col-12">
+                  <label htmlFor="reg-password" className="text-sm text-gray-900 fw-medium">Mật khẩu *</label>
+                  <input id="reg-password" name="password" type="password" autoComplete="new-password" className="common-input" placeholder="••••••••" required />
                 </div>
                 <div className="col-12">
-                  <label className="text-sm text-gray-900 fw-medium">Số điện thoại</label>
-                  <input name="phone" type="tel" className="common-input" placeholder="098xxxxxxx" />
-                </div>
-                <div className="col-6">
-                  <label className="text-sm text-gray-900 fw-medium">Giới tính</label>
-                  <select name="gender" className="common-input">
-                    <option value="unknown">Không xác định</option>
-                    <option value="male">Nam</option>
-                    <option value="female">Nữ</option>
-                  </select>
-                </div>
-                <div className="col-6">
-                  <label className="text-sm text-gray-900 fw-medium">Ngày sinh</label>
-                  <input type="date" name="birthday" className="common-input" />
+                  <label htmlFor="reg-password-confirm" className="text-sm text-gray-900 fw-medium">Xác nhận mật khẩu *</label>
+                  <input id="reg-password-confirm" name="password_confirmation" type="password" autoComplete="new-password" className="common-input" placeholder="Nhập lại mật khẩu" required />
                 </div>
                 <div className="col-12">
-                  <label className="text-sm text-gray-900 fw-medium">Quốc tịch</label>
-                  <input name="nationality" className="common-input" defaultValue="VN" />
+                  <label htmlFor="reg-sodienthoai" className="text-sm text-gray-900 fw-medium">Số điện thoại</label>
+                  <input id="reg-sodienthoai" name="sodienthoai" type="tel" autoComplete="tel" className="common-input" placeholder="098xxxxxxx" />
                 </div>
                 <div className="col-12">
                   <button disabled={loading} type="submit" className="btn btn-main-two">
@@ -454,11 +550,11 @@ export default function Page() {
               <div className="row gy-3">
                 <div className="col-12">
                   <label className="text-sm text-gray-900 fw-medium">Họ tên</label>
-                  <input name="name" defaultValue={(profile?.name as string) || (user?.name ?? "")} className="common-input" />
+                  <input name="name" defaultValue={(profile?.name as string) || (user?.hoten ?? "")} className="common-input" />
                 </div>
                 <div className="col-6">
                   <label className="text-sm text-gray-900 fw-medium">Giới tính</label>
-                  <select name="gender" defaultValue={(profile?.gender as string) || "unknown"} className="common-input">
+                  <select name="gioitinh" defaultValue={(profile?.gioitinh as string) || "unknown"} className="common-input">
                     <option value="unknown">Không xác định</option>
                     <option value="male">Nam</option>
                     <option value="female">Nữ</option>
@@ -466,22 +562,26 @@ export default function Page() {
                 </div>
                 <div className="col-6">
                   <label className="text-sm text-gray-900 fw-medium">Ngày sinh</label>
-                  <input type="date" name="birthday" defaultValue={(profile?.birthday as string) || ""} className="common-input" />
+                  <input type="date" name="ngaysinh" defaultValue={(profile?.ngaysinh as string) || ""} className="common-input" />
                 </div>
-                <div className="col-6">
+                {/* <div className="col-6">
                   <label className="text-sm text-gray-900 fw-medium">Email</label>
                   <input type="email" name="email" defaultValue={(profile?.email as string) || (user?.email ?? "")} className="common-input" />
-                </div>
+                </div> */}
+                {/* <div className="col-6">
+                  <label className="text-sm text-gray-900 fw-medium">Quốc tịch</label>
+                  <input name="quoctich" defaultValue={(profile?.quoctich as string) || "VN"} className="common-input" />
+                </div> */}
                 <div className="col-6">
                   <label className="text-sm text-gray-900 fw-medium">Quốc tịch</label>
-                  <input name="nationality" defaultValue={(profile?.nationality as string) || "VN"} className="common-input" />
+                  <input name="quoctich" className="common-input" defaultValue="VN" />
                 </div>
                 <div className="col-6">
                   <label className="text-sm text-gray-900 fw-medium">Số điện thoại</label>
-                  <input name="phone" defaultValue={(profile?.phone as string) || ""} className="common-input" />
+                  <input name="sodienthoai" defaultValue={(profile?.sodienthoai as string) || ""} className="common-input" />
                 </div>
 
-                <div className="col-12">
+                {/* <div className="col-12">
                   <label className="text-sm text-gray-900 fw-medium">Địa chỉ</label>
                   <input name="address_street" defaultValue={(profile?.address_street as string) || ""} className="mb-2 common-input" placeholder="Số nhà, tên đường" />
                   <div className="gap-8 d-flex">
@@ -489,7 +589,7 @@ export default function Page() {
                     <input name="address_city" defaultValue={(profile?.address_city as string) || ""} className="common-input" placeholder="Tỉnh/Thành phố" />
                     <input name="address_postal" defaultValue={(profile?.address_postal as string) || ""} className="common-input" placeholder="Mã bưu chính" />
                   </div>
-                </div>
+                </div> */}
                 <input 
                     type="hidden" 
                     name="avatar" 

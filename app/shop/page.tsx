@@ -1,474 +1,863 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-
-import ProductCardV2 from "@/components/ProductCardV2";
+import { fetchSearchProducts, fetchHomePage } from "@/lib/api";
+import type { SearchProduct } from "@/lib/api";
 import FullHeader from "@/components/FullHeader";
-import BenefitsStrip from "@/components/BenefitsStrip";
-import { useWishlist } from "@/hooks/useWishlist";
 
-
-/* =======================
-   Types khớp API
-======================= */
-type DanhGia = { id: number; diem: number };
-type BienThe = { gia: string; giagiam: string; soluong?: number };
-type AnhSP = { media: string };
-type Brand = { ten?: string };
-
-type ApiProduct = {
+interface Product {
   id: number;
-  ten: string;
-  slug?: string | null;
-  mediaurl?: string | null;
-  danhgias?: DanhGia[];
-  bienthes?: BienThe[];
-  anhsanphams?: AnhSP[];
-  thuonghieu?: Brand;
-  xuatxu?: string;
-  luotxem?: number;
-};
+  name: string;
+  category?: string;
+  brand: string;
+  price: number;
+  rating: number;
+  image: string;
+  discount?: number;
+  originalPrice?: number;
+  sold?: number;
+}
 
-/* =======================
-   Helpers
-======================= */
-const num = (v?: string): number => {
-  const n = parseFloat(v ?? "0");
-  return Number.isFinite(n) ? n : 0;
-};
-
-const slugify = (s: string, fallback: string) =>
-  (s || fallback)
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "") || fallback;
-
-const firstImage = (p: ApiProduct) =>
-  p.mediaurl || p.anhsanphams?.[0]?.media || "/assets/images/thumbs/product-two-img7.png";
-
-const firstPrice = (p: ApiProduct) => {
-  const gia = num(p.bienthes?.[0]?.gia);
-  const giagiam = num(p.bienthes?.[0]?.giagiam);
-
-  // Heuristic: giagiam < gia => giagiam là GIÁ BÁN; ngược lại là SỐ TIỀN GIẢM
-  const selling = giagiam > 0 && giagiam < gia ? giagiam : Math.max(gia - giagiam, 0);
-  return { gia, giagiam, selling };
-};
-
-const avgRating = (p: ApiProduct) => {
-  const arr = p.danhgias || [];
-  if (!arr.length) return { avg: 0, count: 0 };
-  const sum = arr.reduce((s, r) => s + (Number(r.diem) || 0), 0);
-  return { avg: Math.round((sum / arr.length) * 10) / 10, count: arr.length };
-};
-
-const toHref = (p: ApiProduct) => `/products/${slugify(p.ten, `sp-${p.id}`)}-${p.id}`;
-
-/* =======================
-   Page
-======================= */
-export default function Page() {
+export default function ShopPage() {
   const searchParams = useSearchParams();
+  const queryParam = searchParams.get("query") || "";
+  const categoryParam = searchParams.get("category") || "";
+  const sourceParam = searchParams.get("source") || "";
 
-  // ===== ADDED: base API & đọc mọi tham số query =====
-  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://localhost:4000";
+  const [allProducts, setAllProducts] = useState<Product[]>([]); // Lưu TẤT CẢ sản phẩm từ API
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState(queryParam);
+  const [inputValue, setInputValue] = useState(queryParam); // Giá trị input tạm
 
-  // GIỮ TƯƠNG THÍCH CŨ: view=hot  → source=hot_sales (không phá link cũ)
-  const source   = (searchParams.get("source") || (searchParams.get("view") === "hot" ? "hot_sales" : "")).toLowerCase(); // ADDED
-  const category = (searchParams.get("category") || "").toLowerCase();   // ADDED
-  const brand    = (searchParams.get("brand") || "").toLowerCase();      // ADDED
-  const q        = searchParams.get("q") || "";                          // ADDED
-  const sort     = (searchParams.get("sort") || "popular").toLowerCase();// ADDED
-  const filter  = (searchParams.get("filter") || (searchParams.get("sort") || "popular")).toLowerCase();
-  const userId  = searchParams.get("user_id") || "";
+  // State cho phân trang
+  const [currentPage, setCurrentPage] = useState(1);
+  const productsPerPage = 20;
 
-  const page     = Number(searchParams.get("page") || 1) || 1;           // ADDED
-  const perPage  = Number(searchParams.get("per_page") || 20) || 20;     // CHANGED (giữ default 20 nhưng hỗ trợ query)
+  // State chính - trigger filtering (KHÔNG trigger API call)
+  const [filters, setFilters] = useState({
+    danhmuc: categoryParam,
+    locgia: "",
+    thuonghieu: "",
+    rating: ""
+  });
 
-  // ADDED: hàm dựng URL theo ngữ cảnh (selection hoặc all)
-  const buildUrl = () => {
-    if (source === "hot_sales" || source === "recommend" || source === "best_products") {
-      const p = new URLSearchParams({
-        selection: source,
-        per_page: String(perPage),
-        page: String(page),
-        sort,
-      });
-      return `${API}/api/sanphams-selection?${p.toString()}`;
+  // State tạm - chỉ lưu giá trị đang chọn, chưa áp dụng
+  const [tempFilters, setTempFilters] = useState({
+    danhmuc: categoryParam,
+    locgia: "",
+    thuonghieu: "",
+    rating: ""
+  });
+
+  // Sync inputValue khi queryParam thay đổi
+  useEffect(() => {
+    setInputValue(queryParam);
+    setSearchQuery(queryParam);
+  }, [queryParam]);
+
+  // Sync filters khi categoryParam thay đổi
+  useEffect(() => {
+    if (categoryParam) {
+      setFilters(prev => ({ ...prev, danhmuc: categoryParam }));
+      setTempFilters(prev => ({ ...prev, danhmuc: categoryParam }));
     }
-    const p = new URLSearchParams({
-    filter,                     // popular|latest|trending|matches
-    per_page: String(perPage),
-    page: String(page),
-    });
-    if (q)        p.set("q", q);
-    if (category) p.set("category", category);  
-    if (brand) p.set("brand", brand);
-    if (filter === "matches" && userId) p.set("user_id", userId); // matches có thể cần user_id
+  }, [categoryParam]);
 
-    return `${API}/api/sanphams-all?${p.toString()}`;
+  // Helper function để suy luận category từ tên sản phẩm
+  const inferCategory = (name: string): string => {
+    const lowerName = name.toLowerCase();
+
+    // Bách hóa - Kiểm tra TRƯỚC (vì "nước giặt", "nước rửa chén" chứa từ "nước")
+    if (lowerName.includes("nước giặt") || lowerName.includes("nước rửa chén") ||
+      lowerName.includes("nước rửa bát") || lowerName.includes("bột giặt") ||
+      lowerName.includes("nước lau") || lowerName.includes("tẩy rửa")) {
+      return "bach-hoa";
+    }
+
+    // Chăm sóc cá nhân - Kiểm tra TRƯỚC đồ uống
+    if (lowerName.includes("sữa rửa mặt") || lowerName.includes("dầu gội") ||
+      lowerName.includes("kem dưỡng") || lowerName.includes("son môi") ||
+      lowerName.includes("nước hoa") || lowerName.includes("sữa tắm") ||
+      lowerName.includes("dưỡng da") || lowerName.includes("kem body")) {
+      return "cham-soc-ca-nhan";
+    }
+
+    // Sức khỏe
+    if (lowerName.includes("yến") || lowerName.includes("sâm") ||
+      lowerName.includes("đông trùng") || lowerName.includes("ginseng") ||
+      lowerName.includes("hồng sâm") || lowerName.includes("nhân sâm") ||
+      lowerName.includes("tinh dầu") || lowerName.includes("cao dược liệu")) {
+      return "suc-khoe";
+    }
+
+    // Thực phẩm chức năng
+    if (lowerName.includes("vitamin") || lowerName.includes("collagen") ||
+      lowerName.includes("omega") || lowerName.includes("canxi") ||
+      lowerName.includes("kẽm") || lowerName.includes("sắt") ||
+      lowerName.includes("viên uống") || lowerName.includes("thực phẩm bảo vệ")) {
+      return "thuc-pham-chuc-nang";
+    }
+
+    // Làm đẹp
+    if (lowerName.includes("dưỡng mi") || lowerName.includes("serum") ||
+      lowerName.includes("mặt nạ") || lowerName.includes("toner") ||
+      lowerName.includes("nước tẩy trang") || lowerName.includes("tẩy trang")) {
+      return "lam-dep";
+    }
+
+    // Thiết bị y tế
+    if (lowerName.includes("máy xông") || lowerName.includes("máy đo") ||
+      lowerName.includes("găng") || lowerName.includes("khẩu trang") ||
+      lowerName.includes("tấm lót") || lowerName.includes("hũ hít")) {
+      return "thiet-bi-y-te";
+    }
+
+    // Mẹ và bé
+    if (lowerName.includes("sữa non") || lowerName.includes("tã") ||
+      lowerName.includes("bỉm") || lowerName.includes("papamilk")) {
+      return "me-va-be";
+    }
+
+    // Thực phẩm - đồ ăn
+    if (lowerName.includes("gạo") || lowerName.includes("dầu ăn") ||
+      lowerName.includes("nước mắm") || lowerName.includes("mì") ||
+      lowerName.includes("phở") || lowerName.includes("bún") ||
+      lowerName.includes("bánh") || lowerName.includes("hạt") ||
+      lowerName.includes("bột") || lowerName.includes("kẹo") ||
+      lowerName.includes("matcha")) {
+      return "thuc-pham-do-an";
+    }
+
+    // Đồ uống - Kiểm tra CUỐI CÙNG
+    if (lowerName.includes("nước") || lowerName.includes("trà") ||
+      lowerName.includes("cà phê") || lowerName.includes("sữa uống") ||
+      lowerName.includes("nước ép") || lowerName.includes("nước giải khát")) {
+      return "do-uong";
+    }
+
+    return ""; // Không xác định
   };
 
-  // ADDED: tiêu đề breadcrumb theo ngữ cảnh
-  const pageTitle =
-    source === "hot_sales" || searchParams.get("view") === "hot"
-      ? "Sản phẩm HOT (bán chạy & giảm giá)"
-      : source === "recommend"
-      ? "Có thể bạn quan tâm"
-      : category
-      ? `Danh mục: ${category}`
-      : brand
-      ? `Thương hiệu: ${brand}`
-      : q
-      ? `Kết quả cho “${q}”`
-      : "Danh sách sản phẩm";
-  // ===== /ADDED =====
-
-  const [loading, setLoading] = useState(true);
-  const [items, setItems] = useState<ApiProduct[]>([]);
-  const { isWished, toggle } = useWishlist();
-
-  // ===== CHANGED: fetch theo buildUrl() (không đụng URL cũ) =====
+  // useEffect 1: Fetch products từ API (khi searchQuery thay đổi HOẶC khi có filters)
   useEffect(() => {
-    let mounted = true;
-    const url = buildUrl();
+    async function fetchProducts() {
+      setLoading(true);
+      try {
+        let products: Product[] = [];
 
+        // Kiểm tra xem có filter nào được áp dụng không
+        const hasActiveFilters = filters.danhmuc !== "" || filters.locgia !== "" ||
+          filters.thuonghieu !== "" || filters.rating !== "";
 
-    fetch(url, { headers: { Accept: "application/json" } })
-      .then((r) => r.json())
-      .then((res) => {
-        if (!mounted) return;
-        // dữ liệu có thể nằm ở data[] hoặc data.data[] (paginate)
-        const data = Array.isArray(res?.data) ? res.data : res?.data?.data;
-        if (Array.isArray(data)) setItems(data as ApiProduct[]);
-      })
-      .finally(() => mounted && setLoading(false));
+        // Nếu có filters → Luôn fetch từ shop API (bỏ qua search)
+        // Nếu có search query NHƯNG KHÔNG có filters → Dùng search API
+        if (searchQuery.trim() && !hasActiveFilters) {
+          try {
+            const searchResults = await fetchSearchProducts(searchQuery);
 
-    return () => {
-      mounted = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, category, brand, q, sort, page, perPage, filter, userId]);
-  // ===== /CHANGED =====
+            // Kiểm tra nếu API trả về mảng rỗng hoặc không có data
+            if (!searchResults || searchResults.length === 0) {
+              products = [];
+            } else {
+              // Chuẩn hóa dữ liệu từ API tìm kiếm thành Product
+              products = searchResults
+                .filter((item: SearchProduct) => item.hinh_anh && item.hinh_anh.trim() !== "") // Lọc bỏ sản phẩm không có hình
+                .map((item: SearchProduct) => {
+                  // Xử lý rating - lấy average từ object
+                  const ratingValue = item.rating?.average || 0;
 
-  // ===== CHANGED: sort hiểu 4 tiêu chí + giữ logic HOT cũ =====
-  const sorted = useMemo(() => {
-    const arr = [...items];
+                  // Tính giá sau giảm
+                  const currentPrice = item.gia?.current || 0;
+                  const beforeDiscount = item.gia?.before_discount || 0;
+                  const discountPercent = item.gia?.discount_percent || 0;
 
-    const discountPct = (p: ApiProduct) => {
-      const { gia, selling } = firstPrice(p);
-      return gia > 0 ? (gia - selling) / gia : 0;
-    };
+                  // Normalize URL ảnh: Giữ nguyên relative path từ mock server (đã có /assets/...)
+                  let imageUrl = item.hinh_anh || "/assets/images/thumbs/default-product.png";
 
-    const cmpHot = (a: ApiProduct, b: ApiProduct) => {
-      const discA = discountPct(a);
-      const discB = discountPct(b);
-      if (discB !== discA) return discB - discA;
-      const viewsA = a.luotxem || 0;
-      const viewsB = b.luotxem || 0;
-      if (viewsB !== viewsA) return viewsB - viewsA;
-      return avgRating(b).avg - avgRating(a).avg;
-    };
+                  // Nếu là relative path và bắt đầu bằng /assets/ -> giữ nguyên (từ mock server)
+                  // Nếu là http -> giữ nguyên (từ external API)
+                  // Nếu không có gì -> thêm /assets/images/thumbs/
+                  if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('/assets/')) {
+                    imageUrl = `/assets/images/thumbs/${imageUrl}`;
+                  }
 
-    const cmpPopular  = (a: ApiProduct, b: ApiProduct) => (b.luotxem || 0) - (a.luotxem || 0);
-    const cmpLatest   = (a: ApiProduct, b: ApiProduct) => (Number(b.id) || 0) - (Number(a.id) || 0); // tạm coi id ~ mới nhất
-    const cmpTrending = (a: ApiProduct, b: ApiProduct) => (b.luotxem || 0) - (a.luotxem || 0);
-    const cmpMatches  = (a: ApiProduct, b: ApiProduct) => {
-      const d = discountPct(b) - discountPct(a);
-      if (d !== 0) return d;
-      return avgRating(b).avg - avgRating(a).avg;
-    };
+                  // Đoán category dựa trên tên sản phẩm và thương hiệu
+                  const inferCategory = (name: string): string => {
+                    const lowerName = name.toLowerCase();
 
-    // Nếu là HOT (giữ tương thích cũ): sort=popular => cmpHot
-    if (source === "hot_sales" || searchParams.get("view") === "hot") {
-      if (sort === "popular") arr.sort(cmpHot);
-      else if (sort === "latest") arr.sort(cmpLatest);
-      else if (sort === "trending") arr.sort(cmpTrending);
-      else if (sort === "matches") arr.sort(cmpMatches);
-      return arr;
+                    // Bách hóa - Kiểm tra TRƯỚC (vì "nước giặt", "nước rửa chén" chứa từ "nước")
+                    if (lowerName.includes("nước giặt") || lowerName.includes("nước rửa chén") ||
+                      lowerName.includes("nước rửa bát") || lowerName.includes("bột giặt") ||
+                      lowerName.includes("nước lau") || lowerName.includes("tẩy rửa")) {
+                      return "bach-hoa";
+                    }
+
+                    // Chăm sóc cá nhân - Kiểm tra TRƯỚC đồ uống
+                    if (lowerName.includes("sữa rửa mặt") || lowerName.includes("dầu gội") ||
+                      lowerName.includes("kem dưỡng") || lowerName.includes("son môi") ||
+                      lowerName.includes("nước hoa") || lowerName.includes("sữa tắm") ||
+                      lowerName.includes("dưỡng da") || lowerName.includes("kem body")) {
+                      return "cham-soc-ca-nhan";
+                    }
+
+                    // Sức khỏe
+                    if (lowerName.includes("yến") || lowerName.includes("sâm") ||
+                      lowerName.includes("đông trùng") || lowerName.includes("ginseng") ||
+                      lowerName.includes("hồng sâm") || lowerName.includes("nhân sâm") ||
+                      lowerName.includes("tinh dầu") || lowerName.includes("cao dược liệu")) {
+                      return "suc-khoe";
+                    }
+
+                    // Thực phẩm chức năng
+                    if (lowerName.includes("vitamin") || lowerName.includes("collagen") ||
+                      lowerName.includes("omega") || lowerName.includes("canxi") ||
+                      lowerName.includes("kẽm") || lowerName.includes("sắt") ||
+                      lowerName.includes("viên uống") || lowerName.includes("thực phẩm bảo vệ")) {
+                      return "thuc-pham-chuc-nang";
+                    }
+
+                    // Làm đẹp
+                    if (lowerName.includes("dưỡng mi") || lowerName.includes("serum") ||
+                      lowerName.includes("mặt nạ") || lowerName.includes("toner")) {
+                      return "lam-dep";
+                    }
+
+                    // Thiết bị y tế
+                    if (lowerName.includes("máy xông") || lowerName.includes("máy đo") ||
+                      lowerName.includes("găng tay y tế") || lowerName.includes("khẩu trang")) {
+                      return "thiet-bi-y-te";
+                    }
+
+                    // Mẹ và bé
+                    if (lowerName.includes("sữa non") || lowerName.includes("tã") ||
+                      lowerName.includes("bỉm") || lowerName.includes("papamilk")) {
+                      return "me-va-be";
+                    }
+
+                    // Thực phẩm - đồ ăn
+                    if (lowerName.includes("gạo") || lowerName.includes("dầu ăn") ||
+                      lowerName.includes("nước mắm") || lowerName.includes("mì") ||
+                      lowerName.includes("phở") || lowerName.includes("bún") ||
+                      lowerName.includes("bánh") || lowerName.includes("hạt") ||
+                      lowerName.includes("bột")) {
+                      return "thuc-pham-do-an";
+                    }
+
+                    // Đồ uống - Kiểm tra CUỐI CÙNG
+                    if (lowerName.includes("nước") || lowerName.includes("trà") ||
+                      lowerName.includes("cà phê") || lowerName.includes("sữa uống") ||
+                      lowerName.includes("nước ép") || lowerName.includes("nước giải khát")) {
+                      return "do-uong";
+                    }
+
+                    return ""; // Không xác định
+                  };
+
+                  const product = {
+                    id: item.id,
+                    name: item.ten,
+                    category: inferCategory(item.ten),
+                    brand: item.thuonghieu || "Không rõ",
+                    price: currentPrice, // Giá hiện tại đã giảm
+                    rating: ratingValue,
+                    image: imageUrl,
+                    discount: discountPercent,
+                    originalPrice: beforeDiscount,
+                    sold: parseInt(item.sold_count) || 0,
+                  };
+
+                  return product;
+                });
+            }
+          } catch (searchErr) {
+            console.error("Search API error:", searchErr);
+            products = [];
+          }
+        } else {
+          // Nếu không có search query, tuỳ theo source để lấy dữ liệu
+          try {
+            const homeData = await fetchHomePage(); // Lấy dữ liệu mặc định từ API
+
+            // Map tên danh mục tiếng Việt sang slug
+            const categoryNameToSlug: { [key: string]: string } = {
+              "Bách hóa": "bach-hoa",
+              "Sức khỏe": "suc-khoe",
+              "Thực phẩm - đồ ăn": "thuc-pham-do-an",
+              "Thiết bị y tế": "thiet-bi-y-te",
+              "Làm đẹp": "lam-dep",
+              "Mẹ & bé": "me-va-be",
+              "Điện máy": "dien-may",
+              "Nội thất - Trang trí": "noi-that-trang-tri",
+              "Thời trang": "thoi-trang",
+              "Đồ uống": "do-uong",
+              "Chăm sóc cá nhân": "cham-soc-ca-nhan",
+              "Thực phẩm chức năng": "thuc-pham-chuc-nang"
+            };
+
+            const allProductsFromAPI: any[] = [];
+            const mostWatched = homeData.data.most_watched || [];
+
+            // Debug: Xem API trả về bao nhiêu sản phẩm cho mỗi category
+            const categoryCounts = homeData.data.top_categories?.map((c: any) => ({
+              ten: c.ten,
+              count: c.sanpham?.length || 0
+            }));
+            console.table(categoryCounts);
+            console.log("Shop - Sức khỏe có:", categoryCounts?.find((c: any) => c.ten === "Sức khỏe")?.count || 0, "sản phẩm");
+
+            // Nếu có source param (hot_sales, best_products, new_launch, most_watched)
+            if (sourceParam === "hot_sales" || sourceParam === "best_products" ||
+              sourceParam === "new_launch" || sourceParam === "most_watched") {
+
+              // Nếu ĐỒNG THỜI có category filter → Lấy từ top_categories thay vì source
+              if (categoryParam && categoryParam !== "") {
+                console.log(`🔍 Shop - Có source="${sourceParam}" VÀ category="${categoryParam}" → Lấy từ top_categories`);
+
+                // Lấy sản phẩm từ top_categories (đầy đủ)
+                homeData.data.top_categories?.forEach((cat: any) => {
+                  if (cat.sanpham && Array.isArray(cat.sanpham)) {
+                    const categorySlug = categoryNameToSlug[cat.ten] || "";
+                    cat.sanpham.forEach((product: any) => {
+                      allProductsFromAPI.push({
+                        ...product,
+                        categoryFromAPI: categorySlug,
+                        categoryName: cat.ten
+                      });
+                    });
+                  }
+                });
+              } else {
+                // Nếu chỉ có source, KHÔNG có category filter → Lấy từ source
+                if (sourceParam === "hot_sales") {
+                  const hotSales = (homeData.data.hot_sales || [])
+                    .slice()
+                    .sort((a, b) => {
+                      const soldA = parseInt(a.sold_count || "0");
+                      const soldB = parseInt(b.sold_count || "0");
+                      return soldB - soldA;
+                    });
+                  console.log('🔥 Shop - Hot Sales từ API:', hotSales.length, 'sản phẩm');
+                  hotSales.forEach((product: any) => {
+                    allProductsFromAPI.push({
+                      ...product,
+                      categoryFromAPI: inferCategory(product.ten),
+                      categoryName: "Top deal • Siêu rẻ"
+                    });
+                  });
+                } else if (sourceParam === "best_products") {
+                  const bestProducts = (homeData.data.best_products || [])
+                    .slice()
+                    .sort((a, b) => {
+                      const soldA = parseInt(a.sold_count || "0");
+                      const soldB = parseInt(b.sold_count || "0");
+                      return soldB - soldA;
+                    });
+                  bestProducts.forEach((product: any) => {
+                    allProductsFromAPI.push({
+                      ...product,
+                      categoryFromAPI: inferCategory(product.ten),
+                      categoryName: "Sản phẩm hàng đầu"
+                    });
+                  });
+                } else if (sourceParam === "new_launch") {
+                  const newLaunch = (homeData.data.new_launch || [])
+                    .slice()
+                    .sort((a, b) => {
+                      const soldA = parseInt(a.sold_count || "0");
+                      const soldB = parseInt(b.sold_count || "0");
+                      return soldB - soldA;
+                    });
+                  newLaunch.forEach((product: any) => {
+                    allProductsFromAPI.push({
+                      ...product,
+                      categoryFromAPI: inferCategory(product.ten),
+                      categoryName: "Hàng mới chào sân",
+                    });
+                  });
+                } else if (sourceParam === "most_watched") {
+                  const mostWatchedOnly = (homeData.data.most_watched || [])
+                    .slice()
+                    .sort((a, b) => {
+                      const soldA = parseInt(a.sold_count || "0");
+                      const soldB = parseInt(b.sold_count || "0");
+                      return soldB - soldA;
+                    });
+                  mostWatchedOnly.forEach((product: any) => {
+                    allProductsFromAPI.push({
+                      ...product,
+                      categoryFromAPI: inferCategory(product.ten),
+                      categoryName: "Được quan tâm nhiều nhất",
+                    });
+                  });
+                }
+              }
+            } else {
+              // Mặc định: Lấy sản phẩm từ top_categories - ĐÚNG SỐ LƯỢNG API TRẢ VỀ
+              homeData.data.top_categories?.forEach((cat: any) => {
+                if (cat.sanpham && Array.isArray(cat.sanpham)) {
+                  const categorySlug = categoryNameToSlug[cat.ten] || "";
+
+                  console.log(`📦 Shop - ${cat.ten} (slug: ${categorySlug}): ${cat.sanpham.length} sản phẩm từ API`);
+
+                  // Lấy ĐÚNG số lượng sản phẩm mà API trả về cho từng category
+                  cat.sanpham.forEach((product: any) => {
+                    allProductsFromAPI.push({
+                      ...product,
+                      categoryFromAPI: categorySlug, // Gán category từ API
+                      categoryName: cat.ten
+                    });
+                  });
+                }
+              });
+
+              console.log(`🔍 Shop - categoryParam: "${categoryParam}"`);
+              console.log(`🔍 Shop - Tổng sản phẩm từ API: ${allProductsFromAPI.length}`);
+
+              // Nếu KHÔNG có category filter, thêm sản phẩm từ các section khác
+              if (!categoryParam || categoryParam === "") {
+                [
+                  ...(homeData.data.hot_sales || []),
+                  ...(homeData.data.best_products || []),
+                  ...(homeData.data.new_launch || []),
+                ].forEach((product: any) => {
+                  allProductsFromAPI.push({
+                    ...product,
+                    categoryFromAPI: "", // Các sản phẩm này sẽ không có category
+                    categoryName: ""
+                  });
+                });
+              }
+            }
+
+            // CHO PHÉP sản phẩm xuất hiện ở NHIỀU categories
+            // Sử dụng "id-category" làm key để tạo bản sao riêng cho mỗi category
+            const uniqueProductsMap = new Map();
+
+            allProductsFromAPI.forEach((item: any) => {
+              if (item.hinh_anh && item.hinh_anh.trim() !== "") {
+                // Dùng "id-category" làm key để cho phép sản phẩm xuất hiện ở nhiều category
+                const uniqueKey = `${item.id}-${item.categoryFromAPI || 'no-category'}`;
+
+                if (!uniqueProductsMap.has(uniqueKey)) {
+                  uniqueProductsMap.set(uniqueKey, item);
+                }
+              }
+            });
+
+            // Chuyển đổi sang định dạng Product
+            products = Array.from(uniqueProductsMap.values()).map((item: any) => {
+              const ratingValue = item.rating?.average || 0;
+              const currentPrice = item.gia?.current || 0;
+              const beforeDiscount = item.gia?.before_discount || 0;
+              const discountPercent = item.gia?.discount_percent || 0;
+
+              let imageUrl = item.hinh_anh || "/assets/images/thumbs/default-product.png";
+              if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('/assets/')) {
+                imageUrl = `/assets/images/thumbs/${imageUrl}`;
+              }
+
+              return {
+                id: item.id,
+                name: item.ten,
+                category: item.categoryFromAPI || "", // Dùng category từ API
+                brand: item.thuonghieu || "Không rõ",
+                price: currentPrice,
+                rating: ratingValue,
+                image: imageUrl,
+                discount: discountPercent,
+                originalPrice: beforeDiscount,
+                sold: parseInt(item.sold_count) || 0,
+              };
+            });
+
+            console.log(`📊 Shop - Sản phẩm sau khi map: ${products.length}`);
+            console.log(`🔎 Shop - Sản phẩm có category "thuc-pham-do-an": ${products.filter(p => p.category === "thuc-pham-do-an").length}`);
+
+            // Debug: Kiểm tra số lượng sản phẩm "Sức khỏe" sau khi xử lý
+            const sucKhoeProducts = products.filter((p: any) => p.category === "suc-khoe");
+            console.log("Shop - Sau khi xử lý, Sức khỏe có:", sucKhoeProducts.length, "sản phẩm");
+            console.log("Shop - Sản phẩm Sức khỏe:", sucKhoeProducts.map((p: any) => ({ id: p.id, name: p.name })));
+          } catch (err) {
+            console.error("API error:", err);
+            products = [];
+          }
+        }
+
+        // Lưu products vào state để filter sau
+        setAllProducts(products);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        setAllProducts([]);
+      } finally {
+        setLoading(false);
+      }
     }
 
-    // Các trường hợp khác theo sort chung
-    switch (sort) {
-      case "latest":   arr.sort(cmpLatest); break;
-      case "trending": arr.sort(cmpTrending); break;
-      case "matches":  arr.sort(cmpMatches); break;
-      default:         arr.sort(cmpPopular); break;
+    fetchProducts();
+  }, [searchQuery, filters, sourceParam]); // Fetch lại khi search query, filters HOẶC source thay đổi
+
+  // useEffect 2: Apply filters CLIENT-SIDE (không fetch lại API)
+  useEffect(() => {
+    let filtered = allProducts;
+
+    // 1. Lọc theo danh mục
+    if (filters.danhmuc && filters.danhmuc !== "") {
+      filtered = filtered.filter(p => p.category === filters.danhmuc);
     }
-    return arr;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, source, sort]);
-  // ===== /CHANGED =====
+
+    // 2. Lọc theo giá
+    if (filters.locgia && filters.locgia !== "") {
+      filtered = filtered.filter(p => {
+        const price = p.price;
+        switch (filters.locgia) {
+          case "low100": return price < 100000;
+          case "to200": return price >= 100000 && price <= 200000;
+          case "to300": return price >= 200000 && price <= 300000;
+          case "to500": return price >= 300000 && price <= 500000;
+          case "to700": return price >= 500000 && price <= 700000;
+          case "to1000": return price >= 700000 && price <= 1000000;
+          case "high1000": return price > 1000000;
+          default: return true;
+        }
+      });
+    }
+
+    // 3. Lọc theo thương hiệu
+    if (filters.thuonghieu && filters.thuonghieu !== "") {
+      filtered = filtered.filter(p =>
+        p.brand && p.brand.toLowerCase() === filters.thuonghieu.toLowerCase()
+      );
+    }
+
+    // 4. Lọc theo rating
+    if (filters.rating && filters.rating !== "") {
+      const minRating = parseFloat(filters.rating);
+      filtered = filtered.filter(p => p.rating >= minRating);
+    }
+
+    setFilteredProducts(filtered);
+  }, [allProducts, filters]);
+
+  const handleFilter = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFilters({ ...tempFilters });
+    setCurrentPage(1); // Reset về trang 1 khi filter
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <>
-      {/* Header (no top nav, no categories bar) */}
-      <FullHeader showTopNav={false} showCategoriesBar={false} />
+      {/* Sử dụng FullHeader giống trang chủ */}
+      <FullHeader />
 
-      {/* Breadcrumb (VN) */}
-      <div className="pt-40 mb-0 breadcrumb bg-main-two-60">
-        <div className="container">
-          <div className="flex-wrap gap-16 breadcrumb-wrapper flex-between">
-            {/* CHANGED: dùng pageTitle thay vì view === 'hot' */}
-            <h6 className="mb-0">{pageTitle}</h6>
+      <div className="breadcrumb mb-0 pt-40 bg-main-two-60">
+        <div className="container container-lg">
+          <div className="breadcrumb-wrapper flex-between flex-wrap gap-16">
+            <h6 className="mb-0">
+              {searchQuery
+                ? `Kết quả tìm kiếm: "${searchQuery}"`
+                : sourceParam === "hot_sales"
+                  ? "Top deal • Siêu rẻ"
+                  : sourceParam === "best_products"
+                    ? "Sản phẩm hàng đầu"
+                    : sourceParam === "new_launch"
+                      ? "Hàng mới chào sân"
+                      : sourceParam === "most_watched"
+                        ? "Được quan tâm nhiều nhất"
+                        : "Danh sách sản phẩm"}
+            </h6>
+            {searchQuery && (
+              <p className="text-gray-600 mb-0">
+                Tìm thấy <span className="fw-semibold">{filteredProducts.length}</span> sản phẩm
+              </p>
+            )}
           </div>
         </div>
       </div>
 
-      <section className="py-40 shop">
-        <div className="container">
+      <section className="shop py-40 pb-0 fix-scale-100">
+        <div className="container container-lg">
           <div className="row">
-            {/* Sidebar Start (UI giữ nguyên) */}
-            <div className="col-lg-3 d-lg-block d-none">
-              <div className="shop-sidebar position-relative">
-                {/* Categories */}
-                <div className="p-32 mb-32 border border-gray-100 shop-sidebar__box rounded-8">
-                  <h6 className="pb-24 mb-24 text-xl border-gray-100 border-bottom">Product Category</h6>
-                  <ul className="overflow-y-auto max-h-540 scroll-sm">
+            <div className="col-lg-3">
+              <form className="shop-sidebar" onSubmit={handleFilter}>
+                <button
+                  type="button"
+                  title="Đóng bộ lọc"
+                  className="shop-sidebar__close d-lg-none d-flex w-32 h-32 flex-center border border-gray-100 rounded-circle hover-bg-main-600 position-absolute inset-inline-end-0 me-10 mt-8 hover-text-white hover-border-main-600"
+                >
+                  <i className="ph ph-x"></i>
+                </button>
+
+                <div className="shop-sidebar__box border border-gray-100 rounded-8 p-26 pb-0 mb-32">
+                  <h6 className="text-xl border-bottom border-gray-100 pb-16 mb-16">
+                    Danh mục sản phẩm
+                  </h6>
+                  <ul className="max-h-540 overflow-y-auto scroll-sm">
                     {[
-                      "Mobile & Accessories (12)",
-                      "Laptop (12)",
-                      "Electronics (12)",
-                      "Smart Watch (12)",
-                      "Storage (12)",
-                      "Portable Devices (12)",
-                      "Action Camera (12)",
-                      "Smart Gadget (12)",
-                      "Monitor  (12)",
-                      "Smart TV (12)",
-                      "Camera (12)",
-                      "Monitor Stand (12)",
-                      "Headphone (12)",
-                    ].map((label, i) => (
-                      <li key={i} className={i === 12 ? "mb-0" : "mb-24"}>
-                        <Link href="/product-details-two" className="text-gray-900 hover-text-main-600">
-                          {label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Filter by Price (static UI) */}
-                <div className="p-32 mb-32 border border-gray-100 shop-sidebar__box rounded-8">
-                  <h6 className="pb-24 mb-24 text-xl border-gray-100 border-bottom">Filter by Price</h6>
-                  <div className="custom--range">
-                    <div id="slider-range" />
-                    <div className="flex-wrap-reverse gap-8 mt-24 flex-between ">
-                      <button type="button" className="h-40 btn btn-main flex-align">Filter </button>
-                      <div className="gap-8 custom--range__content flex-align">
-                        <span className="flex-shrink-0 text-gray-500 text-md">Price:</span>
-                        <input
-                          type="text"
-                          className="custom--range__prices text-neutral-600 text-start text-md fw-medium"
-                          readOnly
-                          defaultValue="$0 - $999"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Filter by Rating (static UI) */}
-                <div className="p-32 mb-32 border border-gray-100 shop-sidebar__box rounded-8">
-                  <h6 className="pb-24 mb-24 text-xl border-gray-100 border-bottom">Filter by Rating</h6>
-                  {[
-                    { w: 70, c: 124, stars: [1, 1, 1, 1, 1] },
-                    { w: 50, c: 52, stars: [1, 1, 1, 1, 0] },
-                    { w: 30, c: 31, stars: [1, 1, 1, 0, 0] },
-                  ].map((it, idx) => (
-                    <div className="gap-8 mb-20 flex-align position-relative" key={idx}>
-                      <div className="mb-0 common-check common-radio">
-                        <input className="form-check-input" type="radio" name="ratingFilter" />
-                      </div>
-                      <div
-                        className="h-8 bg-gray-100 progress w-100 rounded-pill"
-                        role="progressbar"
-                        aria-valuenow={it.w}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                      >
-                        <div className="progress-bar bg-main-600 rounded-pill" style={{ width: `${it.w}%` }} />
-                      </div>
-                      <div className="gap-4 flex-align">
-                        {it.stars.map((s, i) => (
-                          <span
-                            key={i}
-                            className={`text-xs fw-medium ${s ? "text-warning-600" : "text-gray-400"} d-flex`}
-                          >
-                            <i className="ph-fill ph-star"></i>
-                          </span>
-                        ))}
-                      </div>
-                      <span className="flex-shrink-0 text-gray-900">{it.c}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Filter by Color */}
-                <div className="p-32 mb-32 border border-gray-100 shop-sidebar__box rounded-8">
-                  <h6 className="pb-24 mb-24 text-xl border-gray-100 border-bottom">Filter by Color</h6>
-                  <ul className="overflow-y-auto max-h-540 scroll-sm">
-                    {[
-                      { id: "color1", label: "Black (12)", extra: "checked-black" },
-                      { id: "color2", label: "Blue (12)", extra: "checked-primary" },
-                      { id: "color3", label: "Gray (12)", extra: "checked-gray" },
-                      { id: "color4", label: "Green (12)", extra: "checked-success" },
-                      { id: "color5", label: "Red (12)", extra: "checked-danger" },
-                      { id: "color6", label: "White (12)", extra: "checked-white" },
-                      { id: "color7", label: "Purple (12)", extra: "checked-purple", last: true },
-                    ].map((c) => (
-                      <li key={c.id} className={c.last ? "mb-0" : "mb-24"}>
-                        <div className={`form-check common-check common-radio ${c.extra}`}>
-                          <input className="form-check-input" type="radio" name="color" id={c.id} />
-                          <label className="form-check-label" htmlFor={c.id}>{c.label}</label>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Filter by Brand */}
-                <div className="p-32 mb-32 border border-gray-100 shop-sidebar__box rounded-8">
-                  <h6 className="pb-24 mb-24 text-xl border-gray-100 border-bottom">Filter by Brand</h6>
-                  <ul className="overflow-y-auto max-h-540 scroll-sm">
-                    {[
-                      { id: "brand1", label: "Apple" },
-                      { id: "brand2", label: "Samsung" },
-                      { id: "brand3", label: "Microsoft" },
-                      { id: "brand4", label: "Apple" },
-                      { id: "brand5", label: "HP" },
-                      { id: "DELL", label: "DELL" },
-                      { id: "Redmi", label: "Redmi", last: true },
-                    ].map((b) => (
-                      <li key={b.id} className={b.last ? "mb-0" : "mb-24"}>
+                      { value: "", label: "Tất cả" },
+                      { value: "suc-khoe", label: "Sức khỏe" },
+                      { value: "thuc-pham-chuc-nang", label: "Thực phẩm chức năng" },
+                      { value: "cham-soc-ca-nhan", label: "Chăm sóc cá nhân" },
+                      { value: "lam-dep", label: "Làm đẹp" },
+                      { value: "dien-may", label: "Điện máy" },
+                      { value: "thiet-bi-y-te", label: "Thiết bị y tế" },
+                      { value: "bach-hoa", label: "Bách hóa" },
+                      { value: "noi-that-trang-tri", label: "Nội thất - Trang trí" },
+                      { value: "me-va-be", label: "Mẹ & bé" },
+                      { value: "thoi-trang", label: "Thời trang" },
+                      { value: "thuc-pham-do-an", label: "Thực phẩm - đồ ăn" },
+                      { value: "do-uong", label: "Đồ uống" }
+                    ].map((cat) => (
+                      <li key={cat.value} className="mb-20">
                         <div className="form-check common-check common-radio">
-                          <input className="form-check-input" type="radio" name="brand" id={b.id} />
-                          <label className="form-check-label" htmlFor={b.id}>{b.label}</label>
+                          <input
+                            className="form-check-input"
+                            type="radio"
+                            name="danhmuc"
+                            id={cat.value}
+                            value={cat.value}
+                            checked={tempFilters.danhmuc === cat.value}
+                            onChange={(e) => setTempFilters({ ...tempFilters, danhmuc: e.target.value })}
+                          />
+                          <label className="form-check-label" htmlFor={cat.value}>
+                            {cat.label}
+                          </label>
                         </div>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                {/* Advertise image */}
-                <div className="shop-sidebar__box rounded-8">
-                  <Image
-                    src="/assets/images/thumbs/advertise-img1.png"
-                    alt="Advertise"
-                    width={360}
-                    height={420}
-                    className="h-auto img-fluid w-100"
-                  />
+                <div className="shop-sidebar__box border border-gray-100 rounded-8 p-26 pb-0 mb-32">
+                  <h6 className="text-xl border-bottom border-gray-100 pb-16 mb-24">
+                    Lọc theo giá tiền
+                  </h6>
+                  <ul className="max-h-540 overflow-y-auto scroll-sm">
+                    {[
+                      { value: "", label: "Tất cả" },
+                      { value: "low100", label: "Dưới 100.000đ" },
+                      { value: "to200", label: "100.000đ - 200.000đ" },
+                      { value: "to300", label: "200.000đ - 300.000đ" },
+                      { value: "to500", label: "300.000đ - 500.000đ" },
+                      { value: "to700", label: "500.000đ - 700.000đ" },
+                      { value: "to1000", label: "700.000đ - 1.000.000đ" },
+                      { value: "high1000", label: "Trên 1.000.000đ" }
+                    ].map((price) => (
+                      <li key={price.value} className="mb-24">
+                        <div className="form-check common-check common-radio">
+                          <input
+                            className="form-check-input"
+                            type="radio"
+                            name="locgia"
+                            id={price.value}
+                            value={price.value}
+                            checked={tempFilters.locgia === price.value}
+                            onChange={(e) => setTempFilters({ ...tempFilters, locgia: e.target.value })}
+                          />
+                          <label className="form-check-label" htmlFor={price.value}>
+                            {price.label}
+                          </label>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              </div>
-            </div>
 
-            {/* Product grid */}
-            <div className="col-lg-9">
-              {/* Top toolbar */}
-              <div className="flex-wrap gap-16 mb-40 flex-between">
-                <span className="text-gray-900">
-                  {loading
-                    ? "Loading…"
-                    : `Showing 1-${Math.min(sorted.length, perPage)} of ${sorted.length} result`}
-                </span>
-                <div className="flex-wrap gap-16 position-relative flex-align">
-                  <div className="gap-16 list-grid-btns flex-align">
-                    <button type="button" className="text-2xl border border-gray-100 w-44 h-44 flex-center rounded-6 list-btn">
-                      <i className="ph-bold ph-list-dashes"></i>
-                    </button>
-                    <button type="button" className="text-2xl text-white border w-44 h-44 flex-center border-main-600 bg-main-600 rounded-6 grid-btn">
-                      <i className="ph ph-squares-four"></i>
-                    </button>
-                  </div>
-                  <div className="gap-4 text-gray-500 position-relative flex-align text-14">
-                    <label htmlFor="sorting" className="flex-shrink-0 text-inherit">Sort by: </label>
-                    {/* NOTE: dropdown này hiện chưa nối state sort; nếu muốn đồng bộ URL, có thể đọc/ghi searchParams */}
-                    <select className="w-auto form-control common-input px-14 py-14 text-inherit rounded-6" id="sorting" defaultValue="Popular">
-                      <option value="Popular">Popular</option>
-                      <option value="Latest">Latest</option>
-                      <option value="Trending">Trending</option>
-                      <option value="Matches">Matches</option>
-                    </select>
-                  </div>
-                  <button type="button" className="text-2xl border border-gray-100 w-44 h-44 d-lg-none d-flex flex-center rounded-6 sidebar-btn">
-                    <i className="ph-bold ph-funnel"></i>
+                <div className="shop-sidebar__box border border-gray-100 rounded-8 p-26 pb-0 mb-32">
+                  <h6 className="text-xl border-bottom border-gray-100 pb-16 mb-24">
+                    Lọc theo thương hiệu
+                  </h6>
+                  <ul className="max-h-540 overflow-y-auto scroll-sm">
+                    {[
+                      { value: "", label: "Tất cả" },
+                      { value: "Trung Tâm Bán Hàng Siêu Thị Vina", label: "Trung Tâm Bán Hàng Siêu Thị Vina" },
+                      { value: "C'CHOI", label: "C'CHOI" },
+                      { value: "ACACI LABS", label: "ACACI LABS" }
+                    ].map((brand) => (
+                      <li key={brand.value} className="mb-16">
+                        <div className="form-check common-check common-radio">
+                          <input
+                            className="form-check-input"
+                            type="radio"
+                            name="thuonghieu"
+                            id={`brand-${brand.value}`}
+                            value={brand.value}
+                            checked={tempFilters.thuonghieu === brand.value}
+                            onChange={(e) => setTempFilters({ ...tempFilters, thuonghieu: e.target.value })}
+                          />
+                          <label className="form-check-label" htmlFor={`brand-${brand.value}`}>
+                            {brand.label}
+                          </label>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="shop-sidebar__box rounded-8 flex-align justify-content-between mb-32">
+                  <button
+                    title="Lọc sản phẩm"
+                    type="submit"
+                    className="btn border-main-600 text-main-600 hover-bg-main-600 hover-border-main-600 hover-text-white rounded-8 px-32 py-12"
+                  >
+                    Lọc sản phẩm
+                  </button>
+                  <button
+                    type="button"
+                    className="btn border-gray-400 text-gray-700 hover-bg-gray-100 rounded-8 px-32 py-12 ms-8"
+                    onClick={() => {
+                      setTempFilters({ danhmuc: "", locgia: "", thuonghieu: "", rating: "" });
+                      setFilters({ danhmuc: "", locgia: "", thuonghieu: "", rating: "" });
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                  >
+                    Xóa lọc
                   </button>
                 </div>
-              </div>
 
-              {/* GRID: dùng dữ liệu thật thay mock */}
-              {loading ? (
-                <div className="py-24 text-center text-gray-500">Đang tải sản phẩm…</div>
-              ) : (
-                <div className="row g-3">
-                  {sorted.map((p) => {
-                    const { gia, selling } = firstPrice(p);
-                    const { avg, count } = avgRating(p);
-                    const showDiscount = selling < gia;
-                    const percent = gia > 0 ? Math.round(((gia - selling) / gia) * 100) : 0;
-
-                    return (
-                      <div className="col-sm-6 col-md-4" key={p.id}>
-                        <ProductCardV2
-                          href={toHref(p)}
-                          img={firstImage(p)}
-                          title={p.ten}
-                          price={selling}                        // number → tự format VND
-                          oldPrice={showDiscount ? gia : undefined}
-                          ratingAverage={avg}
-                          ratingCount={count}
-                          badge={showDiscount ? { text: `Sale ${percent}%`, color: "danger" } : undefined}
-                          showHeart
-                          isWished={isWished(p.id)}
-                          onToggleWish={() => toggle(p.id)}
-                        />
-                      </div>
-                    );
-                  })}
+                <div className="shop-sidebar__box rounded-8">
+                  <a href="https://shopee.tw">
+                    <img className="rounded-8 w-100" src="/assets/images/bg/shoppe.jpg" alt="Shopee Banner" />
+                  </a>
                 </div>
+              </form>
+            </div>
+
+            <div className="col-lg-9">
+              {loading ? (
+                <p className="text-center">Đang tải sản phẩm...</p>
+              ) : (
+                <>
+                  <div className="row g-12">
+                    {filteredProducts.length === 0 ? (
+                      <div className="col-12">
+                        <p className="text-center">Không có sản phẩm nào phù hợp với bộ lọc của bạn.</p>
+                      </div>
+                    ) : (
+                      (() => {
+                        // Tính toán sản phẩm hiển thị cho trang hiện tại
+                        const indexOfLastProduct = currentPage * productsPerPage;
+                        const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+                        const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
+
+                        return currentProducts.map((p) => (
+                          <div key={p.id} className="col-xxl-3 col-xl-3 col-lg-4 col-xs-6">
+                            <div className="product-card h-100 border border-gray-100 hover-border-main-600 rounded-6 position-relative transition-2">
+                              <Link href={`/san-pham/${p.id}`} className="flex-center rounded-8 bg-gray-50 position-relative" style={{ minHeight: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <img src={p.image} alt={p.name} className="w-100 rounded-top-2" style={{ objectFit: 'cover', maxHeight: '250px' }} />
+                              </Link>
+                              <div className="product-card__content w-100 h-100 align-items-stretch flex-column justify-content-between d-flex mt-10 px-10 pb-8">
+                                <div>
+                                  <div className="flex-align justify-content-between mt-5">
+                                    <div className="flex-align gap-4 w-100">
+                                      <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
+                                      <span className="text-gray-500 text-xs" title={p.brand} style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%", display: "inline-block" }}>
+                                        {p.brand}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <h6 className="title text-lg fw-semibold mt-2 mb-2">
+                                    <Link href={`/san-pham/${p.id}`} className="link text-line-2" tabIndex={0}>
+                                      {p.name}
+                                    </Link>
+                                  </h6>
+                                  <div className="flex-align justify-content-between mt-2">
+                                    <div className="flex-align gap-6">
+                                      <span className="text-xs fw-medium text-gray-500">Đánh giá</span>
+                                      <span className="text-xs fw-medium text-gray-500">
+                                        {p.rating} <i className="ph-fill ph-star text-warning-600"></i>
+                                      </span>
+                                    </div>
+                                    <div className="flex-align gap-4">
+                                      <span className="text-xs fw-medium text-gray-500">{p.sold || 0}</span>
+                                      <span className="text-xs fw-medium text-gray-500">Đã bán</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="product-card__price mt-5">
+                                  {(p.discount ?? 0) > 0 && (p.originalPrice ?? 0) > 0 && (
+                                    <div className="flex-align gap-4 text-main-two-600">
+                                      <i className="ph-fill ph-seal-percent text-sm"></i> -{p.discount}%
+                                      <span className="text-gray-400 text-sm fw-semibold text-decoration-line-through">
+                                        {p.originalPrice!.toLocaleString()} đ
+                                      </span>
+                                    </div>
+                                  )}
+                                  <span className="text-heading text-lg fw-semibold">
+                                    {p.price.toLocaleString()} đ
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ));
+                      })()
+                    )}
+                  </div>
+
+                  {filteredProducts.length > 0 && (
+                    <ul className="pagination flex-center flex-wrap gap-12 mt-40">
+                      {/* Nút Previous */}
+                      <li className="page-item">
+                        <button
+                          className="page-link"
+                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                          disabled={currentPage === 1}
+                          title="Trang trước"
+                        >
+                          <i className="ph ph-caret-left"></i>
+                        </button>
+                      </li>
+
+                      {/* Các nút số trang */}
+                      {(() => {
+                        const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+                        const pages = [];
+                        for (let i = 1; i <= totalPages; i++) {
+                          pages.push(
+                            <li key={i} className={`page-item${currentPage === i ? ' active' : ''}`}>
+                              <button
+                                className="page-link"
+                                onClick={() => {
+                                  setCurrentPage(i);
+                                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                                title={`Trang ${i}`}
+                              >
+                                {i}
+                              </button>
+                            </li>
+                          );
+                        }
+                        return pages;
+                      })()}
+
+                      {/* Nút Next */}
+                      <li className="page-item">
+                        <button
+                          className="page-link"
+                          onClick={() => {
+                            const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+                            setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                          }}
+                          disabled={currentPage === Math.ceil(filteredProducts.length / productsPerPage)}
+                          title="Trang sau"
+                        >
+                          <i className="ph ph-caret-right"></i>
+                        </button>
+                      </li>
+                    </ul>
+                  )}
+                </>
               )}
             </div>
           </div>
-
-          {/* Pagination (giữ UI như file cũ, chưa nối API phân trang) */}
-          <div className="mt-40 d-flex justify-content-center w-100">
-            <ul className="flex-wrap gap-16 pagination flex-center">
-              <li className="page-item">
-                <a className="text-xl border border-gray-100 page-link h-44 w-44 flex-center rounded-8 fw-medium text-neutral-600" href="#">
-                  <i className="ph-bold ph-arrow-left"></i>
-                </a>
-              </li>
-              {Array.from({ length: 7 }).map((_, i) => (
-                <li key={i} className={`page-item ${i === 0 ? "active" : ""}`}>
-                  <a
-                    className={`page-link h-44 w-44 flex-center rounded-8 fw-medium ${
-                      i === 0 ? "bg-main-600 text-white" : "border border-gray-100 text-gray-900"
-                    }`}
-                    href="#"
-                  >
-                    {i === 0 ? "01" : String(i + 1)}
-                  </a>
-                </li>
-              ))}
-              <li className="page-item">
-                <a className="text-xl border border-gray-100 page-link h-44 w-44 flex-center rounded-8 fw-medium text-neutral-600" href="#">
-                  <i className="ph-bold ph-arrow-right"></i>
-                </a>
-              </li>
-            </ul>
-          </div>
         </div>
       </section>
-
-      {/* Benefits strip */}
-      <BenefitsStrip />
     </>
   );
 }

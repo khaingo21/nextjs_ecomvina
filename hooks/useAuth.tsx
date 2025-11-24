@@ -1,176 +1,158 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
+
+
+export type RegisterPayload = {
+  hoten: string;
+  username: string;
+  password: string;
+  password_confirmation: string;
+  sodienthoai: string;
+  email?: string;
+};
 
 export type AuthUser = {
-  avatar: string;
   id: number | string;
-  name: string;
-  email?: string;
-  phone?: string;
-  countryCode?: string | null; // optional for flag
+  username?: string;
+  hoten?: string;
+  sodienthoai?: string;
+  gioitinh?: string;
+  ngaysinh?: string;
+  avatar?: string;
+  diachi?: {
+    id?: number;
+    hoten?: string;
+    sodienthoai?: string;
+    diachi?: string;
+    tinhthanh?: string;
+    trangthai?: string;
+  }[];
 };
 
 export type AuthContextType = {
   user: AuthUser | null;
   token: string | null;
   isLoggedIn: boolean;
-  login: (payload: { identifier: string; password: string }) => Promise<void>;
-  register: (payload: {
-    name: string;
-    email: string;
-    password: string;
-    phone?: string;
-    gender?: string;
-    birthday?: string | null;
-    nationality?: string;
-  }) => Promise<void>;
+  login: (payload: { username: string; password: string }) => Promise<void>;
+  // 2. Sử dụng Type RegisterPayload thay vì any
+  register: (payload: RegisterPayload) => Promise<void>;
   logout: () => void;
   setUser: (u: AuthUser | null) => void;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
+const TOKEN_KEY = "access_token";
 
-const TOKEN_KEY = "auth_token";
-const USER_KEY = "auth_user";
+export function AuthProvider({ 
+  children, 
+  initialUser 
+}: { 
+  children: React.ReactNode; 
+  initialUser: AuthUser | null 
+}) {
+  const [user, setUserState] = useState<AuthUser | null>(initialUser);
+  const [token, setToken] = useState<string | null>(() => Cookies.get(TOKEN_KEY) || null);
+  
+  const router = useRouter();
+  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://148.230.100.215";
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
-  const [user, setUser] = useState<AuthUser | null>(null);
-
-  // hydrate from localStorage
+  // Fix eslint: Thêm dependency 'token'
+  // useEffect(() => {
+  //   const currentToken = Cookies.get(TOKEN_KEY);
+  //   if (currentToken && currentToken !== token) {
+  //     setToken(currentToken);
+  //   }
+  // }, [token]);
   useEffect(() => {
-    try {
-      const t = localStorage.getItem(TOKEN_KEY);
-      const rawUser = localStorage.getItem(USER_KEY);
-      setToken(t);
-      setUser(rawUser ? (JSON.parse(rawUser) as AuthUser) : null);
-    } catch {
-      // ignore
-    }
-  }, []);
+  const currentToken = Cookies.get(TOKEN_KEY);
+  if (currentToken) setToken(currentToken);
+}, []);
 
-  const login = useCallback(async ({ identifier, password }: { identifier: string; password: string }) => {
-    const API = process.env.NEXT_PUBLIC_SERVER_API || "http://localhost:4000";
-    let res = await fetch(`${API}/api/auth/dang-nhap`, {
+  // --- Fetch Me Helper ---
+  // Dùng useCallback để tránh warning dependency ở login
+  const fetchMe = useCallback(async (accessToken: string) => {
+    try {
+      const res = await fetch(`${API}/api/auth/thong-tin-nguoi-dung`, {
+        headers: { 
+          Authorization: `Bearer ${accessToken}`,
+          Accept: "application/json" 
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+            const mappedUser: AuthUser = {
+                id: data.user.id,
+                username: data.user.username,
+                hoten: data.user.hoten,
+                sodienthoai: data.user.sodienthoai,
+                gioitinh: data.user.gioitinh,
+                ngaysinh: data.user.ngaysinh,
+                avatar: data.user.avatar,
+                diachi: data.user.diachi
+            };
+            setUserState(mappedUser);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [API]);
+
+  // --- Login ---
+  // Fix eslint: Thêm dependency 'API' và 'fetchMe'
+  const login = useCallback(async ({ username, password }: { username: string; password: string }) => {
+    const res = await fetch(`${API}/api/auth/dang-nhap`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ identifier, password }),
+      body: JSON.stringify({ username, password }),
     });
-    // Fallback for mock older route
-    if (res.status === 404) {
-      try {
-        res = await fetch(`${API}/auth/dang-nhap`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ identifier, password }),
-        });
-      } catch {}
-    }
-    if (!res.ok) {
-      let msg = `Đăng nhập thất bại (HTTP ${res.status}).`;
-      try {
-        const data = await res.json();
-        if (data?.message) msg = `${msg} ${String(data.message)}`;
-        else if (Object.keys(data || {}).length) msg = `${msg} ${JSON.stringify(data)}`;
-      } catch {
-        try {
-          const text = await res.text();
-          if (text) msg = `${msg} ${text}`;
-        } catch {}
-      }
-      throw new Error(msg);
-    }
-    const json = await res.json();
-    const tok: string | null = json?.token || json?.accessToken || null;
-    const usr: AuthUser | null = json?.user || null;
-    setToken(tok);
-    setUser(usr);
-    try {
-      if (tok) localStorage.setItem(TOKEN_KEY, tok);
-      if (usr) localStorage.setItem(USER_KEY, JSON.stringify(usr));
-    } catch {}
-  }, []);
 
-  const register = useCallback(async (
-    {
-      name,
-      email,
-      password,
-      phone,
-      gender,
-      birthday,
-      nationality,
-    }: {
-      name: string;
-      email: string;
-      password: string;
-      phone?: string;
-      gender?: string;
-      birthday?: string | null;
-      nationality?: string;
+    if (!res.ok) throw new Error("Đăng nhập thất bại");
+
+    const data = await res.json();
+    
+    if (data.success && data.token) {
+      Cookies.set(TOKEN_KEY, data.token, { expires: 1, path: '/' });
+      setToken(data.token);
+      await fetchMe(data.token);
     }
-  ) => {
-    const API = process.env.NEXT_PUBLIC_SERVER_API || "http://localhost:4000";
-    let res = await fetch(`${API}/api/auth/dang-ky`, {
+  }, [API, fetchMe]);
+
+  // --- Register ---
+  // 3. Fix lỗi any ở tham số payload
+  const register = useCallback(async (payload: RegisterPayload) => {
+    const res = await fetch(`${API}/api/auth/dang-ky`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ name, email, password, phone, gender, birthday, nationality }),
+      body: JSON.stringify(payload),
     });
-    // Fallback for mock older route
-    if (res.status === 404) {
-      try {
-        res = await fetch(`${API}/auth/register`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ name, email, password, phone: phone || "", confirmPassword: password, gender, birthday, nationality }),
-        });
-      } catch {}
-    }
+
     if (!res.ok) {
-      let msg = `Đăng ký thất bại (HTTP ${res.status}).`;
-      try {
-        const data = await res.json();
-        if (data?.message) msg = `${msg} ${String(data.message)}`;
-        else if (Object.keys(data || {}).length) msg = `${msg} ${JSON.stringify(data)}`;
-      } catch {
-        try {
-          const text = await res.text();
-          if (text) msg = `${msg} ${text}`;
-        } catch {}
-      }
-      throw new Error(msg);
+        const err = await res.json();
+        throw new Error(err.message || "Đăng ký thất bại");
     }
-    // Không tự đăng nhập; UI sẽ thông báo và chuyển sang tab đăng nhập
-  }, []);
+  }, [API]);
 
   const logout = useCallback(() => {
-    (async () => {
-      try {
-        const API = process.env.NEXT_PUBLIC_SERVER_API || "http://localhost:4000";
-        await fetch(`${API}/api/auth/dang-xuat`, { method: "POST", credentials: "include" });
-      } catch {}
-      setToken(null);
-      setUser(null);
-      try {
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(USER_KEY);
-      } catch {}
-    })();
-  }, []);
+    Cookies.remove(TOKEN_KEY);
+    setToken(null);
+    setUserState(null);
+    router.refresh();
+    router.push("/dang-nhap");
+  }, [router]);
 
   const value = useMemo<AuthContextType>(() => ({
     user,
     token,
-    isLoggedIn: !!token && !!user,
+    isLoggedIn: !!user,
     login,
     register,
     logout,
-    setUser,
+    setUser: setUserState,
   }), [user, token, login, register, logout]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

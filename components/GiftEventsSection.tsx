@@ -1,164 +1,157 @@
 "use client";
-import React from "react";
-import Link from "next/link";
+import React, { useEffect, useState } from "react";
+import { type GiftEvent } from "@/lib/api";
+import { useHomeData } from "@/hooks/useHomeData";
 
-type GiftEvent = {
-  id: number | string;
-  title?: string;
-  slug?: string;
-  mediaurl?: string;
-  valid_until?: string;
-  cta_link?: string;
-};
+export default function GiftEventsSection() {
+  const { data: homeData, loading: homeLoading } = useHomeData();
+  const [gifts, setGifts] = useState<GiftEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const itemsPerPage = 5;
 
-export default function GiftEventsSection({ title = "Quà tặng" }: { title?: string }) {
-  const API = (process.env.NEXT_PUBLIC_SERVER_API || "http://127.0.0.1:4000").replace(/\/$/, "");
-  const url = `${API}/api/gift_events`;
+  useEffect(() => {
+    if (!homeData) return;
 
-  const [items, setItems] = React.useState<GiftEvent[]>([]);
-  const [loading, setLoading] = React.useState<boolean>(true);
-
-  const containerRef = React.useRef<HTMLDivElement | null>(null);
-  const autoplayRef = React.useRef<number | null>(null);
-  const [isHover, setIsHover] = React.useState(false);
-
-  React.useEffect(() => {
     let alive = true;
-    setLoading(true);
-    fetch(url, { headers: { Accept: "application/json" }, cache: "no-store" })
-      .then((r) => r.json())
-      .then((res) => {
-        if (!alive) return;
-        if (Array.isArray(res)) setItems(res);
-        else if (Array.isArray(res?.data)) setItems(res.data);
-        else setItems([]);
-      })
-      .catch(() => {
-        if (alive) setItems([]);
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
+    try {
+      if (!alive) return;
+      const hotGifts = homeData.data?.hot_gift || [];
+      console.log("✅ Quà tặng từ API:", hotGifts.length, "items");
+      console.log("Hiển thị:", itemsPerPage, "items");
+      console.log("Có mũi tên?", hotGifts.length > itemsPerPage);
+      setGifts(hotGifts);
+    } catch (error) {
+      console.error("Error fetching gift events:", error);
+    } finally {
+      if (alive) setLoading(false);
+    }
     return () => {
       alive = false;
     };
-  }, [url]);
-
-  React.useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const start = () => {
-      stop();
-      autoplayRef.current = window.setInterval(() => {
-        if (!el || isHover) return;
-        el.scrollBy({ left: el.clientWidth * 0.9, behavior: "smooth" });
-      }, 3000);
-    };
-    const stop = () => {
-      if (autoplayRef.current !== null) {
-        window.clearInterval(autoplayRef.current);
-        autoplayRef.current = null;
-      }
-    };
-    start();
-    return stop;
-  }, [items.length, isHover]);
-
-  const scrollPrev = () => {
-    const el = containerRef.current;
-    if (!el) return;
-    el.scrollBy({ left: -Math.max(el.clientWidth * 0.9, 200), behavior: "smooth" });
-  };
-  const scrollNext = () => {
-    const el = containerRef.current;
-    if (!el) return;
-    el.scrollBy({ left: Math.max(el.clientWidth * 0.9, 200), behavior: "smooth" });
-  };
-
-  const handleImgError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    const img = e.currentTarget as HTMLImageElement;
-    img.onerror = null;
-    img.src = "/assets/images/thumbs/placeholder.png";
-  };
+  }, [homeData]);
 
   if (loading) {
-    return <div className="p-12 text-center">Đang tải…</div>;
+    return (
+      <section className="deals-weeek pt-10 overflow-hidden fix-scale-30">
+        <div className="container container-lg px-0">
+          <div className="text-center py-5">Đang tải chương trình quà tặng...</div>
+        </div>
+      </section>
+    );
   }
 
-  if (!items.length) {
-    return <div className="p-12 text-center">Không có chương trình.</div>;
+  if (gifts.length === 0) return null;
+
+  // Tính toán items hiển thị (5 items)
+  const displayedGifts = gifts.slice(currentIndex, currentIndex + itemsPerPage);
+
+  // Nếu không đủ 5 items, lấy thêm từ đầu (circular)
+  if (displayedGifts.length < itemsPerPage && gifts.length >= itemsPerPage) {
+    const remaining = itemsPerPage - displayedGifts.length;
+    displayedGifts.push(...gifts.slice(0, remaining));
   }
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) => {
+      const newIndex = prev - 1;
+      // Quay vòng: nếu < 0 thì về cuối
+      return newIndex < 0 ? gifts.length - 1 : newIndex;
+    });
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => {
+      const newIndex = prev + 1;
+      // Quay vòng: nếu vượt quá thì về đầu
+      return newIndex >= gifts.length ? 0 : newIndex;
+    });
+  };
+
+  // Luôn cho phép navigation nếu có nhiều hơn 5 items (để chuyển ảnh)
+  const showNavigation = gifts.length > itemsPerPage;
 
   return (
-    <section className="pt-10 overflow-hidden deals-week fix-scale-30">
-      <div className="container px-0 container-lg">
-        <div>
-          <div className="mb-24 section-heading">
-            <div className="flex-wrap gap-8 flex-between flex-align w-100">
-              <h6 className="gap-8 mb-0 flex-align">
-                <i className="ph-bold ph-gift text-main-600" /> {title}
+    <section className="deals-weeek pt-10 overflow-hidden fix-scale-30">
+      <div className="container container-lg px-0">
+        <div className="">
+          <div className="section-heading mb-24">
+            <div className="flex-between flex-align flex-wrap gap-8 w-100">
+              <h6 className="mb-0 wow fadeInLeft flex-align gap-8" style={{ visibility: "visible", animationName: "fadeInLeft" }}>
+                <i className="ph-bold ph-gift text-main-600"></i> Quà tặng
               </h6>
-              <div className="gap-16 flex-align">
-                <Link href="/san-pham?filter=gift" className="text-sm fw-semibold text-main-600 hover-text-main-600 hover-text-decoration-underline">
+              <div className="border-bottom border-2 border-main-600 mb-0 mt-4" style={{ width: "77%" }}></div>
+              <div className="flex-align gap-16 wow fadeInRight" style={{ visibility: "visible", animationName: "fadeInRight" }}>
+                <a href="#" className="text-sm fw-semibold text-main-600 hover-text-main-600 hover-text-decoration-underline">
                   Xem tất cả
-                </Link>
-                <div className="gap-8 flex-align">
-                  <button type="button" onClick={scrollPrev} aria-label="Previous gift" className="text-xl border border-gray-100 rounded-circle flex-center">
-                    <i className="ph ph-caret-left" />
-                  </button>
-                  <button type="button" onClick={scrollNext} aria-label="Next gift" className="text-xl border border-gray-100 rounded-circle flex-center">
-                    <i className="ph ph-caret-right" />
-                  </button>
-                </div>
+                </a>
+                {showNavigation && (
+                  <div className="flex-align gap-8">
+                    <button
+                      type="button"
+                      onClick={handlePrev}
+                      className="slick-prev flex-center rounded-circle border border-gray-100 hover-border-main-600 text-xl hover-bg-main-600 hover-text-white transition-1"
+                      style={{ width: "36px", height: "36px" }}
+                    >
+                      <i className="ph ph-caret-left"></i>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleNext}
+                      className="slick-next flex-center rounded-circle border border-gray-100 hover-border-main-600 text-xl hover-bg-main-600 hover-text-white transition-1"
+                      style={{ width: "36px", height: "36px" }}
+                    >
+                      <i className="ph ph-caret-right"></i>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          <div
-            ref={containerRef}
-            className="flex gap-6 px-2 py-6 overflow-x-auto"
-            style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}
-            onMouseEnter={() => setIsHover(true)}
-            onMouseLeave={() => setIsHover(false)}
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "ArrowRight") scrollNext();
-              if (e.key === "ArrowLeft") scrollPrev();
-            }}
-          >
-            {items.map((it) => {
-              const image =
-                it.mediaurl && typeof it.mediaurl === "string"
-                  ? it.mediaurl.startsWith("http")
-                    ? it.mediaurl
-                    : `${API}/${it.mediaurl.replace(/^\/+/, "")}`
-                  : "/assets/images/thumbs/placeholder.png";
-              const href = it.cta_link ?? `/san-pham?promo=${encodeURIComponent(String(it.slug ?? it.id))}`;
-              return (
-                <div key={String(it.id)} className="border border-gray-100 product-card p-card rounded-16 position-relative transition-2" style={{ minWidth: 300, flex: "0 0 auto", scrollSnapAlign: "start" }}>
-                  <a href={href} className="d-block rounded-16 position-relative" onClick={(e) => { e.preventDefault(); window.location.href = href; }}>
-                    <div className="rounded-16" style={{ position: "relative", width: "100%", height: 260, backgroundImage: `url('${image}')`, backgroundSize: "cover", backgroundPosition: "center" }}>
-                      <div className="card-overlay rounded-16 transition-1" />
-                    </div>
-                    <div className="card-content mt-210 p-14 w-100">
-                      <div className="mt-5 mb-5 text-lg title text-white-500 fw-semibold">
-                        <div className="link text-line-2" style={{ color: "white" }} tabIndex={0}>
-                          {it.title ?? "Chương trình"}
-                        </div>
+          <div className="gift-event-slider arrow-style-two">
+            <div className="row gy-3 gx-3">
+              {displayedGifts.map((gift) => (
+                <div key={gift.id} className="gift-col-5">
+                  <div className="product-card p-card border border-gray-100 rounded-16 position-relative transition-2" style={{ height: "380px", overflow: "hidden" }}>
+                    <a href="#">
+                      <div
+                        className="rounded-16"
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          width: "100%",
+                          height: "100%",
+                          backgroundImage: `url('${gift.hinhanh}')`,
+                          backgroundSize: "cover",
+                          backgroundRepeat: "no-repeat",
+                          zIndex: 1,
+                          backgroundPosition: "center"
+                        }}
+                      >
+                        <div className="card-overlay rounded-16 transition-1"></div>
                       </div>
-                      <div className="gap-4 p-5 flex-align bg-gray-50 rounded-8">
+                    </a>
+                    <div className="gift-card-content">
+                      <div className="gift-card-title title text-white text-lg fw-semibold mb-8">
+                        <a href="#" className="link text-line-2 text-white">
+                          {gift.tieude}
+                        </a>
+                      </div>
+                      <div className="flex-align gap-4 bg-gray-50 p-8 rounded-8">
                         <span className="text-main-600 text-md d-flex">
-                          <i className="ph-bold ph-timer" />
+                          <i className="ph-bold ph-timer"></i>
                         </span>
-                        <span className="text-xs text-gray-500">
-                          {it.valid_until ? `Đến ${new Date(it.valid_until).toLocaleDateString("vi-VN")}` : "Thời hạn chưa xác định"}
+                        <span className="text-gray-500 text-xs fw-medium">
+                          {gift.thoigian_conlai}
                         </span>
                       </div>
                     </div>
-                  </a>
+                  </div>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
         </div>
       </div>

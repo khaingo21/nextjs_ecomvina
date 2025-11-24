@@ -2,288 +2,349 @@
 
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import ProductCardSearch from "@/components/ProductCardSearch";
-import { searchProducts, Product, SearchParams } from "@/lib/searchAlgorithm";
+import FullHeader from "@/components/FullHeader";
+import FullFooter from "@/components/FullFooter";
+import Link from "next/link";
+import { fetchSearchProducts, trackKeywordAccess } from "@/lib/api";
+import Image from "next/image";
 
-type Category = {
+// Type cho sản phẩm hiển thị trên UI
+type DisplayProduct = {
     id: number;
-    ten: string;
+    name: string;
     slug: string;
+    image: string;
+    brand: string;
+    price: number;
+    originalPrice: number;
+    discount: number;
+    rating: number;
+    sold: number;
 };
 
 export default function SearchPage() {
-    const API = process.env.NEXT_PUBLIC_SERVER_API || "http://localhost:4000";
     const searchParams = useSearchParams();
-    const query = searchParams.get("q") || "";
-    const categoryId = searchParams.get("category_id");
-    const sortBy = searchParams.get("sort") as SearchParams["sort_by"];
+    const query = searchParams.get("query") || "";
 
-    const [loading, setLoading] = useState(true);
-    const [allProducts, setAllProducts] = useState<Product[]>([]);
-    const [results, setResults] = useState<Product[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
-
-    // Filter states
-    const [selectedCategory, setSelectedCategory] = useState<number | undefined>(
-        categoryId ? parseInt(categoryId) : undefined
-    );
+    const [products, setProducts] = useState<DisplayProduct[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
     const [minRating, setMinRating] = useState<number>(0);
-    const [currentSort, setCurrentSort] = useState<SearchParams["sort_by"]>(sortBy || "relevance");
+    const [currentSort, setCurrentSort] = useState<"relevance" | "price_asc" | "price_desc" | "rating" | "sales">("relevance");
 
-    // Load products và categories
+    // Lấy dữ liệu tìm kiếm
     useEffect(() => {
-        Promise.all([
-            fetch(`${API}/sanphams`).then(r => r.json()),
-            fetch(`${API}/danhmucs-selection?per_page=20`).then(r => r.json())
-        ])
-            .then(([productsRes, categoriesRes]) => {
-                // API trả về { status, data }
-                let products = [];
-                if (Array.isArray(productsRes)) {
-                    products = productsRes;
-                } else if (productsRes?.data) {
-                    products = Array.isArray(productsRes.data) ? productsRes.data : [];
-                }
-
-                // Map dữ liệu từ API sang format cần thiết cho search
-                const mappedProducts = products.map((p: Record<string, any>) => ({
-                    id: p.id,
-                    ten: p.ten,
-                    slug: p.slug || '',
-                    mota: p.mota || '',
-                    hashtags: p.hashtags || [],
-                    mediaurl: p.mediaurl || p.anhsanphams?.[0]?.media || '/assets/images/thumbs/product-two-img1.png',
-                    selling_price: p.selling_price || p.bienthes?.[0]?.gia || 0,
-                    original_price: p.original_price || p.bienthes?.[0]?.giagiam || p.selling_price || p.bienthes?.[0]?.gia || 0,
-                    discount_amount: p.discount_amount || 0,
-                    discount_percent: p.discount_percent || 0,
-                    rating_average: p.rating_average || p.danhgias?.[0]?.diem || 0,
-                    rating_count: p.rating_count || p.danhgias?.length || 0,
-                    danhmuc_id: p.danhmuc_id || p.thuonghieu?.danhmuc_id || 0,
-                    total_sold: p.total_sold || 0,
-                    monthly_sold: p.monthly_sold || 0,
-                    view_count: p.view_count || p.luotxem || 0,
-                    conversion_rate: p.conversion_rate || 0,
-                    shop_response_rate: p.shop_response_rate || 0,
-                    return_rate: p.return_rate || 0,
-                    cancel_rate: p.cancel_rate || 0,
-                    shop_rating: p.shop_rating || 0,
-                    is_mall: p.is_mall || false,
-                    is_favorite: p.is_favorite || false,
-                    has_video: p.has_video || false,
-                    image_count: p.image_count || p.anhsanphams?.length || 0,
-                    is_ad: p.is_ad || false,
-                    is_flash_sale: p.is_flash_sale || false,
-                    flash_sale_priority: p.flash_sale_priority || 0,
-                }));
-
-                const cats = Array.isArray(categoriesRes?.data) ? categoriesRes.data : [];
-
-                console.log('Products loaded:', mappedProducts.length);
-                console.log('First mapped product:', mappedProducts[0]);
-                console.log('Categories loaded:', cats.length);
-
-                setAllProducts(mappedProducts);
-                setCategories(cats);
-            })
-            .catch(err => {
-                console.error('Error loading data:', err);
-            })
-            .finally(() => setLoading(false));
-    }, [API]);
-
-    // Tìm kiếm và filter
-    useEffect(() => {
-        console.log('Search useEffect triggered');
-        console.log('Query:', query);
-        console.log('All products count:', allProducts.length);
-
-        if (allProducts.length === 0) {
-            console.log('No products loaded yet');
+        if (!query.trim()) {
+            setProducts([]);
             return;
         }
 
-        const searchParams: SearchParams = {
-            query,
-            category_id: selectedCategory,
-            min_price: priceRange[0],
-            max_price: priceRange[1],
-            min_rating: minRating,
-            sort_by: currentSort,
+        const fetchData = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                // Gọi API tìm kiếm
+                const data = await fetchSearchProducts(query);
+
+                // Map từ SearchProduct sang DisplayProduct
+                const mappedProducts: DisplayProduct[] = data.map((item) => {
+                    const currentPrice = item.gia?.current || 0;
+                    const beforeDiscount = item.gia?.before_discount || currentPrice;
+                    const discountPercent = item.gia?.discount_percent || 0;
+                    const ratingValue = typeof item.rating === 'object' ? item.rating.average : item.rating || 0;
+
+                    // Normalize image URL
+                    let imageUrl = item.hinh_anh || "/assets/images/thumbs/default-product.png";
+                    if (imageUrl && !imageUrl.startsWith('http')) {
+                        imageUrl = `http://148.230.100.215${imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`}`;
+                    }
+
+                    return {
+                        id: item.id,
+                        name: item.ten,
+                        slug: item.slug || `product-${item.id}`,
+                        image: imageUrl,
+                        brand: item.thuonghieu || "Không rõ",
+                        price: currentPrice,
+                        originalPrice: beforeDiscount,
+                        discount: discountPercent,
+                        rating: ratingValue,
+                        sold: parseInt(item.sold_count) || 0,
+                    };
+                });
+
+                // Sắp xếp theo loại
+                const sorted = [...mappedProducts];
+                switch (currentSort) {
+                    case "price_asc":
+                        sorted.sort((a, b) => a.price - b.price);
+                        break;
+                    case "price_desc":
+                        sorted.sort((a, b) => b.price - a.price);
+                        break;
+                    case "rating":
+                        sorted.sort((a, b) => b.rating - a.rating);
+                        break;
+                    case "sales":
+                        sorted.sort((a, b) => b.sold - a.sold);
+                        break;
+                    default: // relevance
+                        break;
+                }
+
+                // Lọc giá và rating
+                const filtered = sorted.filter((p) => {
+                    return p.price >= priceRange[0] && p.price <= priceRange[1] && p.rating >= minRating;
+                });
+
+                setProducts(filtered);
+
+                // Gọi API tăng lượt truy cập từ khóa (optional - không block nếu lỗi)
+                try {
+                    await trackKeywordAccess(query);
+                } catch (err) {
+                    // Bỏ qua lỗi tracking, không ảnh hưởng tới hiển thị sản phẩm
+                    console.debug("Keyword tracking:", err);
+                }
+            } catch (err: unknown) {
+                const e = err as { message?: string };
+                setError(e.message || "Lỗi khi tìm kiếm");
+                setProducts([]);
+            } finally {
+                setLoading(false);
+            }
         };
 
-        console.log('Search params:', searchParams);
-        const filtered = searchProducts(allProducts, searchParams);
-        console.log('Filtered results:', filtered.length);
-        console.log('First 3 results:', filtered.slice(0, 3));
-        setResults(filtered);
-    }, [query, allProducts, selectedCategory, priceRange, minRating, currentSort]);
+        fetchData();
+    }, [query, currentSort, priceRange, minRating]);
 
     if (loading) {
         return (
-            <div className="container py-80">
-                <div className="text-center">
-                    <div className="mb-16 spinner-border text-main-600" role="status">
-                        <span className="visually-hidden">Đang tải...</span>
+            <>
+                <FullHeader />
+                <section className="breadcrumb mb-0 py-26 bg-main-two-50">
+                    <div className="container container-lg">
+                        <div className="breadcrumb-wrapper flex-between flex-wrap gap-16">
+                            <h6 className="mb-0">Tìm kiếm</h6>
+                        </div>
                     </div>
-                    <p>Đang tìm kiếm...</p>
-                </div>
-            </div>
+                </section>
+                <section className="py-40">
+                    <div className="container container-lg">
+                        <div className="text-center">
+                            <p className="text-xl text-gray-600">Đang tìm kiếm...</p>
+                        </div>
+                    </div>
+                </section>
+                <FullFooter />
+            </>
         );
     }
 
     return (
-        <div className="py-40 search-page">
-            <div className="container">
-                {/* Header */}
-                <div className="mb-24">
-                    <h1 className="mb-8 text-2xl fw-bold">
-                        Kết quả tìm kiếm: <span className="text-main-600">{query}</span>
-                    </h1>
-                    <p className="text-gray-600">
-                        Tìm thấy <span className="fw-semibold">{results.length}</span> sản phẩm
-                    </p>
+        <>
+            <FullHeader />
+
+            {/* Breadcrumb */}
+            <section className="breadcrumb mb-0 py-26 bg-main-two-50">
+                <div className="container container-lg">
+                    <div className="breadcrumb-wrapper flex-between flex-wrap gap-16">
+                        <h6 className="mb-0">Kết quả tìm kiếm</h6>
+                        <ul className="flex-align gap-8 flex-wrap">
+                            <li className="text-sm">
+                                <Link href="/" className="text-gray-900 flex-align gap-8 hover-text-main-600">
+                                    <i className="ph ph-house"></i>
+                                    Trang chủ
+                                </Link>
+                            </li>
+                            <li className="flex-align">
+                                <i className="ph ph-caret-right"></i>
+                            </li>
+                            <li className="text-sm text-main-600">Tìm kiếm: &quot;{query}&quot;</li>
+                        </ul>
+                    </div>
                 </div>
+            </section>
 
-                <div className="row g-24">
-                    {/* Sidebar Filters */}
-                    <div className="col-lg-3">
-                        <div className="p-24 bg-white border border-gray-100 rounded-8">
-                            <h5 className="mb-20 fw-bold">Bộ lọc</h5>
-
-                            {/* Danh mục */}
-                            <div className="mb-24">
-                                <h6 className="mb-12 fw-semibold">Danh mục</h6>
-                                <div className="gap-8 d-flex flex-column">
-                                    <button
-                                        onClick={() => setSelectedCategory(undefined)}
-                                        className={`px-12 py-8 text-start rounded-6 ${!selectedCategory ? "bg-main-50 text-main-600" : "hover-bg-gray-50"
-                                            }`}
-                                    >
-                                        Tất cả
-                                    </button>
-                                    {categories.map((cat) => (
-                                        <button
-                                            key={cat.id}
-                                            onClick={() => setSelectedCategory(cat.id)}
-                                            className={`px-12 py-8 text-start rounded-6 ${selectedCategory === cat.id ? "bg-main-50 text-main-600" : "hover-bg-gray-50"
-                                                }`}
-                                        >
-                                            {cat.ten}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Giá */}
-                            <div className="mb-24">
-                                <h6 className="mb-12 fw-semibold">Khoảng giá</h6>
-                                <div className="gap-8 d-flex align-items-center">
-                                    <input
-                                        type="number"
-                                        value={priceRange[0]}
-                                        onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
-                                        className="px-8 py-6 form-control"
-                                        placeholder="Từ"
-                                    />
-                                    <span>-</span>
-                                    <input
-                                        type="number"
-                                        value={priceRange[1]}
-                                        onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || 10000000])}
-                                        className="px-8 py-6 form-control"
-                                        placeholder="Đến"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Đánh giá */}
-                            <div className="mb-24">
-                                <h6 className="mb-12 fw-semibold">Đánh giá</h6>
-                                <div className="gap-8 d-flex flex-column">
-                                    {[5, 4, 3, 2, 1].map((rating) => (
-                                        <button
-                                            key={rating}
-                                            onClick={() => setMinRating(rating)}
-                                            className={`px-12 py-8 text-start rounded-6 ${minRating === rating ? "bg-main-50 text-main-600" : "hover-bg-gray-50"
-                                                }`}
-                                        >
-                                            {"⭐".repeat(rating)} trở lên
-                                        </button>
-                                    ))}
-                                    <button
-                                        onClick={() => setMinRating(0)}
-                                        className={`px-12 py-8 text-start rounded-6 ${minRating === 0 ? "bg-main-50 text-main-600" : "hover-bg-gray-50"
-                                            }`}
-                                    >
-                                        Tất cả
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Reset */}
-                            <button
-                                onClick={() => {
-                                    setSelectedCategory(undefined);
-                                    setPriceRange([0, 10000000]);
-                                    setMinRating(0);
-                                }}
-                                className="w-100 btn btn-outline-main"
-                            >
-                                Xóa bộ lọc
-                            </button>
-                        </div>
+            {/* Search Results */}
+            <section className="py-40">
+                <div className="container container-lg">
+                    <div className="mb-40">
+                        <h4 className="text-2xl fw-semibold">
+                            Kết quả tìm kiếm cho: <span className="text-main-600">&quot;{query}&quot;</span>
+                        </h4>
+                        <p className="text-gray-600 mt-8">
+                            Tìm thấy <span className="fw-semibold">{products.length}</span> sản phẩm
+                        </p>
                     </div>
 
-                    {/* Results */}
-                    <div className="col-lg-9">
-                        {/* Sort bar */}
-                        <div className="p-16 mb-24 bg-white border border-gray-100 rounded-8">
-                            <div className="gap-12 d-flex align-items-center">
-                                <span className="text-sm fw-medium">Sắp xếp:</span>
-                                <div className="flex-wrap gap-8 d-flex">
-                                    {[
-                                        { value: "relevance", label: "Liên quan" },
-                                        { value: "sales", label: "Bán chạy" },
-                                        { value: "price_asc", label: "Giá thấp" },
-                                        { value: "price_desc", label: "Giá cao" },
-                                        { value: "rating", label: "Đánh giá" },
-                                    ].map((sort) => (
-                                        <button
-                                            key={sort.value}
-                                            onClick={() => setCurrentSort(sort.value as SearchParams["sort_by"])}
-                                            className={`px-16 py-8 text-sm rounded-6 ${currentSort === sort.value
-                                                ? "bg-main-600 text-white"
-                                                : "bg-gray-50 hover-bg-gray-100"
-                                                }`}
-                                        >
-                                            {sort.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+                    {error && (
+                        <div className="alert alert-danger py-20 px-24 rounded-8 mb-40">
+                            <p className="mb-0">Lỗi: {error}</p>
                         </div>
+                    )}
 
-                        {/* Products Grid */}
-                        {results.length === 0 ? (
-                            <div className="text-center py-80">
-                                <i className="mb-16 text-6xl text-gray-300 ph ph-magnifying-glass"></i>
-                                <h5 className="mb-8 fw-semibold">Không tìm thấy sản phẩm</h5>
-                                <p className="text-gray-600">Thử tìm kiếm với từ khóa khác hoặc điều chỉnh bộ lọc</p>
-                            </div>
-                        ) : (
-                            <div className="row g-16">
-                                {results.map((product) => (
-                                    <div key={product.id} className="col-6 col-sm-4 col-xl-3">
-                                        <ProductCardSearch product={product} />
+                    {products.length === 0 && !error && (
+                        <div className="text-center py-40">
+                            <i className="mb-16 text-6xl text-gray-300 ph ph-magnifying-glass"></i>
+                            <h5 className="mb-8 fw-semibold">Không tìm thấy sản phẩm nào</h5>
+                            <p className="text-gray-600">Thử tìm kiếm với từ khóa khác</p>
+                        </div>
+                    )}
+
+                    {products.length > 0 && (
+                        <div className="row g-24">
+                            {/* Sidebar Filter */}
+                            <div className="col-lg-3">
+                                <div className="shop-sidebar">
+                                    {/* Price Filter */}
+                                    <div className="p-24 mb-24 bg-white border border-gray-100 rounded-8">
+                                        <h6 className="mb-20 fw-semibold">Khoảng giá</h6>
+                                        <div className="mb-16">
+                                            <label className="mb-8 text-sm">Từ:</label>
+                                            <input
+                                                type="number"
+                                                className="w-100 px-12 py-8 border border-gray-100 rounded-6"
+                                                value={priceRange[0]}
+                                                onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
+                                                placeholder="Giá thấp nhất"
+                                            />
+                                        </div>
+                                        <div className="mb-16">
+                                            <label className="mb-8 text-sm">Đến:</label>
+                                            <input
+                                                type="number"
+                                                className="w-100 px-12 py-8 border border-gray-100 rounded-6"
+                                                value={priceRange[1]}
+                                                onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
+                                                placeholder="Giá cao nhất"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={() => setPriceRange([0, 10000000])}
+                                            className="w-100 px-16 py-8 text-sm bg-gray-50 hover-bg-gray-100 rounded-6"
+                                        >
+                                            Đặt lại
+                                        </button>
                                     </div>
-                                ))}
+
+                                    {/* Rating Filter */}
+                                    <div className="p-24 bg-white border border-gray-100 rounded-8">
+                                        <h6 className="mb-20 fw-semibold">Đánh giá tối thiểu</h6>
+                                        <div className="gap-12 d-flex flex-column">
+                                            {[5, 4, 3, 2, 1, 0].map((rating) => (
+                                                <button
+                                                    key={rating}
+                                                    onClick={() => setMinRating(rating)}
+                                                    className={`px-12 py-8 text-sm rounded-6 text-start ${minRating === rating ? "bg-main-600 text-white" : "bg-gray-50 hover-bg-gray-100"}`}
+                                                >
+                                                    <span className="gap-4 d-flex align-items-center">
+                                                        {rating === 0 ? "Tất cả" : (
+                                                            <>
+                                                                {[...Array(rating)].map((_, i) => (
+                                                                    <i key={i} className="ph-fill ph-star text-warning-600"></i>
+                                                                ))}
+                                                                {rating < 5 && <span className="ms-4">trở lên</span>}
+                                                            </>
+                                                        )}
+                                                    </span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        )}
-                    </div>
+
+                            {/* Products Section */}
+                            <div className="col-lg-9">
+                                {/* Sort bar */}
+                                <div className="p-16 mb-24 bg-white border border-gray-100 rounded-8">
+                                    <div className="gap-12 d-flex align-items-center flex-wrap">
+                                        <span className="text-sm fw-medium">Sắp xếp:</span>
+                                        <div className="flex-wrap gap-8 d-flex">
+                                            {[
+                                                { value: "relevance" as const, label: "Liên quan" },
+                                                { value: "sales" as const, label: "Bán chạy" },
+                                                { value: "price_asc" as const, label: "Giá thấp" },
+                                                { value: "price_desc" as const, label: "Giá cao" },
+                                                { value: "rating" as const, label: "Đánh giá" },
+                                            ].map((sort) => (
+                                                <button
+                                                    key={sort.value}
+                                                    onClick={() => setCurrentSort(sort.value)}
+                                                    className={`px-16 py-8 text-sm rounded-6 ${currentSort === sort.value ? "bg-main-600 text-white" : "bg-gray-50 hover-bg-gray-100"}`}
+                                                >
+                                                    {sort.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Products Grid */}
+                                <div className="row g-24">
+                                    {products.map((product) => (
+                                        <div key={product.id} className="col-xxl-4 col-lg-6 col-sm-6">
+                                            <div className="product-card h-100 border border-gray-100 hover-border-main-600 rounded-6 position-relative transition-2">
+                                                <Link
+                                                    href={`/product-details/${product.slug}`}
+                                                    className="flex-center rounded-8 bg-gray-50 position-relative"
+                                                >
+                                                    <Image
+                                                        src={product.image}
+                                                        alt={product.name}
+                                                        width={300}
+                                                        height={300}
+                                                        className="w-100 rounded-top-2"
+                                                        style={{ objectFit: 'cover' }}
+                                                    />
+                                                </Link>
+                                                <div className="product-card__content w-100 h-100 align-items-stretch flex-column justify-content-between d-flex mt-10 px-10 pb-8">
+                                                    <div>
+                                                        <h6 className="title text-lg fw-semibold mt-2 mb-2">
+                                                            <Link href={`/product-details/${product.slug}`} className="link text-line-2">
+                                                                {product.name}
+                                                            </Link>
+                                                        </h6>
+                                                        <div className="flex-align justify-content-between mt-2">
+                                                            <div className="flex-align gap-6">
+                                                                <span className="text-xs fw-medium text-gray-500">Đánh giá</span>
+                                                                <span className="text-xs fw-medium text-gray-500">
+                                                                    {product.rating.toFixed(1)} <i className="ph-fill ph-star text-warning-600"></i>
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex-align gap-4">
+                                                                <span className="text-xs fw-medium text-gray-500">{product.sold}</span>
+                                                                <span className="text-xs fw-medium text-gray-500">Đã bán</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="product-card__price mt-5">
+                                                        {product.discount > 0 && (
+                                                            <div className="flex-align gap-4 text-main-two-600 mb-8">
+                                                                <i className="ph-fill ph-seal-percent text-sm"></i> -{product.discount}%
+                                                                <span className="text-decoration-line-through">
+                                                                    {product.originalPrice.toLocaleString()} đ
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        <span className="text-heading text-lg fw-semibold">
+                                                            {product.price.toLocaleString()} đ
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
-            </div>
-        </div>
+            </section>
+
+            <FullFooter />
+        </>
     );
 }

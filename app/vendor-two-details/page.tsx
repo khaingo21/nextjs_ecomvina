@@ -320,7 +320,7 @@ export default function Page() {
                         <span className="text-gray-400 text-md fw-semibold text-decoration-line-through"> $28.99</span>
                         <span className="text-heading text-md fw-semibold ">$14.99 <span className="text-gray-500 fw-normal">/Qty</span> </span>
                       </div>
-                      <Link href="/cart" className="product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 px-24 rounded-8 flex-center gap-8 fw-medium" tabIndex={0}>
+                      <Link href="/gio-hang" className="product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 px-24 rounded-8 flex-center gap-8 fw-medium" tabIndex={0}>
                         Add To Cart <i className="ph ph-shopping-cart"></i>
                       </Link>
                     </div>

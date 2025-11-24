@@ -10,6 +10,11 @@ module.exports = {
     remotePatterns: [
       { protocol: "https", hostname: "example.com" },
       {
+        protocol: "https",
+        hostname: "sieuthivina.com",
+        pathname: "/**",
+      },
+      {
         protocol: "http",          
         hostname: "localhost",
         port: "8000",              
