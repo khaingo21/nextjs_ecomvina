@@ -20,6 +20,18 @@ const eslintConfig = [
       "next-env.d.ts",
     ],
   },
+  {
+    rules: {
+      // Disable img element warning - allow using <img> instead of <Image />
+      "@next/next/no-img-element": "off",
+
+      // Disable html link warning - allow using <a> instead of <Link />
+      "@next/next/no-html-link-for-pages": "off",
+
+      // Disable unused expression warning
+      "@typescript-eslint/no-unused-expressions": "off",
+    },
+  },
 ];
 
 export default eslintConfig;

@@ -290,6 +290,8 @@ export interface ProductDetail {
   variants?: unknown[];
   category?: string;
   tags?: string[];
+  xuatxu?: string;
+  sanxuat?: string;
 }
 
 export interface ProductDetailResponse {

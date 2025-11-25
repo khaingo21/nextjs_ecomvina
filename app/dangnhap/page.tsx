@@ -49,9 +49,8 @@ export default function Page() {
       setMessage({ type: "success", text: "Đăng nhập thành công!" });
       router.push("/");
     } catch (err: unknown) {
-      type ErrorResponse = { data?: { message?: string } | null; message?: string };
-      const errObj = err as ErrorResponse;
-      const msg = errObj?.data?.message || errObj?.message || "Đăng nhập thất bại. Vui lòng thử lại.";
+      const e = err as { data?: any; message?: string };
+      const msg = e?.data?.message || e?.message || "Đăng nhập thất bại. Vui lòng thử lại.";
       setMessage({ type: "error", text: msg });
     } finally {
       setLoading(false);

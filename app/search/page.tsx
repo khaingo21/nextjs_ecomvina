@@ -122,7 +122,7 @@ export default function SearchPage() {
     if (loading) {
         return (
             <>
-                <FullHeader />
+                <FullHeader showClassicTopBar={true} showTopNav={false} />
                 <section className="breadcrumb mb-0 py-26 bg-main-two-50">
                     <div className="container container-lg">
                         <div className="breadcrumb-wrapper flex-between flex-wrap gap-16">
@@ -144,7 +144,7 @@ export default function SearchPage() {
 
     return (
         <>
-            <FullHeader />
+            <FullHeader showClassicTopBar={true} showTopNav={false} />
 
             {/* Breadcrumb */}
             <section className="breadcrumb mb-0 py-26 bg-main-two-50">

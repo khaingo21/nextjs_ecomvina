@@ -207,8 +207,7 @@ export default function Page() {
                           const checked = selectedIds.has(row.id_bienthesp);
 
                           return (
-                            // <tr key={String(row.id_bienthesp)}>
-                            <tr key={`${String(row.id_bienthesp ?? row.product?.id ?? `idx${idx}`)}-${idx}`}>
+                            <tr key={String(row.id_bienthesp)}>
                               {/* Hành động */}
                               <td className="px-5 py-15">
                                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>

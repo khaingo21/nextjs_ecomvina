@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect, use, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import FullHeader from "@/components/FullHeader";
 import FullFooter from "@/components/FullFooter";
@@ -9,12 +9,16 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { fetchHomePage, type HomeHotSaleProduct, ProductDetail } from "@/lib/api";
 import Image from "next/image";
+import { useCart } from "@/hooks/useCart";
 
 export default function ProductDetailsPage({ params }: { params: Promise<{ slug: string }> }) {
     const searchParams = useSearchParams();
     const categoryName = searchParams?.get("category") || "";
     const resolvedParams = use(params);
     const slug = resolvedParams.slug;
+    const sliderRef = useRef<Slider>(null);
+
+    const { addToCart } = useCart();
 
     const [product, setProduct] = useState<ProductDetail | null>(null);
     const [loading, setLoading] = useState(true);
@@ -23,6 +27,40 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ slug:
     const [activeTab, setActiveTab] = useState("description");
     const [selectedVariant, setSelectedVariant] = useState("30");
     const [selectedImage, setSelectedImage] = useState(0);
+    const [addingToCart, setAddingToCart] = useState(false);
+    const [addedSuccess, setAddedSuccess] = useState(false);
+
+    // Xử lý thêm vào giỏ hàng
+    const handleAddToCart = async () => {
+        if (!product) return;
+
+        setAddingToCart(true);
+        try {
+            // Chuẩn bị dữ liệu đúng chuẩn AddToCartInput của useCart mới
+            // Lưu ý: ProductDetail hiện tại dùng 'hinh_anh', cần map sang 'hinhanh' hoặc 'mediaurl'
+            const productInput = {
+                id_bienthe: product.id, // ID sản phẩm
+                ten: product.ten,
+                // Map hình ảnh để hiển thị ngay (Optimistic UI)
+                mediaurl: product.hinh_anh, 
+                hinhanh: product.hinh_anh,
+                // Map giá (quan trọng để tính tiền ở client trước khi sync)
+                gia: product.gia, 
+                price: typeof product.gia === 'object' ? product.gia?.current : Number(product.gia),
+            };
+
+            // GỌI HÀM MỚI: Chỉ truyền 2 tham số (product object, quantity)
+            await addToCart(productInput, quantity);
+            
+            setAddedSuccess(true);
+            setTimeout(() => setAddedSuccess(false), 2000);
+        } catch (err) {
+            console.error("Lỗi thêm vào giỏ:", err);
+            alert("Có lỗi xảy ra khi thêm vào giỏ hàng");
+        } finally {
+            setAddingToCart(false);
+        }
+    };
 
     useEffect(() => {
         if (!slug) return;
@@ -103,7 +141,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ slug:
 
     return (
         <>
-            <FullHeader />
+            <FullHeader showClassicTopBar={true} showTopNav={false} />
 
             {/* Breadcrumb */}
             <section className="mb-0 breadcrumb py-26 bg-main-two-50">
@@ -153,6 +191,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ slug:
 
                                         <div className="mt-24">
                                             <Slider
+                                                ref={sliderRef}
                                                 dots={false}
                                                 infinite={productImages.length > 4}
                                                 speed={500}
@@ -433,9 +472,32 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ slug:
                                 </div>
                             </div>
 
-                            <a href="/gio-hang" className="gap-8 py-16 mt-48 btn btn-main flex-center rounded-8 fw-normal w-100 justify-content-center">
-                                <i className="text-lg ph ph-shopping-cart-simple" /> Thêm vào giỏ hàng
-                            </a>
+                            <button
+                                onClick={handleAddToCart}
+                                disabled={addingToCart}
+                                className="gap-8 py-16 mt-48 btn btn-main flex-center rounded-8 fw-normal w-100 justify-content-center"
+                            >
+                                {addingToCart ? (
+                                    <>
+                                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                        Đang thêm...
+                                    </>
+                                ) : addedSuccess ? (
+                                    <>
+                                        <i className="text-lg ph ph-check-circle" /> Đã thêm vào giỏ!
+                                    </>
+                                ) : (
+                                    <>
+                                        <i className="text-lg ph ph-shopping-cart-simple" /> Thêm vào giỏ hàng
+                                    </>
+                                )}
+                            </button>
+
+                            {addedSuccess && (
+                                <Link href="/gio-hang" className="gap-8 py-12 mt-12 btn btn-outline-main flex-center rounded-8 fw-normal w-100 justify-content-center">
+                                    <i className="text-lg ph ph-shopping-cart" /> Xem giỏ hàng
+                                </Link>
+                            )}
 
                             <div className="mt-32">
                                 <div className="gap-12 px-16 py-12 mb-0 bg-main-50 rounded-8 flex-between">
@@ -678,7 +740,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ slug:
             </section >
 
             {/* Similar Products Section */}
-            <section className="pb-20 new-arrival">
+            <section className="new-arrival pb-120">
                 <div className="container container-lg">
                     <div className="section-heading">
                         <div className="flex-wrap gap-8 flex-between">
@@ -688,7 +750,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ slug:
                                     <button
                                         type="button"
                                         className="text-xl border border-gray-100 slick-prev flex-center rounded-circle hover-border-main-600 hover-bg-main-600 hover-text-white transition-1"
-                                        onClick={() => document.querySelector('.similar-products-slider')?.slickPrev?.()}
+                                        onClick={() => sliderRef.current?.slickPrev()}
                                         style={{ width: '40px', height: '40px' }}
                                     >
                                         <i className="ph ph-caret-left"></i>
@@ -696,7 +758,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ slug:
                                     <button
                                         type="button"
                                         className="text-xl border border-gray-100 slick-next flex-center rounded-circle hover-border-main-600 hover-bg-main-600 hover-text-white transition-1"
-                                        onClick={() => document.querySelector('.similar-products-slider')?.slickNext?.()}
+                                        onClick={() => sliderRef.current?.slickNext()}
                                         style={{ width: '40px', height: '40px' }}
                                     >
                                         <i className="ph ph-caret-right"></i>
@@ -707,6 +769,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ slug:
                     </div>
 
                     <Slider
+                        ref={sliderRef}
                         className="similar-products-slider arrow-style-two"
                         dots={false}
                         infinite={true}

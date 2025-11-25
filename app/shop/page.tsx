@@ -551,7 +551,7 @@ export default function ShopPage() {
   return (
     <>
       {/* Sử dụng FullHeader giống trang chủ */}
-      <FullHeader />
+      <FullHeader showClassicTopBar={true} showTopNav={false} />
 
       <div className="breadcrumb mb-0 pt-40 bg-main-two-60">
         <div className="container container-lg">

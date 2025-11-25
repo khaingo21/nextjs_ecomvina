@@ -359,20 +359,18 @@ export default function OrdersPage() {
       <AccountShell title="Đơn hàng của tôi" current="orders">
         
         {/* Search box: tìm theo mã đơn + username/email */}
-        <div className="p-12 mb-12 bg-white border rounded-8">
+        {/* <div className="p-12 mb-12 bg-white border rounded-8">
           <form className="row gy-3" onSubmit={handleSearch}>
             <div className="col-5">
               <input value={searchMadon} onChange={(ev) => setSearchMadon(ev.target.value)} placeholder="Mã đơn (VNA...)" className="common-input" />
             </div>
-            <div className="col-5">
-              <input value={searchAccount} onChange={(ev) => setSearchAccount(ev.target.value)} placeholder="Tài khoản (username hoặc email)" className="common-input" />
-            </div>
+            
             <div className="col-2 d-flex" style={{ gap: 8 }}>
               <button type="submit" className="btn btn-main-two" disabled={loading}>{loading ? "Tìm..." : "Tìm"}</button>
               <button type="button" className="btn btn-secondary" onClick={handleClearSearch}>Xóa</button>
             </div>
           </form>
-        </div>
+        </div> */}
         {/* Filter Tabs */}
         <div className="p-12 mb-16 bg-white border rounded-8" style={{ marginTop: 4 }}>
           <div className="flex-wrap d-flex align-items-center justify-content-between" style={{ gap: 8 }}>

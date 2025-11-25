@@ -36,7 +36,7 @@ export async function addToCart(id_bienthesp: number, quantity = 1) {
   console.log("🛒 addToCart called:", { id_bienthesp, quantity });
 
   // Chuẩn hoá API base để cookie đi kèm
-  const raw = process.env.NEXT_PUBLIC_SERVER_API || "http://localhost:4000";
+  const raw = process.env.NEXT_PUBLIC_SERVER_API || "http://148.230.100.215";
   const API = (() => {
     try {
       if (typeof window === "undefined") return raw;

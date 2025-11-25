@@ -8,7 +8,7 @@ export default function Page() {
   return (
     <>
       {/* Header (matches contact.html header-middle + header) */}
-      <FullHeader />
+      <FullHeader showClassicTopBar={true} showTopNav={false} />
 
       {/* ========================= Breadcrumb Start =============================== */}
       <div className="breadcrumb mb-0 py-26 bg-main-two-50">

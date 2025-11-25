@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { type HomeHotSaleProduct } from '@/lib/api';
 import { useHomeData } from '@/hooks/useHomeData';
 
@@ -96,53 +97,64 @@ export default function LatestProductsSection() {
                     <div className="tab-content" id="pills-tabContent">
                         <div className="tab-pane fade show active" id="pills-all" role="tabpanel" aria-labelledby="pills-all-tab" tabIndex={0}>
                             <div className="row g-12">
-                                {products.map((product) => (
-                                    <div key={product.id} className="col-xxl-2 col-xl-3 col-lg-4 col-xs-6">
-                                        <div className="product-card h-100 border border-gray-100 hover-border-main-600 rounded-6 position-relative transition-2">
-                                            <a href={`/product-details/${product.slug}?category=${encodeURIComponent("Hàng mới chào sân")}`} className="flex-center rounded-8 bg-gray-50 position-relative" style={{ minHeight: '250px' }}>
-                                                <img src={product.mediaurl} alt={product.ten} className="w-100 rounded-top-2" style={{ objectFit: 'cover', maxHeight: '250px' }} />
-                                            </a>
-                                            <div className="product-card__content w-100 h-100 align-items-stretch flex-column justify-content-between d-flex mt-10 px-10 pb-8">
-                                                <div>
-                                                    <div className="flex-align justify-content-between mt-5">
-                                                        <div className="flex-align gap-4 w-100">
-                                                            <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
-                                                            <span className="text-gray-500 text-xs" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%", display: "inline-block" }} title={product.shop_name}>
-                                                                {product.shop_name}
-                                                            </span>
+                                {products.map((product) => {
+                                    // Fix riêng cho sản phẩm áo Rabity
+                                    const isRabityProduct = product.slug === "ao-ni-dai-tay-be-gai-rabity";
+                                    const imageStyle = isRabityProduct
+                                        ? { color: "transparent", objectFit: "cover" as const, width: "100%", height: "100%" }
+                                        : { color: "transparent", objectFit: "cover" as const };
+                                    const containerStyle = isRabityProduct
+                                        ? { height: "220px", width: "100%", overflow: "hidden" }
+                                        : { height: "220px" };
+                                    const imageWidth = isRabityProduct ? 220 : 240;
+                                    const imageHeight = isRabityProduct ? 220 : 240;
+
+                                    return (
+                                        <div key={product.id} className="col-xxl-2 col-xl-3 col-lg-4 col-xs-6">
+                                            <div className="product-card h-100 border border-gray-100 hover-border-main-600 rounded-6 position-relative transition-2" style={{ maxWidth: "220px", minHeight: "360px" }}>
+                                                <a href={`/product-details/${product.slug}?category=${encodeURIComponent("Hàng mới chào sân")}`} className="flex-center rounded-8 bg-gray-50 position-relative" style={containerStyle}>
+                                                    <Image alt={product.ten} loading="lazy" width={imageWidth} height={imageHeight} decoding="async" className={isRabityProduct ? "rounded-top-2" : "w-100 rounded-top-2"} src={product.mediaurl} style={imageStyle} />
+                                                </a>
+                                                <div className="product-card__content w-100 h-100 align-items-stretch flex-column justify-content-between d-flex px-10 pb-8">
+                                                    <div>
+                                                        <div className="flex-align justify-content-between">
+                                                            <div className="flex-align gap-4 w-100">
+                                                                <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
+                                                                <span className="text-gray-500 text-xs" title={product.shop_name} style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%", display: "inline-block" }}>{product.shop_name}</span>
+                                                            </div>
+                                                        </div>
+                                                        <h6 className="title text-lg fw-semibold mt-2 mb-2">
+                                                            <a href={`/product-details/${product.slug}?category=${encodeURIComponent("Hàng mới chào sân")}`} className="link text-line-2" tabIndex={0}>{product.ten}</a>
+                                                        </h6>
+                                                        <div className="flex-align justify-content-between mt-2">
+                                                            <div className="flex-align gap-6">
+                                                                <span className="text-xs fw-medium text-gray-500">Đánh giá</span>
+                                                                <span className="text-xs fw-medium text-gray-500">{product.rating?.toFixed(1)} <i className="ph-fill ph-star text-warning-600"></i></span>
+                                                            </div>
+                                                            <div className="flex-align gap-4">
+                                                                <span className="text-xs fw-medium text-gray-500">{product.sold}</span>
+                                                                <span className="text-xs fw-medium text-gray-500">Đã bán</span>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    <h6 className="title text-lg fw-semibold mt-2 mb-2">
-                                                        <a href={`/product-details/${product.slug}?category=${encodeURIComponent("Hàng mới chào sân")}`} className="link text-line-2" tabIndex={0}>{product.ten}</a>
-                                                    </h6>
-                                                    <div className="flex-align justify-content-between mt-2">
-                                                        <div className="flex-align gap-6">
-                                                            <span className="text-xs fw-medium text-gray-500">Đánh giá</span>
-                                                            <span className="text-xs fw-medium text-gray-500">{product.rating?.toFixed(1)} <i className="ph-fill ph-star text-warning-600"></i></span>
-                                                        </div>
-                                                        <div className="flex-align gap-4">
-                                                            <span className="text-xs fw-medium text-gray-500">{product.sold}</span>
-                                                            <span className="text-xs fw-medium text-gray-500">Đã bán</span>
-                                                        </div>
+                                                    <div className="product-card__price">
+                                                        {(product.discount_percent || 0) > 0 && (
+                                                            <div className="flex-align gap-4 text-main-two-600">
+                                                                <i className="ph-fill ph-seal-percent text-sm"></i> -{product.discount_percent}%
+                                                                <span className="text-gray-400 text-sm fw-semibold text-decoration-line-through">
+                                                                    {formatPrice(product.original_price || 0)}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        <span className="text-heading text-lg fw-semibold">
+                                                            {formatPrice(product.selling_price)}
+                                                        </span>
                                                     </div>
-                                                </div>
-                                                <div className="product-card__price mt-5">
-                                                    {(product.discount_percent || 0) > 0 && (
-                                                        <div className="flex-align gap-4 text-main-two-600">
-                                                            <i className="ph-fill ph-seal-percent text-sm"></i> -{product.discount_percent}%
-                                                            <span className="text-gray-400 text-sm fw-semibold text-decoration-line-through">
-                                                                {formatPrice(product.original_price || 0)}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                    <span className="text-heading text-lg fw-semibold">
-                                                        {formatPrice(product.selling_price)}
-                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                         <div className="mx-auto w-100 text-center aos-init aos-animate" data-aos="fade-up" data-aos-duration="200">

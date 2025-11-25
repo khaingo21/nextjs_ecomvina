@@ -8,6 +8,7 @@ import { useWishlist } from "@/hooks/useWishlist";
 import { useAuth } from "@/hooks/useAuth";
 import { initCartAnchorBySelector, setCartAnchor } from "@/utils/flyToCart";
 import Cookies from "js-cookie";
+import { useCart } from "@/hooks/useCart";
 
 
 type FullHeaderProps = {
@@ -59,8 +60,7 @@ export default function FullHeader({
   // auth state
   const { user, isLoggedIn, logout } = useAuth();
 
-  // cart count
-  const [cartCount, setCartCount] = useState<number>(0);
+ 
   // ---- Danh mục (All Categories) ----
   type DanhMuc = {
     id: number | string;
@@ -252,78 +252,8 @@ export default function FullHeader({
   }, [cartIconRef]);
 
   // ===== Cart count helpers =====
-  const readCartCount = () => {
-    try {
-      // Đọc từ localStorage nếu chưa đăng nhập
-      if (!isLoggedIn) {
-        const saved = localStorage.getItem("marketpro_cart");
-        if (!saved) {
-          setCartCount(0);
-          return;
-        }
-        const cart = JSON.parse(saved);
-        const count = Array.isArray(cart)
-          ? cart.reduce((sum: number, item: { quantity?: number }) => sum + (Number(item.quantity) || 0), 0)
-          : 0;
-        setCartCount(count);
-        return;
-      }
+  const { totalItems } = useCart();
 
-      // Đọc từ server nếu đã đăng nhập
-      readServerCartCount();
-    } catch (err) {
-      console.error("Error reading cart count:", err);
-      setCartCount(0);
-    }
-  };
-
-  const readServerCartCount = async () => {
-    try {
-      // Lấy token từ localStorage
-      // const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-      const token = Cookies.get("access_token");
-      const headers: Record<string, string> = { Accept: "application/json" };
-      if (token) headers.Authorization = `Bearer ${token}`;
-
-      const res = await fetch(`${API}/api/toi/giohang`, {
-        credentials: "include",
-        headers,
-        cache: "no-store",
-      });
-      const j: ApiCartResponse = await res.json();
-      const n = Array.isArray(j?.data)
-        ? j.data.reduce((s, it) => s + (Number(it.quantity) || 0), 0)
-        : 0;
-      setCartCount(n);
-    } catch {
-      setCartCount(0);
-    }
-  };
-
-  // Lần đầu & khi trạng thái login đổi
-  useEffect(() => {
-    readCartCount();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoggedIn, API]);
-
-  // Refresh khi nơi khác bắn cart:updated (addToCart/remove/clear)
-  useEffect(() => {
-    const onUpdated = (ev: Event) => {
-      console.log('FullHeader: cart:updated event received', ev);
-      const ce = ev as CustomEvent<{ count?: number }>;
-      console.log('FullHeader: event.detail', ce?.detail);
-      if (ce?.detail && typeof ce.detail.count === 'number') {
-        // update immediately with provided count
-        setCartCount(ce.detail.count);
-        return;
-      }
-      // otherwise re-read (small delay to let server settle)
-      setTimeout(() => readCartCount(), 100);
-    };
-    window.addEventListener("cart:updated", onUpdated as EventListener);
-    return () => window.removeEventListener("cart:updated", onUpdated as EventListener);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoggedIn, API]);
 
   return (
     <>
@@ -671,9 +601,9 @@ export default function FullHeader({
                         className="ph-bold ph-shopping-cart"
                         ref={cartIconRef}
                       ></i>
-                      {cartCount > 0 && (
+                      {totalItems > 0 && (
                         <span className="top-0 badge bg-success-600 rounded-circle position-absolute start-100 translate-middle">
-                          {cartCount}
+                          {totalItems}
                         </span>
                       )}
                     </span>
@@ -792,7 +722,7 @@ export default function FullHeader({
                     <li className="flex-align">
                       <Link href="/gio-hang" className="text-sm text-white-6 hover-text-white" data-cart-icon>
                         <i className="ph-bold ph-shopping-cart"></i> Giỏ hàng
-                        <span className="badge bg-success-600 rounded-circle ms-6">{cartCount}</span>
+                        <span className="badge bg-success-600 rounded-circle ms-6">{totalItems}</span>
                       </Link>
                     </li>
                   </ul>

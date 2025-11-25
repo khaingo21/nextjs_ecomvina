@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { type GiftEvent } from "@/lib/api";
 import { useHomeData } from "@/hooks/useHomeData";
 
@@ -82,9 +83,9 @@ export default function GiftEventsSection() {
               </h6>
               <div className="border-bottom border-2 border-main-600 mb-0 mt-4" style={{ width: "77%" }}></div>
               <div className="flex-align gap-16 wow fadeInRight" style={{ visibility: "visible", animationName: "fadeInRight" }}>
-                <a href="#" className="text-sm fw-semibold text-main-600 hover-text-main-600 hover-text-decoration-underline">
+                <Link href="/qua-tang" className="text-sm fw-semibold text-main-600 hover-text-main-600 hover-text-decoration-underline">
                   Xem tất cả
-                </a>
+                </Link>
                 {showNavigation && (
                   <div className="flex-align gap-8">
                     <button

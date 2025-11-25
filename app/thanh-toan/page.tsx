@@ -318,7 +318,7 @@ export default function Page() {
   if (!isLoggedIn) {
     return (
       <>
-        <FullHeader />
+        <FullHeader showClassicTopBar={true} showTopNav={false} />
         <div className="container py-20 text-center">
           <p className="text-lg">Đang kiểm tra đăng nhập...</p>
         </div>

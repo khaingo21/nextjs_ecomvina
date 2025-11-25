@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { type HomeHotSaleProduct } from '@/lib/api';
 import { useHomeData } from '@/hooks/useHomeData';
 
@@ -106,18 +107,16 @@ export default function MostInterestedSection() {
                             <div className="row g-12">
                                 {products.map((product) => (
                                     <div key={product.id} className="col-xxl-2 col-xl-3 col-lg-4 col-xs-6">
-                                        <div className="product-card h-100 border border-gray-100 hover-border-main-600 rounded-6 position-relative transition-2">
-                                            <a href={`/product-details/${product.slug}?category=${encodeURIComponent("Được quan tâm nhiều nhất")}`} className="flex-center rounded-8 bg-gray-50 position-relative" style={{ minHeight: '250px' }}>
-                                                <img src={product.mediaurl} alt={product.ten} className="w-100 rounded-top-2" style={{ objectFit: 'cover', maxHeight: '250px' }} />
+                                        <div className="product-card h-100 border border-gray-100 hover-border-main-600 rounded-6 position-relative transition-2" style={{ maxWidth: "220px", minHeight: "360px" }}>
+                                            <a href={`/product-details/${product.slug}?category=${encodeURIComponent("Được quan tâm nhiều nhất")}`} className="flex-center rounded-8 bg-gray-50 position-relative" style={{ height: "220px" }}>
+                                                <Image alt={product.ten} loading="lazy" width={240} height={240} decoding="async" className="w-100 rounded-top-2" src={product.mediaurl} style={{ color: "transparent", objectFit: "cover" }} />
                                             </a>
-                                            <div className="product-card__content w-100 h-100 align-items-stretch flex-column justify-content-between d-flex mt-10 px-10 pb-8">
+                                            <div className="product-card__content w-100 h-100 align-items-stretch flex-column justify-content-between d-flex px-10 pb-8">
                                                 <div>
-                                                    <div className="flex-align justify-content-between mt-5">
+                                                    <div className="flex-align justify-content-between">
                                                         <div className="flex-align gap-4 w-100">
                                                             <span className="text-main-600 text-md d-flex"><i className="ph-fill ph-storefront"></i></span>
-                                                            <span className="text-gray-500 text-xs" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%", display: "inline-block" }} title={product.shop_name}>
-                                                                {product.shop_name}
-                                                            </span>
+                                                            <span className="text-gray-500 text-xs" title={product.shop_name} style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%", display: "inline-block" }}>{product.shop_name}</span>
                                                         </div>
                                                     </div>
                                                     <h6 className="title text-lg fw-semibold mt-2 mb-2">
@@ -134,7 +133,7 @@ export default function MostInterestedSection() {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="product-card__price mt-5">
+                                                <div className="product-card__price">
                                                     {(product.discount_percent || 0) > 0 && (
                                                         <div className="flex-align gap-4 text-main-two-600">
                                                             <i className="ph-fill ph-seal-percent text-sm"></i> -{product.discount_percent}%
