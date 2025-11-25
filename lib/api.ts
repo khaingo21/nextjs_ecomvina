@@ -1,3 +1,4 @@
+// Chào cậu! 👋
 export type ApiOptions = {
   method?: string;
   headers?: Record<string, string>;
@@ -93,8 +94,8 @@ export const api = {
     apiFetch<T>(path, { method: "DELETE", ...normalizeOptions(opts) }),
 };
 
-export type LoginResponse = { token?: string; accessToken?: string; [k: string]: unknown };
-export type RegisterResponse = { success?: boolean; message?: string; [k: string]: unknown };
+export type LoginResponse = { token?: string; accessToken?: string;[k: string]: unknown };
+export type RegisterResponse = { success?: boolean; message?: string;[k: string]: unknown };
 
 export function getTokenFromResponse(resp: LoginResponse): string | null {
   return resp?.token || resp?.accessToken || null;
