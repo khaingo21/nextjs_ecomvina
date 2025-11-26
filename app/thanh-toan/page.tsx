@@ -78,7 +78,7 @@ export default function Page() {
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
   const router = useRouter();
 
-  const API = useMemo(() => process.env.NEXT_PUBLIC_SERVER_API || "http://localhost:4000", []);
+  const API = useMemo(() => process.env.NEXT_PUBLIC_SERVER_API || "http://148.230.100.215", []);
 
   // Redirect nếu chưa đăng nhập
   useEffect(() => {
@@ -152,9 +152,9 @@ export default function Page() {
     let giam_gia = 0;
     for (const it of cartItems) {
       const soluong = Number(it.soluong ?? it.qty ?? it.quantity ?? 1) || 1;
-      const gia_hien_tai = 
-      Number(it.product?.gia?.hien_tai ?? it.gia?.hien_tai ?? it.price ?? it.selling_price ?? it.unit_price ?? 0) || 0;
-    const gia_truoc_giam = Number(it.product?.gia?.truoc_giam_gia ?? it.gia?.truoc_giam_gia ?? 0) || 0;
+      const gia_hien_tai =
+        Number(it.product?.gia?.hien_tai ?? it.gia?.hien_tai ?? it.price ?? it.selling_price ?? it.unit_price ?? 0) || 0;
+      const gia_truoc_giam = Number(it.product?.gia?.truoc_giam_gia ?? it.gia?.truoc_giam_gia ?? 0) || 0;
       tamtinh += gia_hien_tai * soluong;
       if (gia_truoc_giam > gia_hien_tai) giam_gia += (gia_truoc_giam - gia_hien_tai) * soluong;
     }
@@ -180,7 +180,7 @@ export default function Page() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          gio_hang: toCheckout, 
+          gio_hang: toCheckout,
           tong_tien: amount,
           returnUrl: `${window.location.origin}/hoan-tat-thanh-toan`
         })
@@ -294,7 +294,7 @@ export default function Page() {
       // clear local snapshot + state
       try {
         sessionStorage.removeItem("checkout_cart");
-      } catch {}
+      } catch { }
       setCartItems([]);
 
       // navigate to orders/status page so orders/page.tsx can fetch & show the order
@@ -395,11 +395,11 @@ export default function Page() {
                     const price =
                       Number(
                         it.product?.gia?.hien_tai ??
-                          it.gia?.hien_tai ??
-                          it.price ??
-                          it.selling_price ??
-                          it.unit_price ??
-                          0
+                        it.gia?.hien_tai ??
+                        it.price ??
+                        it.selling_price ??
+                        it.unit_price ??
+                        0
                       ) || 0;
                     const img = (it.product?.mediaurl as string) || "/assets/images/default-avatar.png";
 

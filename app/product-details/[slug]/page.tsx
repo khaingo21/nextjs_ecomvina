@@ -42,16 +42,16 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ slug:
                 id_bienthe: product.id, // ID sản phẩm
                 ten: product.ten,
                 // Map hình ảnh để hiển thị ngay (Optimistic UI)
-                mediaurl: product.hinh_anh, 
+                mediaurl: product.hinh_anh,
                 hinhanh: product.hinh_anh,
                 // Map giá (quan trọng để tính tiền ở client trước khi sync)
-                gia: product.gia, 
+                gia: product.gia,
                 price: typeof product.gia === 'object' ? product.gia?.current : Number(product.gia),
             };
 
             // GỌI HÀM MỚI: Chỉ truyền 2 tham số (product object, quantity)
             await addToCart(productInput, quantity);
-            
+
             setAddedSuccess(true);
             setTimeout(() => setAddedSuccess(false), 2000);
         } catch (err) {
@@ -115,7 +115,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ slug:
     if (loading) {
         return (
             <>
-                <FullHeader showClassicTopBar={true} showTopNav={false} />
+                <FullHeader showClassicTopBar={false} showTopNav={true} showCategoriesBar={false} />
                 <div className="container text-center py-80">
                     <div className="spinner-border text-main-600" role="status">
                         <span className="visually-hidden">Đang tải...</span>
@@ -129,7 +129,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ slug:
     if (error || !product) {
         return (
             <>
-                <FullHeader showClassicTopBar={true} showTopNav={false} />
+                <FullHeader showClassicTopBar={false} showTopNav={true} showCategoriesBar={false} />
                 <div className="container text-center py-80">
                     <h4 className="text-danger">Lỗi: {error || "Không tìm thấy sản phẩm"}</h4>
                     <Link href="/" className="mt-3 btn btn-main-600">Về trang chủ</Link>
@@ -141,7 +141,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ slug:
 
     return (
         <>
-            <FullHeader showClassicTopBar={true} showTopNav={false} />
+            <FullHeader showClassicTopBar={false} showTopNav={true} showCategoriesBar={false} />
 
             {/* Breadcrumb */}
             <section className="mb-0 breadcrumb py-26 bg-main-two-50">

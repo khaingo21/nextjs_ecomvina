@@ -87,7 +87,7 @@ export default function MostInterestedSection() {
         );
     }
     return (
-        <section className="trending-productss overflow-hidden fix-scale-80" style={{ marginTop: "-112px", paddingTop: "0px" }}>
+        <section className="trending-productss overflow-hidden fix-scale-80" style={{ marginTop: "-80px", paddingTop: "0px", marginBottom: "0px" }}>
             <div className="container container-lg px-0">
                 <div className="">
                     <div className="section-heading mb-24">

@@ -115,7 +115,7 @@ export default function Page() {
 
   // Chuẩn hoá host để cookie không rớt (localhost ↔ 127.0.0.1)
   const API = useMemo(() => {
-    const raw = process.env.NEXT_PUBLIC_SERVER_API || "http://localhost:4000";
+    const raw = process.env.NEXT_PUBLIC_SERVER_API || "http://148.230.100.215";
     try {
       if (typeof window === "undefined") return raw;
       const u = new URL(raw);
@@ -228,56 +228,56 @@ export default function Page() {
     const formEl = e.currentTarget;
 
     try {
-    const formData = new FormData(formEl);
-    const fd = new FormData();
+      const formData = new FormData(formEl);
+      const fd = new FormData();
 
-    const hoten = String(formData.get("name") || "");
-    const sodienthoai = String(formData.get("phone") || formData.get("sodienthoai") || "");
-    const ngaysinh = String(formData.get("birthday") || "");
-    const gioitinh = String(formData.get("gender") || formData.get("gioitinh") || "");
-    const email = String(formData.get("email") || "");
-    const tinhthanh = String(formData.get("address_city") || formData.get("tinhthanh") || "");
-    const diachi = String(formData.get("address_street") || formData.get("address") || "");
-    const trangthai_diachi = String(formData.get("address_state") || formData.get("trangthai_diachi") || "Mặc định");
+      const hoten = String(formData.get("name") || "");
+      const sodienthoai = String(formData.get("phone") || formData.get("sodienthoai") || "");
+      const ngaysinh = String(formData.get("birthday") || "");
+      const gioitinh = String(formData.get("gender") || formData.get("gioitinh") || "");
+      const email = String(formData.get("email") || "");
+      const tinhthanh = String(formData.get("address_city") || formData.get("tinhthanh") || "");
+      const diachi = String(formData.get("address_street") || formData.get("address") || "");
+      const trangthai_diachi = String(formData.get("address_state") || formData.get("trangthai_diachi") || "Mặc định");
 
-    fd.append("hoten", hoten);
-    if (sodienthoai) fd.append("sodienthoai", sodienthoai);
-    if (ngaysinh) fd.append("ngaysinh", ngaysinh);
-    if (gioitinh) fd.append("gioitinh", gioitinh);
-    if (email) fd.append("email", email);
-    if (tinhthanh) fd.append("tinhthanh", tinhthanh);
-    if (diachi) fd.append("diachi", diachi);
-    fd.append("trangthai_diachi", trangthai_diachi);
+      fd.append("hoten", hoten);
+      if (sodienthoai) fd.append("sodienthoai", sodienthoai);
+      if (ngaysinh) fd.append("ngaysinh", ngaysinh);
+      if (gioitinh) fd.append("gioitinh", gioitinh);
+      if (email) fd.append("email", email);
+      if (tinhthanh) fd.append("tinhthanh", tinhthanh);
+      if (diachi) fd.append("diachi", diachi);
+      fd.append("trangthai_diachi", trangthai_diachi);
 
-    // avatar file (if user selected one)
-    const fileInput = formEl.querySelector<HTMLInputElement>('input[type="file"][name="avatar"]');
-    const avatarFile = fileInput?.files?.[0];
-    if (avatarFile) fd.append("avatar", avatarFile);
+      // avatar file (if user selected one)
+      const fileInput = formEl.querySelector<HTMLInputElement>('input[type="file"][name="avatar"]');
+      const avatarFile = fileInput?.files?.[0];
+      if (avatarFile) fd.append("avatar", avatarFile);
 
-    // send as multipart/form-data (let browser set Content-Type)
-    const res = await fetch(`${API}/api/auth/cap-nhat-thong-tin`, {
-      method: "POST",
-      credentials: "include",
-      body: fd,
-    });
+      // send as multipart/form-data (let browser set Content-Type)
+      const res = await fetch(`${API}/api/auth/cap-nhat-thong-tin`, {
+        method: "POST",
+        credentials: "include",
+        body: fd,
+      });
 
-    if (!res.ok) throw new Error("Cập nhật thất bại");
-    const j = await res.json();
+      if (!res.ok) throw new Error("Cập nhật thất bại");
+      const j = await res.json();
       const newProfile = (j?.user ?? j?.data ?? j) as AuthUser | null;
       if (newProfile) setProfile(newProfile);
 
       // update avatar preview + persist for AccountShell/sidebar
       if (newProfile?.avatar && typeof newProfile.avatar === "string") {
         setAvatarPreview(String(newProfile.avatar));
-        try { localStorage.setItem("avatar", String(newProfile.avatar)); } catch {}
+        try { localStorage.setItem("avatar", String(newProfile.avatar)); } catch { }
       }
 
       // persist display name / username so sidebar shows immediately
       if (newProfile?.hoten && typeof newProfile.hoten === "string") {
-        try { localStorage.setItem("fullname", String(newProfile.hoten)); } catch {}
+        try { localStorage.setItem("fullname", String(newProfile.hoten)); } catch { }
       }
       if (newProfile?.username && typeof newProfile.username === "string") {
-        try { localStorage.setItem("username", String(newProfile.username)); } catch {}
+        try { localStorage.setItem("username", String(newProfile.username)); } catch { }
       }
 
       // if backend returns diachi array, remind user to add address if empty
@@ -317,7 +317,7 @@ export default function Page() {
           })
         )
       );
-    } catch {}
+    } catch { }
   };
 
   // const handleLogin: React.FormEventHandler<HTMLFormElement> = async (e) => {
@@ -384,7 +384,7 @@ export default function Page() {
   //   }
   // };
   const handleLogin: React.FormEventHandler<HTMLFormElement> = async (e) => {
-   e.preventDefault();
+    e.preventDefault();
     const form = new FormData(e.currentTarget);
     const username = String(form.get("username") || "").trim();
     const password = String(form.get("password") || "").trim();
@@ -456,7 +456,7 @@ export default function Page() {
       setWishlist((prev) =>
         prev.filter((w) => (w.product?.id ?? w.product_id) !== productId)
       );
-    } catch {}
+    } catch { }
   };
 
   return (
@@ -466,122 +466,122 @@ export default function Page() {
         {!isLoggedIn ? (
           <>
             <div className="gap-16 mb-16 d-flex">
-            <button
-              className={`btn ${tab === "login" ? "btn-main-two" : "btn-outline-main-two"}`}
-              onClick={() => setTab("login")}
-            >
-              Đăng nhập
-            </button>
-            <button
-              className={`btn ${tab === "register" ? "btn-main-two" : "btn-outline-main-two"}`}
-              onClick={() => setTab("register")}
-            >
-              Đăng ký
-            </button>
-          </div>
-
-          {notice && (
-            <div
-              className={`alert ${notice.type === "success" ? "alert-success" : "alert-danger"} py-10 px-12 mb-16`}
-            >
-              {notice.msg}
+              <button
+                className={`btn ${tab === "login" ? "btn-main-two" : "btn-outline-main-two"}`}
+                onClick={() => setTab("login")}
+              >
+                Đăng nhập
+              </button>
+              <button
+                className={`btn ${tab === "register" ? "btn-main-two" : "btn-outline-main-two"}`}
+                onClick={() => setTab("register")}
+              >
+                Đăng ký
+              </button>
             </div>
-          )}
 
-          {tab === "login" ? (
-            <form onSubmit={handleLogin}>
-              <div className="row gy-4">
-                <div className="col-12">
-                  <label htmlFor="login-username" className="text-sm text-gray-900 fw-medium">Email hoặc SĐT *</label>
-                  <input id="login-username" name="username" type="text" className="common-input" placeholder="tên đăng nhập / email / sđt" autoComplete="username" required />
-                </div>
-                <div className="col-12">
-                  <label htmlFor="login-password" className="text-sm text-gray-900 fw-medium">Mật khẩu</label>
-                  <input id="login-password" name="password" type="password" className="common-input" placeholder="••••••••" required />
-                </div>
-                <div className="col-12">
-                  <button disabled={loading} type="submit" className="btn btn-main-two">
-                    {loading ? "Đang xử lý..." : "Đăng nhập"}
-                  </button>
-                </div>
+            {notice && (
+              <div
+                className={`alert ${notice.type === "success" ? "alert-success" : "alert-danger"} py-10 px-12 mb-16`}
+              >
+                {notice.msg}
               </div>
-            </form>
-          ) : (
-            <form onSubmit={handleRegister}>
-              <div className="row gy-4">
-                <div className="col-12">
-                  <label htmlFor="reg-hoten" className="text-sm text-gray-900 fw-medium">Họ tên *</label>
-                  <input id="reg-hoten" name="hoten" type="text" autoComplete="name" className="common-input" placeholder="Nguyễn Văn A" required />
+            )}
+
+            {tab === "login" ? (
+              <form onSubmit={handleLogin}>
+                <div className="row gy-4">
+                  <div className="col-12">
+                    <label htmlFor="login-username" className="text-sm text-gray-900 fw-medium">Email hoặc SĐT *</label>
+                    <input id="login-username" name="username" type="text" className="common-input" placeholder="tên đăng nhập / email / sđt" autoComplete="username" required />
+                  </div>
+                  <div className="col-12">
+                    <label htmlFor="login-password" className="text-sm text-gray-900 fw-medium">Mật khẩu</label>
+                    <input id="login-password" name="password" type="password" className="common-input" placeholder="••••••••" required />
+                  </div>
+                  <div className="col-12">
+                    <button disabled={loading} type="submit" className="btn btn-main-two">
+                      {loading ? "Đang xử lý..." : "Đăng nhập"}
+                    </button>
+                  </div>
                 </div>
-                <div className="col-12">
-                  <label htmlFor="reg-username" className="text-sm text-gray-900 fw-medium">Tên tài khoản (username)</label>
-                  <input id="reg-username" name="username" type="text" autoComplete="username" className="common-input" placeholder="tùy chọn — để trống sẽ dùng họ tên" />
-                  <small className="text-xs text-muted">Bạn có thể đăng nhập bằng username, email hoặc số điện thoại.</small>
+              </form>
+            ) : (
+              <form onSubmit={handleRegister}>
+                <div className="row gy-4">
+                  <div className="col-12">
+                    <label htmlFor="reg-hoten" className="text-sm text-gray-900 fw-medium">Họ tên *</label>
+                    <input id="reg-hoten" name="hoten" type="text" autoComplete="name" className="common-input" placeholder="Nguyễn Văn A" required />
+                  </div>
+                  <div className="col-12">
+                    <label htmlFor="reg-username" className="text-sm text-gray-900 fw-medium">Tên tài khoản (username)</label>
+                    <input id="reg-username" name="username" type="text" autoComplete="username" className="common-input" placeholder="tùy chọn — để trống sẽ dùng họ tên" />
+                    <small className="text-xs text-muted">Bạn có thể đăng nhập bằng username, email hoặc số điện thoại.</small>
+                  </div>
+                  <div className="col-12">
+                    <label htmlFor="reg-email" className="text-sm text-gray-900 fw-medium">Email</label>
+                    <input id="reg-email" name="email" type="email" autoComplete="email" className="common-input" placeholder="you@example.com" />
+                  </div>
+                  <div className="col-12">
+                    <label htmlFor="reg-password" className="text-sm text-gray-900 fw-medium">Mật khẩu *</label>
+                    <input id="reg-password" name="password" type="password" autoComplete="new-password" className="common-input" placeholder="••••••••" required />
+                  </div>
+                  <div className="col-12">
+                    <label htmlFor="reg-password-confirm" className="text-sm text-gray-900 fw-medium">Xác nhận mật khẩu *</label>
+                    <input id="reg-password-confirm" name="password_confirmation" type="password" autoComplete="new-password" className="common-input" placeholder="Nhập lại mật khẩu" required />
+                  </div>
+                  <div className="col-12">
+                    <label htmlFor="reg-sodienthoai" className="text-sm text-gray-900 fw-medium">Số điện thoại</label>
+                    <input id="reg-sodienthoai" name="sodienthoai" type="tel" autoComplete="tel" className="common-input" placeholder="098xxxxxxx" />
+                  </div>
+                  <div className="col-12">
+                    <button disabled={loading} type="submit" className="btn btn-main-two">
+                      {loading ? "Đang xử lý..." : "Tạo tài khoản"}
+                    </button>
+                  </div>
                 </div>
-                <div className="col-12">
-                  <label htmlFor="reg-email" className="text-sm text-gray-900 fw-medium">Email</label>
-                  <input id="reg-email" name="email" type="email" autoComplete="email" className="common-input" placeholder="you@example.com" />
-               </div>
-                <div className="col-12">
-                  <label htmlFor="reg-password" className="text-sm text-gray-900 fw-medium">Mật khẩu *</label>
-                  <input id="reg-password" name="password" type="password" autoComplete="new-password" className="common-input" placeholder="••••••••" required />
-                </div>
-                <div className="col-12">
-                  <label htmlFor="reg-password-confirm" className="text-sm text-gray-900 fw-medium">Xác nhận mật khẩu *</label>
-                  <input id="reg-password-confirm" name="password_confirmation" type="password" autoComplete="new-password" className="common-input" placeholder="Nhập lại mật khẩu" required />
-                </div>
-                <div className="col-12">
-                  <label htmlFor="reg-sodienthoai" className="text-sm text-gray-900 fw-medium">Số điện thoại</label>
-                  <input id="reg-sodienthoai" name="sodienthoai" type="tel" autoComplete="tel" className="common-input" placeholder="098xxxxxxx" />
-                </div>
-                <div className="col-12">
-                  <button disabled={loading} type="submit" className="btn btn-main-two">
-                    {loading ? "Đang xử lý..." : "Tạo tài khoản"}
-                  </button>
-                </div>
-              </div>
-            </form>
-          )}
-        </>
-      ) : (
-        <form key={String(profile?.id ?? "no-profile")} onSubmit={handleSaveProfile}>
-          <div className="row gy-3">
-            <div className="col-8">
-              <div className="row gy-3">
-                <div className="col-12">
-                  <label className="text-sm text-gray-900 fw-medium">Họ tên</label>
-                  <input name="name" defaultValue={(profile?.name as string) || (user?.hoten ?? "")} className="common-input" />
-                </div>
-                <div className="col-6">
-                  <label className="text-sm text-gray-900 fw-medium">Giới tính</label>
-                  <select name="gioitinh" defaultValue={(profile?.gioitinh as string) || "unknown"} className="common-input">
-                    <option value="unknown">Không xác định</option>
-                    <option value="male">Nam</option>
-                    <option value="female">Nữ</option>
-                  </select>
-                </div>
-                <div className="col-6">
-                  <label className="text-sm text-gray-900 fw-medium">Ngày sinh</label>
-                  <input type="date" name="ngaysinh" defaultValue={(profile?.ngaysinh as string) || ""} className="common-input" />
-                </div>
-                {/* <div className="col-6">
+              </form>
+            )}
+          </>
+        ) : (
+          <form key={String(profile?.id ?? "no-profile")} onSubmit={handleSaveProfile}>
+            <div className="row gy-3">
+              <div className="col-8">
+                <div className="row gy-3">
+                  <div className="col-12">
+                    <label className="text-sm text-gray-900 fw-medium">Họ tên</label>
+                    <input name="name" defaultValue={(profile?.name as string) || (user?.hoten ?? "")} className="common-input" />
+                  </div>
+                  <div className="col-6">
+                    <label className="text-sm text-gray-900 fw-medium">Giới tính</label>
+                    <select name="gioitinh" defaultValue={(profile?.gioitinh as string) || "unknown"} className="common-input">
+                      <option value="unknown">Không xác định</option>
+                      <option value="male">Nam</option>
+                      <option value="female">Nữ</option>
+                    </select>
+                  </div>
+                  <div className="col-6">
+                    <label className="text-sm text-gray-900 fw-medium">Ngày sinh</label>
+                    <input type="date" name="ngaysinh" defaultValue={(profile?.ngaysinh as string) || ""} className="common-input" />
+                  </div>
+                  {/* <div className="col-6">
                   <label className="text-sm text-gray-900 fw-medium">Email</label>
                   <input type="email" name="email" defaultValue={(profile?.email as string) || (user?.email ?? "")} className="common-input" />
                 </div> */}
-                {/* <div className="col-6">
+                  {/* <div className="col-6">
                   <label className="text-sm text-gray-900 fw-medium">Quốc tịch</label>
                   <input name="quoctich" defaultValue={(profile?.quoctich as string) || "VN"} className="common-input" />
                 </div> */}
-                <div className="col-6">
-                  <label className="text-sm text-gray-900 fw-medium">Quốc tịch</label>
-                  <input name="quoctich" className="common-input" defaultValue="VN" />
-                </div>
-                <div className="col-6">
-                  <label className="text-sm text-gray-900 fw-medium">Số điện thoại</label>
-                  <input name="sodienthoai" defaultValue={(profile?.sodienthoai as string) || ""} className="common-input" />
-                </div>
+                  <div className="col-6">
+                    <label className="text-sm text-gray-900 fw-medium">Quốc tịch</label>
+                    <input name="quoctich" className="common-input" defaultValue="VN" />
+                  </div>
+                  <div className="col-6">
+                    <label className="text-sm text-gray-900 fw-medium">Số điện thoại</label>
+                    <input name="sodienthoai" defaultValue={(profile?.sodienthoai as string) || ""} className="common-input" />
+                  </div>
 
-                {/* <div className="col-12">
+                  {/* <div className="col-12">
                   <label className="text-sm text-gray-900 fw-medium">Địa chỉ</label>
                   <input name="address_street" defaultValue={(profile?.address_street as string) || ""} className="mb-2 common-input" placeholder="Số nhà, tên đường" />
                   <div className="gap-8 d-flex">
@@ -590,50 +590,50 @@ export default function Page() {
                     <input name="address_postal" defaultValue={(profile?.address_postal as string) || ""} className="common-input" placeholder="Mã bưu chính" />
                   </div>
                 </div> */}
-                <input 
-                    type="hidden" 
-                    name="avatar" 
-                    defaultValue={(profile?.avatar as string) || (user?.avatar as string) || ""} 
-                />
-
-                <div className="col-12">
-                  <button disabled={loading} type="submit" className="btn btn-main-two">
-                    {loading ? "Đang lưu..." : "Lưu thông tin"}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-4">
-              <div className="p-12 text-center card">
-                <div style={{ width: 120, height: 120, margin: "0 auto 12px" }}>
-                  <img
-                    src={avatarPreview || "/assets/images/default-avatar.png"}
-                    alt="avatar"
-                    style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/assets/images/default-avatar.png"; }}
-                  />
-                </div>
-                <label className="btn btn-outline-main-two">
-                  Chọn Hình Ảnh
                   <input
-                    type="file"
+                    type="hidden"
                     name="avatar"
-                    accept="image/*"
-                    style={{ display: "none" }}
-                    onChange={(ev) => {
-                      const f = (ev.target as HTMLInputElement).files?.[0];
-                      if (f) setAvatarPreview(URL.createObjectURL(f));
-                    }}
+                    defaultValue={(profile?.avatar as string) || (user?.avatar as string) || ""}
                   />
-                </label>
-                <p className="mt-8 text-xs text-muted">Kích thước tối đa 1MB. JPG, PNG</p>
+
+                  <div className="col-12">
+                    <button disabled={loading} type="submit" className="btn btn-main-two">
+                      {loading ? "Đang lưu..." : "Lưu thông tin"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="col-4">
+                <div className="p-12 text-center card">
+                  <div style={{ width: 120, height: 120, margin: "0 auto 12px" }}>
+                    <img
+                      src={avatarPreview || "/assets/images/default-avatar.png"}
+                      alt="avatar"
+                      style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/assets/images/default-avatar.png"; }}
+                    />
+                  </div>
+                  <label className="btn btn-outline-main-two">
+                    Chọn Hình Ảnh
+                    <input
+                      type="file"
+                      name="avatar"
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      onChange={(ev) => {
+                        const f = (ev.target as HTMLInputElement).files?.[0];
+                        if (f) setAvatarPreview(URL.createObjectURL(f));
+                      }}
+                    />
+                  </label>
+                  <p className="mt-8 text-xs text-muted">Kích thước tối đa 1MB. JPG, PNG</p>
+                </div>
               </div>
             </div>
-          </div>
-        </form>
-      )}
-    </AccountShell>
+          </form>
+        )}
+      </AccountShell>
     </>
   );
 }

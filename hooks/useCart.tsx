@@ -56,7 +56,7 @@ interface ServerCartItemRaw {
     };
   };
   // SỬA LỖI: Dùng unknown thay vì any
-  bienthe_quatang?: unknown; 
+  bienthe_quatang?: unknown;
 }
 
 export type AddToCartInput = {
@@ -91,36 +91,36 @@ export function useCart() {
   // --- HELPER MAP DATA ---
   const mapServerDataToCartItem = useCallback((serverItem: unknown): CartItem => {
     const sItem = serverItem as ServerCartItemRaw;
-    
+
     const id_giohang = sItem.id_giohang ?? `temp_${Date.now()}_${Math.random()}`;
     const quantity = Number(sItem.bienthe?.soluong ?? 1);
     const detail = sItem.bienthe?.detail;
-    
-    let productInfo: ProductDisplayInfo | undefined = undefined;
-    
-    if (detail) {
-        const currentPrice = Number(detail.giaban ?? detail.giagoc ?? 0);
-        const originPrice = Number(detail.giagoc ?? 0);
 
-        productInfo = {
-            id: id_giohang, 
-            ten: detail.tensanpham ?? "Sản phẩm",
-            mediaurl: detail.hinhanh ?? "/assets/images/thumbs/placeholder.png",
-            category: detail.loaisanpham,
-            gia: { 
-                current: currentPrice, 
-                before_discount: originPrice 
-            },
-            ratingAverage: 5,
-            ratingCount: 0
-        };
+    let productInfo: ProductDisplayInfo | undefined = undefined;
+
+    if (detail) {
+      const currentPrice = Number(detail.giaban ?? detail.giagoc ?? 0);
+      const originPrice = Number(detail.giagoc ?? 0);
+
+      productInfo = {
+        id: id_giohang,
+        ten: detail.tensanpham ?? "Sản phẩm",
+        mediaurl: detail.hinhanh ?? "/assets/images/thumbs/placeholder.png",
+        category: detail.loaisanpham,
+        gia: {
+          current: currentPrice,
+          before_discount: originPrice
+        },
+        ratingAverage: 5,
+        ratingCount: 0
+      };
     }
 
-    return { 
-        id_giohang, 
-        id_bienthe: id_giohang, 
-        quantity, 
-        product: productInfo 
+    return {
+      id_giohang,
+      id_bienthe: id_giohang,
+      quantity,
+      product: productInfo
     };
   }, []);
 
@@ -133,12 +133,12 @@ export function useCart() {
       });
       if (!res.ok) return [];
       const j: unknown = await res.json();
-      
+
       let rawData: unknown[] = [];
       if (Array.isArray(j)) {
-         rawData = j;
+        rawData = j;
       } else if (j && typeof j === 'object' && 'data' in j && Array.isArray((j as { data: unknown[] }).data)) {
-         rawData = (j as { data: unknown[] }).data;
+        rawData = (j as { data: unknown[] }).data;
       }
 
       return rawData.map(mapServerDataToCartItem);
@@ -161,7 +161,7 @@ export function useCart() {
 
   const saveLocalCart = useCallback((cart: CartItem[]) => {
     if (typeof window === "undefined") return;
-    try { localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart)); } catch {}
+    try { localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart)); } catch { }
   }, []);
 
   const clearLocalCart = useCallback(() => {
@@ -183,14 +183,14 @@ export function useCart() {
             id_bienthe: item.id_bienthe,
             soluong: item.quantity,
           }),
-        }).catch(() => {});
+        }).catch(() => { });
       }
       clearLocalCart();
       const serverCart = await loadServerCart();
       setItems(serverCart);
-      try { 
-          const count = serverCart.reduce((s, it) => s + (Number(it.quantity) || 0), 0);
-          window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count } })); 
+      try {
+        const count = serverCart.reduce((s, it) => s + (Number(it.quantity) || 0), 0);
+        window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count } }));
       } catch { }
     } finally { setLoading(false); }
   }, [API, getAuthHeaders, loadLocalCart, clearLocalCart, loadServerCart]);
@@ -212,18 +212,18 @@ export function useCart() {
   useEffect(() => {
     let mounted = true;
     (async () => {
-        if (isLoggedIn) {
-            const localItems = loadLocalCart();
-            if (localItems.length > 0 && !hasSyncedRef.current) {
-                hasSyncedRef.current = true;
-                await syncLocalToServer();
-            } else if (localItems.length === 0) {
-                if (mounted) await fetchCart();
-            }
-        } else {
-            hasSyncedRef.current = false;
-            if (mounted) await fetchCart();
+      if (isLoggedIn) {
+        const localItems = loadLocalCart();
+        if (localItems.length > 0 && !hasSyncedRef.current) {
+          hasSyncedRef.current = true;
+          await syncLocalToServer();
+        } else if (localItems.length === 0) {
+          if (mounted) await fetchCart();
         }
+      } else {
+        hasSyncedRef.current = false;
+        if (mounted) await fetchCart();
+      }
     })();
     return () => { mounted = false; };
   }, [isLoggedIn, syncLocalToServer, fetchCart, loadLocalCart]);
@@ -238,44 +238,44 @@ export function useCart() {
   const addToCart = useCallback(async (product: AddToCartInput, quantity = 1) => {
     const id_bienthe = product.id_bienthe ?? product.id;
     if (!id_bienthe) return;
-    
+
     setLoading(true);
     try {
       if (isLoggedIn) {
         const res = await fetch(`${API}/api/toi/giohang`, {
           method: "POST",
           headers: getAuthHeaders(),
-          body: JSON.stringify({ 
-              id_bienthe: String(id_bienthe), 
-              soluong: quantity 
+          body: JSON.stringify({
+            id_bienthe: String(id_bienthe),
+            soluong: quantity
           }),
         });
         if (res.ok) {
-            const serverCart = await loadServerCart();
-            setItems(serverCart);
-            const count = serverCart.reduce((s, it) => s + (Number(it.quantity) || 0), 0);
-            window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count } }));
+          const serverCart = await loadServerCart();
+          setItems(serverCart);
+          const count = serverCart.reduce((s, it) => s + (Number(it.quantity) || 0), 0);
+          window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count } }));
         }
       } else {
         const localCart = loadLocalCart();
         const existingIndex = localCart.findIndex(i => i.id_bienthe == id_bienthe);
-        
+
         const priceVal = typeof product.gia === 'number' ? product.gia : (product.gia?.current ?? 0);
         const displayItem: CartItem = {
-            id_giohang: `local_${Date.now()}`,
-            id_bienthe: id_bienthe,
-            quantity: quantity,
-            product: {
-                id: id_bienthe,
-                ten: product.ten ?? "Sản phẩm",
-                mediaurl: product.hinhanh ?? "/assets/images/thumbs/placeholder.png",
-                gia: { current: Number(priceVal) }
-            }
+          id_giohang: `local_${Date.now()}`,
+          id_bienthe: id_bienthe,
+          quantity: quantity,
+          product: {
+            id: id_bienthe,
+            ten: product.ten ?? "Sản phẩm",
+            mediaurl: product.hinhanh ?? "/assets/images/thumbs/placeholder.png",
+            gia: { current: Number(priceVal) }
+          }
         };
 
         if (existingIndex >= 0) localCart[existingIndex].quantity += quantity;
         else localCart.push(displayItem);
-        
+
         saveLocalCart(localCart);
         setItems(localCart);
         const count = localCart.reduce((s, it) => s + (Number(it.quantity) || 0), 0);
@@ -286,36 +286,55 @@ export function useCart() {
 
   const updateQuantity = useCallback(async (id_giohang: number | string, quantity: number) => {
     if (quantity < 1) return;
-    setItems(prev => prev.map(it => it.id_giohang === id_giohang ? { ...it, quantity } : it));
 
+    // Cập nhật state ngay lập tức (optimistic update)
+    setItems(prev => {
+      const updated = prev.map(it => it.id_giohang === id_giohang ? { ...it, quantity } : it);
+      // Lưu vào localStorage nếu chưa đăng nhập
+      if (!isLoggedIn) {
+        saveLocalCart(updated);
+      }
+      return updated;
+    });
+
+    // Gọi API nếu đã đăng nhập
     if (isLoggedIn) {
-      await fetch(`${API}/api/toi/giohang/${id_giohang}`, {
-        method: "PUT",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ soluong: quantity }),
-      }).catch(() => fetchCart());
-    } else {
-      const local = loadLocalCart();
-      const updated = local.map(it => it.id_giohang === id_giohang ? { ...it, quantity } : it);
-      saveLocalCart(updated);
+      try {
+        await fetch(`${API}/api/toi/giohang/${id_giohang}`, {
+          method: "PUT",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ soluong: quantity }),
+        });
+      } catch {
+        // Nếu API lỗi, không làm gì - giữ nguyên state local
+        console.warn("Không thể cập nhật số lượng trên server");
+      }
     }
-    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent("cart:updated"));
-  }, [isLoggedIn, API, getAuthHeaders, fetchCart, loadLocalCart, saveLocalCart]);
+  }, [isLoggedIn, API, getAuthHeaders, saveLocalCart]);
 
   const removeItem = useCallback(async (id_giohang: number | string) => {
-    setItems(prev => prev.filter(it => it.id_giohang !== id_giohang));
+    // Cập nhật state ngay lập tức (optimistic update)
+    setItems(prev => {
+      const updated = prev.filter(it => it.id_giohang !== id_giohang);
+      // Lưu vào localStorage nếu chưa đăng nhập
+      if (!isLoggedIn) {
+        saveLocalCart(updated);
+      }
+      return updated;
+    });
+
+    // Gọi API nếu đã đăng nhập
     if (isLoggedIn) {
-      await fetch(`${API}/api/toi/giohang/${id_giohang}`, {
-        method: "DELETE",
-        headers: getAuthHeaders(),
-      }).catch(() => fetchCart());
-    } else {
-      const local = loadLocalCart();
-      const updated = local.filter(it => it.id_giohang !== id_giohang);
-      saveLocalCart(updated);
+      try {
+        await fetch(`${API}/api/toi/giohang/${id_giohang}`, {
+          method: "DELETE",
+          headers: getAuthHeaders(),
+        });
+      } catch {
+        console.warn("Không thể xóa sản phẩm trên server");
+      }
     }
-    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent("cart:updated"));
-  }, [isLoggedIn, API, getAuthHeaders, fetchCart, loadLocalCart, saveLocalCart]);
+  }, [isLoggedIn, API, getAuthHeaders, saveLocalCart]);
 
   const clearCart = useCallback(() => {
     setItems([]);
@@ -327,7 +346,7 @@ export function useCart() {
   const removeVoucher = useCallback(() => setAppliedVoucher(null), []);
 
   const subtotal = items.reduce((sum, it) => {
-    const pPrice = it.product?.gia?.current; 
+    const pPrice = it.product?.gia?.current;
     const price = Number(pPrice || 0);
     const qty = Number(it.quantity) || 0;
     return sum + price * qty;

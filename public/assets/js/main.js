@@ -1,21 +1,17 @@
 (function ($) {
   "use strict";
-  // 1) Đừng chạy gì nếu không có jQuery
-  // if (!window.jQuery) return;
 
-  // // 2) Chỉ chạy khi có dấu hiệu là template cũ (VD: body có class legacy-html)
-  // if (!document.body.classList.contains('legacy-html')) return;
-
-  // var $ = window.jQuery;
-
-  // // 3) Trước khi gọi plugin phải kiểm tra tồn tại
-  // if ($.fn.marquee && $('.marquee').length) {
-  //   $('.marquee').marquee({ duration: 15000, gap: 50, duplicated: true });
-  // }
-
-  // if ($.fn.slick && $('.some-legacy-slick').length) {
-  //   $('.some-legacy-slick').slick({ /* options */ });
-  // }
+  // Helper function để khởi tạo slick an toàn
+  function safeSlick(selector, options) {
+    var $el = $(selector);
+    if ($el.length && $.fn.slick) {
+      try {
+        $el.slick(options);
+      } catch (e) {
+        console.warn('Slick init error for ' + selector + ':', e.message);
+      }
+    }
+  }
 
   // ==========================================
   //      Start Document Ready function
@@ -59,22 +55,24 @@
 
     // ===================== Scroll Back to Top Js Start ======================
     var progressPath = document.querySelector(".progress-wrap path");
-    var pathLength = progressPath.getTotalLength();
-    progressPath.style.transition = progressPath.style.WebkitTransition =
-      "none";
-    progressPath.style.strokeDasharray = pathLength + " " + pathLength;
-    progressPath.style.strokeDashoffset = pathLength;
-    progressPath.getBoundingClientRect();
-    progressPath.style.transition = progressPath.style.WebkitTransition =
-      "stroke-dashoffset 10ms linear";
-    var updateProgress = function () {
-      var scroll = $(window).scrollTop();
-      var height = $(document).height() - $(window).height();
-      var progress = pathLength - (scroll * pathLength) / height;
-      progressPath.style.strokeDashoffset = progress;
-    };
-    updateProgress();
-    $(window).scroll(updateProgress);
+    if (progressPath) {
+      var pathLength = progressPath.getTotalLength();
+      progressPath.style.transition = progressPath.style.WebkitTransition =
+        "none";
+      progressPath.style.strokeDasharray = pathLength + " " + pathLength;
+      progressPath.style.strokeDashoffset = pathLength;
+      progressPath.getBoundingClientRect();
+      progressPath.style.transition = progressPath.style.WebkitTransition =
+        "stroke-dashoffset 10ms linear";
+      var updateProgress = function () {
+        var scroll = $(window).scrollTop();
+        var height = $(document).height() - $(window).height();
+        var progress = pathLength - (scroll * pathLength) / height;
+        progressPath.style.strokeDashoffset = progress;
+      };
+      updateProgress();
+      $(window).scroll(updateProgress);
+    }
     var offset = 50;
     var duration = 550;
     jQuery(window).on("scroll", function () {
@@ -192,7 +190,7 @@
     // ========================== Set Language in dropdown Js End =================================
 
     // ========================= Banner Slider Js Start ==============
-    $(".banner-slider").slick({
+    safeSlick(".banner-slider", {
       slidesToShow: 1,
       slidesToScroll: 1,
       autoplay: true,
@@ -236,7 +234,7 @@
     // ========================= Category Js End ===================
 
     // ========================= hot deals Slider Js Start ==============
-    $(".product-one-slider").slick({
+    safeSlick(".product-one-slider", {
       slidesToShow: 6,
       slidesToScroll: 1,
       autoplay: true,
@@ -299,7 +297,7 @@
     // ========================= hot deals Slider Js End ===================
 
     // ========================= Banner Three Slider Js Start ==============
-    $(".banner-three-slider").slick({
+    safeSlick(".banner-three-slider", {
       slidesToShow: 1,
       slidesToScroll: 1,
       autoplay: false,
@@ -319,7 +317,7 @@
     // ========================= Banner Three Slider Js End ===================
 
     // ========================= hot deals Slider Js Start ==============
-    $(".feature-item-wrapper").slick({
+    safeSlick(".feature-item-wrapper", {
       slidesToShow: 10,
       slidesToScroll: 1,
       autoplay: true,
@@ -388,7 +386,7 @@
     // ========================= hot deals Slider Js End ===================
 
     // ========================= hot deals Slider Js Start ==============
-    $(".feature-three-item-wrapper").slick({
+    safeSlick(".feature-three-item-wrapper", {
       slidesToShow: 6,
       slidesToScroll: 1,
       autoplay: true,
@@ -451,7 +449,7 @@
     // ========================= hot deals Slider Js End ===================
 
     // ========================= Banner Slider Js Start ==============
-    $(".banner-item-two__slider").slick({
+    safeSlick(".banner-item-two__slider", {
       slidesToShow: 1,
       slidesToScroll: 1,
       autoplay: true,
@@ -480,7 +478,7 @@
     // ========================= Banner Slider Js End ===================
 
     // ========================= flash Sale Four Slider Js Start ==============
-    $(".flash-sales__slider").slick({
+    safeSlick(".flash-sales__slider", {
       slidesToShow: 2,
       slidesToScroll: 1,
       autoplay: true,
@@ -508,7 +506,7 @@
     // ========================= flash Sale Four Slider Js End ==================
 
     // ========================= hot deals Slider Js Start ==============
-    $(".hot-deals-slider").slick({
+    safeSlick(".hot-deals-slider", {
       slidesToShow: 4,
       slidesToScroll: 1,
       autoplay: true,
@@ -550,7 +548,7 @@
     // ========================= hot deals Slider Js End ===================
 
     // ========================= hot deals Slider Js Start ==============
-    $(".deals-week-slider").slick({
+    safeSlick(".deals-week-slider", {
       slidesToShow: 6,
       slidesToScroll: 1,
       autoplay: true,
@@ -585,7 +583,7 @@
     // ========================= hot deals Slider Js End ===================
 
     // ========================= New arrival Slider Js Start ==============
-    $(".new-arrival__slider").slick({
+    safeSlick(".new-arrival__slider", {
       slidesToShow: 6,
       slidesToScroll: 1,
       autoplay: false,
@@ -641,7 +639,7 @@
     // ========================= New arrival Slider Js End ===================
 
     // ========================= hot deals Slider Js Start ==============
-    $(".short-product-list").slick({
+    safeSlick(".short-product-list", {
       slidesToShow: 1,
       slidesToScroll: 1,
       autoplay: true,
@@ -684,7 +682,7 @@
     // ========================= Copy Coupon Code Js End ===================
 
     // ========================= hot deals Slider Js Start ==============
-    $(".brand-slider").slick({
+    safeSlick(".brand-slider", {
       slidesToShow: 8,
       slidesToScroll: 1,
       autoplay: true,
@@ -754,7 +752,7 @@
     // ========================= Category Dropdown Two Js End ===============================
 
     // ========================= Featured Products Slider Js Start ==============
-    $(".featured-product-slider").slick({
+    safeSlick(".featured-product-slider", {
       slidesToShow: 2,
       slidesToScroll: 1,
       autoplay: true,
@@ -782,7 +780,7 @@
     // ========================= Featured Products Slider Js End ==================
 
     // ========================= hot deals Slider Js Start ==============
-    $(".recommended-slider").slick({
+    safeSlick(".recommended-slider", {
       slidesToShow: 4,
       slidesToScroll: 1,
       autoplay: true,
@@ -824,7 +822,7 @@
     // ========================= hot deals Slider Js End ===================
 
     // ========================= hot deals Slider Js Start ==============
-    $(".vendor-card__list.style-two").slick({
+    safeSlick(".vendor-card__list.style-two", {
       slidesToShow: 4,
       slidesToScroll: 1,
       autoplay: true,
@@ -843,7 +841,7 @@
     // ========================= hot deals Slider Js End ===================
 
     // ========================= hot deals Slider Js Start ==============
-    $(".top-brand__slider").slick({
+    safeSlick(".top-brand__slider", {
       slidesToShow: 8,
       slidesToScroll: 1,
       autoplay: true,
@@ -906,7 +904,7 @@
     // ========================= hot deals Slider Js End ===================
 
     // ========================= Product Details Thumbs Slider Js Start ===================
-    $(".product-details__thumb-slider").slick({
+    safeSlick(".product-details__thumb-slider", {
       slidesToShow: 1,
       slidesToScroll: 1,
       arrows: false,
@@ -914,7 +912,7 @@
       asNavFor: ".product-details__images-slider",
     });
 
-    $(".product-details__images-slider").slick({
+    safeSlick(".product-details__images-slider", {
       slidesToShow: 4,
       slidesToScroll: 1,
       asNavFor: ".product-details__thumb-slider",
@@ -1103,7 +1101,7 @@
     // ========================== Wishlist Button Js End =====================
 
     // ========================== Instagram Slider Js Start =====================
-    $(".instagram-slider").slick({
+    safeSlick(".instagram-slider", {
       slidesToShow: 4,
       slidesToScroll: 1,
       autoplay: true,
@@ -1152,7 +1150,7 @@
     // ========================== Instagram Slider Js End =====================
 
     // ========================== Testimonials Thumbs Slider Js Start =====================
-    $(".testimonials-slider").slick({
+    safeSlick(".testimonials-slider", {
       slidesToShow: 1,
       slidesToScroll: 1,
       asNavFor: ".testimonials-thumbs-slider",
@@ -1165,7 +1163,7 @@
       arrows: false,
     });
 
-    $(".testimonials-thumbs-slider").slick({
+    safeSlick(".testimonials-thumbs-slider", {
       slidesToShow: 4,
       slidesToScroll: 1,
       autoplay: false,

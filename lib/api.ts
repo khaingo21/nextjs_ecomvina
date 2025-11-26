@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // lib/api.ts
 const BASE_URL = process.env.SERVER_API || process.env.NEXT_PUBLIC_SERVER_API || "http://148.230.100.215";
 
@@ -19,11 +18,6 @@ type FetchOptions = {
   method?: "GET" | "POST" | "PUT" | "DELETE";
   body?: any;
   cache?: RequestCache;
-=======
-// Chào cậu! 👋
-export type ApiOptions = {
-  method?: string;
->>>>>>> f7db362cc7e0dd95e06f9e61346d997648581817
   headers?: Record<string, string>;
   credentials?: RequestCredentials;
 };
@@ -116,14 +110,12 @@ export const api = {
     request<T>(endpoint, { method: "DELETE" }),
 };
 
-<<<<<<< HEAD
+export type LoginResponse = { token?: string; accessToken?: string;[k: string]: unknown };
+export type RegisterResponse = { success?: boolean; message?: string;[k: string]: unknown };
+
 // ============================================
 // Homepage API Types & Functions
 // ============================================
-=======
-export type LoginResponse = { token?: string; accessToken?: string;[k: string]: unknown };
-export type RegisterResponse = { success?: boolean; message?: string;[k: string]: unknown };
->>>>>>> f7db362cc7e0dd95e06f9e61346d997648581817
 
 // ===== Hot Keywords =====
 export interface HotKeyword {
@@ -223,6 +215,29 @@ export interface Coupon {
   trangthai: string;
 }
 
+// ===== Blog Posts =====
+export interface BlogPost {
+  id: number;
+  tieude: string;
+  slug: string;
+  noidung: string;
+  luotxem: number;
+  hinhanh: string;
+  trangthai: string;
+}
+
+// Fetch all blog posts from API server
+export async function fetchBlogPosts(): Promise<BlogPost[]> {
+  try {
+    // API trả về mảng JSON thuần các bài viết
+    const posts = await api.get<BlogPost[]>("/api-bai-viet");
+    return Array.isArray(posts) ? posts : [];
+  } catch (error) {
+    console.error("Error fetching blog posts:", error);
+    return [];
+  }
+}
+
 // ===== Main Response =====
 export interface HomePageResponse {
   status: boolean;
@@ -239,6 +254,7 @@ export interface HomePageResponse {
     new_coupon: Coupon[];
     new_launch: HomeHotSaleProduct[];
     most_watched: HomeHotSaleProduct[];
+    posts_to_explore?: BlogPost[];
   };
 }
 
@@ -422,5 +438,29 @@ export async function fetchSearchProducts(query: string): Promise<SearchProduct[
   } catch (error) {
     console.error('Error fetching search products:', error);
     return [];
+  }
+}
+
+/**
+ * Track keyword access for analytics
+ * Records search queries to help track popular search terms
+ * @param keyword - Search keyword to track
+ * @returns Promise<void>
+ */
+export async function trackKeywordAccess(keyword: string): Promise<void> {
+  if (!keyword || !keyword.trim()) {
+    return;
+  }
+
+  try {
+    // Send keyword tracking to API
+    // The API endpoint may not exist yet, so we catch errors silently
+    await api.post('/api/tracking/keywords', {
+      keyword: keyword.trim(),
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    // Silently fail - tracking shouldn't break the user experience
+    console.debug('Keyword tracking failed (non-critical):', error);
   }
 }

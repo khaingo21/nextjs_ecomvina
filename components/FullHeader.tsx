@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import SearchBox from "@/components/SearchBox";
+import SearchBoxWithSuggestions from "@/components/SearchBoxWithSuggestions";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useAuth } from "@/hooks/useAuth";
 import { initCartAnchorBySelector, setCartAnchor } from "@/utils/flyToCart";
@@ -19,7 +19,7 @@ type FullHeaderProps = {
 
 type ApiCartItem = { quantity?: number };
 type ApiCartResponse = { data?: ApiCartItem[] };
-type Cat = { id: number|string; ten?: string; name?: string; slug?: string; children?: Cat[] };
+type Cat = { id: number | string; ten?: string; name?: string; slug?: string; children?: Cat[] };
 
 function useClickAway<T extends HTMLElement>(
   ref: React.RefObject<T | null>,
@@ -60,7 +60,7 @@ export default function FullHeader({
   // auth state
   const { user, isLoggedIn, logout } = useAuth();
 
- 
+
   // ---- Danh mục (All Categories) ----
   type DanhMuc = {
     id: number | string;
@@ -157,11 +157,11 @@ export default function FullHeader({
     setShowCategoryMenu(true);
   };
 
-  
+
 
   // Chuẩn hoá host để cookie không rớt (localhost ↔ 127.0.0.1)
   const API = useMemo(() => {
-    const raw = process.env.NEXT_PUBLIC_SERVER_API || "http://localhost:4000";
+    const raw = process.env.NEXT_PUBLIC_SERVER_API || "http://148.230.100.215";
     try {
       if (typeof window === "undefined") return raw;
       const u = new URL(raw);
@@ -258,19 +258,74 @@ export default function FullHeader({
   return (
     <>
       {renderCategoryDropdown()}
+
+      {/* Thanh đỏ trên cùng */}
+      {showTopNav && (
+        <div style={{ background: "rgb(229, 57, 53)", width: "100%", padding: "10px 0px", display: "block" }}>
+          <div className="container container-lg">
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "8px",
+              }}
+            >
+              {/* Nhóm trái */}
+              <ul style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "16px", listStyle: "none", margin: 0, padding: 0 }}>
+                <li style={{ display: "flex", alignItems: "center" }}>
+                  <Link href="/dangky" style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: "14px", textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <i className="ph-bold ph-user"></i> Đăng ký thành viên
+                  </Link>
+                </li>
+                <li style={{ display: "flex", alignItems: "center" }}>
+                  <a href="#" style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: "14px", textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <i className="ph-bold ph-info"></i> Giới thiệu về Siêu Thị Vina
+                  </a>
+                </li>
+                <li style={{ display: "flex", alignItems: "center" }}>
+                  <a href="#" style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: "14px", textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <i className="ph-bold ph-chat-dots"></i> Liên hệ hỗ trợ
+                  </a>
+                </li>
+              </ul>
+              {/* Nhóm phải */}
+              <ul style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "16px", listStyle: "none", margin: 0, padding: 0 }}>
+                <li style={{ display: "flex", alignItems: "center", position: "relative" }}>
+                  <a href="#" style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: "14px", textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <i className="ph ph-squares-four"></i> Danh mục
+                  </a>
+                </li>
+                <li style={{ display: "flex", alignItems: "center" }}>
+                  <Link href="/orders" style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: "14px", textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <i className="ph-bold ph-notepad"></i> Tra cứu đơn hàng
+                  </Link>
+                </li>
+                <li style={{ display: "flex", alignItems: "center" }}>
+                  <Link href="/gio-hang" style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: "14px", textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <i className="ph-bold ph-shopping-cart"></i> Giỏ hàng
+                    <span style={{ background: "rgb(0, 230, 118)", color: "rgb(255, 255, 255)", borderRadius: "4px", padding: "2px 6px", marginLeft: "4px", fontSize: "13px" }}>
+                      {totalItems}
+                    </span>
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* HEADER MIDDLE */}
       {showTopNav && (
-        <header
-          className="py-10 header-middle border-bottom border-neutral-40"
-          style={{ overflow: "visible", position: "sticky", top: 0, zIndex: 300, background: "#fff" }}//position: "relative"
-        >
+        <header className="header border-bottom border-neutral-40 pt-16 pb-10" style={{ zIndex: 99 }}>
           <div className="container container-lg">
-            <nav className="gap-8 header-inner flex-between align-items-center">
+            <nav className="header-inner flex-between gap-16">
               {/* Logo */}
               <div className="logo">
-                <Link href="/" className="link" aria-label="Home">
-                  <Image
-                    src="/assets/images/logo/logo_nguyenban.png"
+                <Link href="/" className="link" aria-label="Trang chủ Siêu Thị Vina">
+                  <img
+                    src="https://sieuthivina.com/assets/client/images/logo/logo_nguyenban.png"
                     alt="Logo"
                     width={140}
                     height={40}
@@ -278,98 +333,49 @@ export default function FullHeader({
                 </Link>
               </div>
 
-              {/* Desktop Search + Keywords (template style) */}
+              {/* Desktop Search + Keywords */}
               <div className="header-menu w-50 d-lg-block d-none">
                 <div className="mx-20">
-                  {/* <form
-                    action="#"
-                    className="position-relative w-100 d-md-block d-none"
-                  >
-                    <input
-                      type="text"
-                      className="py-8 text-sm shadow-none form-control fw-normal placeholder-italic bg-neutral-30 placeholder-fw-normal placeholder-light ps-30 pe-60"
-                      placeholder="Thuốc giảm cân dành cho người béo...."
-                    />
-                    <button
-                      type="submit"
-                      className="text-xl position-absolute top-50 translate-middle-y text-main-600 end-0 me-36 line-height-1"
-                    >
-                      <i className="ph-bold ph-magnifying-glass"></i>
-                    </button>
-                  </form> */}
-                  <SearchBox />
-
-                  <div className="gap-12 mt-10 flex-align title">
-                    <Link
-                      href="#"
-                      className="text-sm text-gray-600 link hover-text-main-600 fst-italic"
-                    >
-                      Máy massage
+                  <SearchBoxWithSuggestions placeholder="Sâm Ngọc Linh...." />
+                  <div className="flex-align mt-10 gap-12 title">
+                    <Link href="/shop?query=sâm ngọc linh" className="text-sm link text-gray-600 hover-text-main-600 fst-italic">
+                      Sâm Ngọc Linh
                     </Link>
-                    <Link
-                      href="#"
-                      className="text-sm text-gray-600 link hover-text-main-600 fst-italic"
-                    >
-                      điện gia dụng
+                    <Link href="/shop?query=sách hán ngữ 3" className="text-sm link text-gray-600 hover-text-main-600 fst-italic">
+                      Sách hán ngữ 3
                     </Link>
-                    <Link
-                      href="#"
-                      className="text-sm text-gray-600 link hover-text-main-600 fst-italic"
-                    >
-                      mẹ và bé
+                    <Link href="/shop?query=móc khóa genshin" className="text-sm link text-gray-600 hover-text-main-600 fst-italic">
+                      Móc khóa genshin
                     </Link>
-                    <Link
-                      href="#"
-                      className="text-sm text-gray-600 link hover-text-main-600 fst-italic"
-                    >
-                      móc khóa minecraft
+                    <Link href="/shop?query=đồ chơi minecraft" className="text-sm link text-gray-600 hover-text-main-600 fst-italic">
+                      Đồ chơi minecraft
                     </Link>
-                    <Link
-                      href="#"
-                      className="text-sm text-gray-600 link hover-text-main-600 fst-italic"
-                    >
-                      điện nội thất
+                    <Link href="/shop?query=điện nội thất" className="text-sm link text-gray-600 hover-text-main-600 fst-italic">
+                      Điện nội thất
                     </Link>
                   </div>
                 </div>
               </div>
 
               {/* Right side + Mobile toggle */}
-              <div className="header-right flex-align"  style={{ marginLeft: 24 }}>
+              <div className="header-right flex-align">
+                <ul className="header-top__right style-two style-three flex-align flex-wrap d-lg-block d-none">
+                  <li className="d-sm-flex d-none">
+                    <Link
+                      className="d-flex align-content-around gap-10 fw-medium text-main-600 py-14 px-24 bg-main-50 rounded-pill line-height-1 hover-bg-main-600 hover-text-white"
+                      href="/dang-nhap"
+                    >
+                      <span className="d-sm-flex d-none line-height-1">
+                        <i className="ph-bold ph-user"></i>
+                      </span>
+                      Đăng nhập
+                    </Link>
+                  </li>
+                </ul>
                 <div
                   ref={userRef}
-                  className="flex-wrap on-hover-item nav-menu__item has-submenu header-top__right style-two style-three flex-align d-lg-block d-none position-relative"
+                  className="d-none"
                 >
-                  <button
-                    type="button"
-                    aria-haspopup="menu"
-                    aria-expanded={userOpen}
-                    onClick={() =>
-                      userOpen ? setUserOpen(false) : openOnly("user")
-                    }
-                    className="gap-10 px-20 py-10 text-center text-white d-flex justify-content-center flex-align align-content-around fw-medium bg-success-600 rounded-pill line-height-1 hover-bg-success-500 hover-text-white btn-reset"
-                  >
-                    <span className="line-height-1" aria-hidden style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      {isLoggedIn ? (
-                        getAvatarSrc(user) ? (
-                          <Image
-                            src={getAvatarSrc(user) as string}
-                            alt={getDisplayName(user)}
-                            width={32}
-                            height={32}
-                            className="rounded-circle"
-                          />
-                        ) : (
-                          <i className="ph-bold ph-user" style={{ fontSize: 18 }} />
-                        )
-                      ) : (
-                        <i className="ph-bold ph-user" />
-                      )}
-                    </span>
-                    <span style={{ marginLeft: 8 }}>
-                      {isLoggedIn ? getDisplayName(user) : "Tài khoản"}
-                    </span>
-                  </button>
                   {userOpen && (
                     <ul
                       role="menu"
@@ -473,8 +479,7 @@ export default function FullHeader({
 
                 <button
                   type="button"
-                  aria-label="Toggle mobile menu"
-                  className="text-4xl text-gray-800 d-lg-none ms-3n d-flex btn-reset js-open-menu"
+                  className="toggle-mobileMenu d-lg-none ms-3n text-gray-800 text-4xl d-flex"
                   onClick={() => setMobileOpen((s) => !s)}
                 >
                   <i className="ph ph-list"></i>
@@ -485,7 +490,7 @@ export default function FullHeader({
         </header>
       )}
 
-      
+
       {/* SECOND HEADER (categories/search/actions) */}
       {showTopNav ? (
         showCategoriesBar ? (
@@ -696,8 +701,8 @@ export default function FullHeader({
 
                   <ul className="flex-wrap gap-16 header-top__right flex-align">
                     {/* Danh mục */}
-                    <li 
-                      className="flex-shrink-0 d-block on-hover-item text-white-6" 
+                    <li
+                      className="flex-shrink-0 d-block on-hover-item text-white-6"
                       ref={categoryButtonRef}
                       onMouseEnter={handleMouseEnter}
                       onMouseLeave={handleMouseLeave}
@@ -705,7 +710,7 @@ export default function FullHeader({
                       <button
                         className="gap-4 text-sm category__button flex-align text-white-6 rounded-top js-open-menu"
                         type="button"
-                        aria-expanded={showCategoryMenu} 
+                        aria-expanded={showCategoryMenu}
                       >
                         <span className="text-sm icon d-md-flex d-none">
                           <i className="ph ph-squares-four"></i>
@@ -747,17 +752,17 @@ export default function FullHeader({
                 </div>
                 <div className="header-menu w-50 d-lg-block d-none">
                   <div className="relative mx-20">
-                    <SearchBox />
+                    <SearchBoxWithSuggestions />
                   </div>
                 </div>
                 <div
                   className="d-lg-block d-none position-relative"
-                   style={{ marginLeft: "0px" }}// sát khung tìm kiếm hơn, giống hình
+                  style={{ marginLeft: "0px" }}// sát khung tìm kiếm hơn, giống hình
                 >
                   {isLoggedIn ? (
                     <div
                       ref={userRef}
-                      className="flex-wrap on-hover-item nav-menu__item has-submenu header-top__right style-two style-three flex-align position-relative" 
+                      className="flex-wrap on-hover-item nav-menu__item has-submenu header-top__right style-two style-three flex-align position-relative"
                     >
                       <button
                         type="button"
@@ -924,7 +929,7 @@ export default function FullHeader({
                         </Link>
                       </li>
                       <li className="mt-8">
-                        <SearchBox />
+                        <SearchBoxWithSuggestions />
                       </li>
                     </ul>
                   </div>

@@ -82,7 +82,7 @@ type FilterPayment = "all" | "paid" | "unpaid";
 
 export default function OrdersPage() {
   // Lưu ý: Khi deploy lên server thật, hãy đổi NEXT_PUBLIC_SERVER_API trong .env
-  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://localhost:4000";
+  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://148.230.100.215";
   const router = useRouter();
 
   const [searchMadon, setSearchMadon] = React.useState<string>("");
@@ -198,8 +198,8 @@ export default function OrdersPage() {
         const groupList: ApiGroup[] = isApiResponse(j)
           ? j.data
           : Array.isArray(j)
-          ? (j as ApiGroup[])
-          : [];
+            ? (j as ApiGroup[])
+            : [];
         let allOrders: Order[] = [];
 
         if (Array.isArray(groupList)) {
@@ -241,7 +241,7 @@ export default function OrdersPage() {
     return () => { alive = false; };
   }, [API]);
 
-  
+
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!searchMadon && !searchAccount) return;
@@ -307,21 +307,21 @@ export default function OrdersPage() {
   const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
   const start = (page - 1) * pageSize;
   const current = filteredOrders.slice(start, start + pageSize);
-  
+
   const toggle = (id: number) => setExpanded(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const formatVND = (n?: number) => (typeof n === "number" ? n.toLocaleString("vi-VN") + " đ" : "0 đ");
 
   const handleCancel = async (orderId: number) => {
     if (!window.confirm("Bạn chắc chắn muốn hủy đơn này?")) return;
-    
+
     // Optimistic update
     setOrders(prev => prev.map(o => (o.id === orderId ? { ...o, trangthai: "cancelled", trangthai_goc: "Đã hủy" } : o)));
 
     // Lấy token để gọi API hủy
     const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : "";
-    const headers: HeadersInit = { 
-        "Content-Type": "application/json",
-        "Authorization": token ? `Bearer ${token}` : "" 
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+      "Authorization": token ? `Bearer ${token}` : ""
     };
 
     // Thử các endpoint hủy có thể có
@@ -329,7 +329,7 @@ export default function OrdersPage() {
       `${API}/api/orders/${orderId}`, // Endpoint chuẩn REST
       `${API}/api/toi/donhang/${orderId}` // Endpoint dự phòng
     ];
-    
+
     let succeeded = false;
     for (const url of endpoints) {
       try {
@@ -339,7 +339,7 @@ export default function OrdersPage() {
           body: JSON.stringify({ trangthai: "Đã hủy" }) // Gửi trạng thái tiếng Việt hoặc Anh tùy BE quy định
         });
         if (r.ok) { succeeded = true; break; }
-      } catch {}
+      } catch { }
     }
 
     if (!succeeded) {
@@ -357,7 +357,7 @@ export default function OrdersPage() {
     <>
       <FullHeader showClassicTopBar={true} showTopNav={false} />
       <AccountShell title="Đơn hàng của tôi" current="orders">
-        
+
         {/* Search box: tìm theo mã đơn + username/email */}
         {/* <div className="p-12 mb-12 bg-white border rounded-8">
           <form className="row gy-3" onSubmit={handleSearch}>
@@ -376,7 +376,7 @@ export default function OrdersPage() {
           <div className="flex-wrap d-flex align-items-center justify-content-between" style={{ gap: 8 }}>
             <div className="flex-wrap gap-8 d-flex">
               {STATUS_OPTIONS.map((opt) => (
-                  <button
+                <button
                   key={opt.key}
                   type="button"
                   onClick={() => { setFilterStatus(opt.key); setPage(1); }}
@@ -421,36 +421,36 @@ export default function OrdersPage() {
                           />
                         </div>
                         <div style={{ minWidth: 0, flex: 1 }}>
-                            <div className="gap-8 mb-1 d-flex align-items-center">
-                                <div className="fw-semibold text-truncate">Đơn #{o.madon || o.id}</div>
-                                <span
-                                  style={{
-                                    marginLeft: 8,
-                                    padding: "4px 8px",
-                                    borderRadius: 12,
-                                    fontSize: 12,
-                                    background: o.trangthai === "completed" ? "#d1f7e7" : o.trangthai === "cancelled" ? "#ffd8d8" : "#fff2cc",
-                                    color: "#1a1a1a",
-                                  }}
-                                >
-                                  {o.trangthai_goc || o.trangthai}
-                                </span>
+                          <div className="gap-8 mb-1 d-flex align-items-center">
+                            <div className="fw-semibold text-truncate">Đơn #{o.madon || o.id}</div>
+                            <span
+                              style={{
+                                marginLeft: 8,
+                                padding: "4px 8px",
+                                borderRadius: 12,
+                                fontSize: 12,
+                                background: o.trangthai === "completed" ? "#d1f7e7" : o.trangthai === "cancelled" ? "#ffd8d8" : "#fff2cc",
+                                color: "#1a1a1a",
+                              }}
+                            >
+                              {o.trangthai_goc || o.trangthai}
+                            </span>
+                          </div>
+                          <div className="mb-2 text-sm text-gray-600">
+                            {o.created_at ? new Date(o.created_at).toLocaleDateString('vi-VN') : ""}
+                          </div>
+
+                          {/* Product name preview */}
+                          {Array.isArray(o.chitietdonhang) && o.chitietdonhang[0] && (
+                            <div>
+                              <div className="fw-medium text-truncate" title={o.chitietdonhang[0].name}>
+                                {o.chitietdonhang[0].name}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {o.chitietdonhang.length > 1 ? `và ${o.chitietdonhang.length - 1} sản phẩm khác` : `Số lượng: ${o.chitietdonhang[0].quantity}`}
+                              </div>
                             </div>
-                            <div className="mb-2 text-sm text-gray-600">
-                                {o.created_at ? new Date(o.created_at).toLocaleDateString('vi-VN') : ""}
-                            </div>
-                            
-                            {/* Product name preview */}
-                            {Array.isArray(o.chitietdonhang) && o.chitietdonhang[0] && (
-                                <div>
-                                  <div className="fw-medium text-truncate" title={o.chitietdonhang[0].name}>
-                                      {o.chitietdonhang[0].name}
-                                  </div>
-                                  <div className="text-sm text-gray-600">
-                                    {o.chitietdonhang.length > 1 ? `và ${o.chitietdonhang.length - 1} sản phẩm khác` : `Số lượng: ${o.chitietdonhang[0].quantity}`}
-                                  </div>
-                                </div>
-                            )}
+                          )}
                         </div>
                       </div>
                     </div>
@@ -463,12 +463,12 @@ export default function OrdersPage() {
                       <div className="gap-2 mt-12 d-flex justify-content-end align-items-center">
                         {/* Các nút hành động */}
                         {o.trangthai === "pending" && (
-                            <button className="btn btn-outline-danger btn-sm" onClick={() => handleCancel(o.id)}>
-                                Hủy đơn
-                            </button>
+                          <button className="btn btn-outline-danger btn-sm" onClick={() => handleCancel(o.id)}>
+                            Hủy đơn
+                          </button>
                         )}
                         <button className="btn btn-outline-main-two btn-sm" onClick={() => toggle(o.id)}>
-                           {expanded.has(o.id) ? "Thu gọn" : "Chi tiết"}
+                          {expanded.has(o.id) ? "Thu gọn" : "Chi tiết"}
                         </button>
                       </div>
                     </div>
@@ -477,22 +477,22 @@ export default function OrdersPage() {
                   {/* Expanded Detail View */}
                   {expanded.has(o.id) && Array.isArray(o.chitietdonhang) && (
                     <div className="pt-12 mt-12 border-top">
-                        {o.chitietdonhang.map((it) => (
-                            <div key={it.id} className="gap-3 p-2 mb-3 border rounded d-flex align-items-center bg-light">
-                                <img src={it.image || ""} alt="" width={50} height={50} className="rounded" style={{objectFit: "cover"}} />
-                                <div className="flex-grow-1">
-                                    <div className="text-sm fw-medium">{it.name}</div>
-                                    <div className="text-xs text-muted">x{it.quantity}</div>
-                                </div>
-                                <div className="text-sm fw-bold">{formatVND(it.price)}</div>
-                            </div>
-                        ))}
-                        <div className="mt-2 text-sm text-end">
-                            <span className="text-muted me-2">Thanh toán:</span>
-                            <span className={o.paid ? "text-success fw-bold" : "text-warning fw-bold"}>
-                                {o.paid ? "Đã thanh toán" : "Chưa thanh toán"}
-                            </span>
+                      {o.chitietdonhang.map((it) => (
+                        <div key={it.id} className="gap-3 p-2 mb-3 border rounded d-flex align-items-center bg-light">
+                          <img src={it.image || ""} alt="" width={50} height={50} className="rounded" style={{ objectFit: "cover" }} />
+                          <div className="flex-grow-1">
+                            <div className="text-sm fw-medium">{it.name}</div>
+                            <div className="text-xs text-muted">x{it.quantity}</div>
+                          </div>
+                          <div className="text-sm fw-bold">{formatVND(it.price)}</div>
                         </div>
+                      ))}
+                      <div className="mt-2 text-sm text-end">
+                        <span className="text-muted me-2">Thanh toán:</span>
+                        <span className={o.paid ? "text-success fw-bold" : "text-warning fw-bold"}>
+                          {o.paid ? "Đã thanh toán" : "Chưa thanh toán"}
+                        </span>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -502,8 +502,8 @@ export default function OrdersPage() {
               <div className="mt-4 d-flex justify-content-between align-items-center">
                 <span className="text-sm text-gray-600">Trang {page}/{totalPages}</span>
                 <div className="gap-8 d-flex">
-                  <button className="btn btn-outline-secondary btn-sm" disabled={page<=1} onClick={() => setPage(p => Math.max(1, p-1))}>Trước</button>
-                  <button className="btn btn-outline-secondary btn-sm" disabled={page>=totalPages} onClick={() => setPage(p => Math.min(totalPages, p+1))}>Sau</button>
+                  <button className="btn btn-outline-secondary btn-sm" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Trước</button>
+                  <button className="btn btn-outline-secondary btn-sm" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Sau</button>
                 </div>
               </div>
             </div>
