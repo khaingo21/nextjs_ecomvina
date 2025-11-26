@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // lib/api.ts
 const BASE_URL = process.env.SERVER_API || process.env.NEXT_PUBLIC_SERVER_API || "http://148.230.100.215";
 
@@ -18,6 +19,11 @@ type FetchOptions = {
   method?: "GET" | "POST" | "PUT" | "DELETE";
   body?: any;
   cache?: RequestCache;
+=======
+// Chào cậu! 👋
+export type ApiOptions = {
+  method?: string;
+>>>>>>> f7db362cc7e0dd95e06f9e61346d997648581817
   headers?: Record<string, string>;
   credentials?: RequestCredentials;
 };
@@ -110,9 +116,14 @@ export const api = {
     request<T>(endpoint, { method: "DELETE" }),
 };
 
+<<<<<<< HEAD
 // ============================================
 // Homepage API Types & Functions
 // ============================================
+=======
+export type LoginResponse = { token?: string; accessToken?: string;[k: string]: unknown };
+export type RegisterResponse = { success?: boolean; message?: string;[k: string]: unknown };
+>>>>>>> f7db362cc7e0dd95e06f9e61346d997648581817
 
 // ===== Hot Keywords =====
 export interface HotKeyword {
