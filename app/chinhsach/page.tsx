@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-
+//chào
 export default function Page() {
   return (
     <main className="container container-lg py-40">
@@ -30,5 +30,6 @@ export default function Page() {
         </p>
       </div>
     </main>
+
   );
 }
