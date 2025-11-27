@@ -103,7 +103,7 @@ export function useCart() {
   const { isLoggedIn } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
-  
+
   // Voucher State
   const [appliedVoucher, setAppliedVoucher] = useState<Coupon | null>(null);
   const [availableVouchers, setAvailableVouchers] = useState<Coupon[]>([]);
@@ -389,8 +389,8 @@ export function useCart() {
 
   const applyVoucher = useCallback((voucher: Coupon) => {
     if (voucher.min_order_value && subtotal < voucher.min_order_value) {
-        alert(`Đơn hàng chưa đạt giá trị tối thiểu ${voucher.min_order_value.toLocaleString("vi-VN")}đ`);
-        return;
+      alert(`Đơn hàng chưa đạt giá trị tối thiểu ${voucher.min_order_value.toLocaleString("vi-VN")}đ`);
+      return;
     }
     setAppliedVoucher(voucher);
   }, [subtotal]);
@@ -398,38 +398,38 @@ export function useCart() {
   // Lấy danh sách voucher
   const fetchVouchers = useCallback(async () => {
     try {
-        const res = await fetch(`${API}/api/ma-giam-gia`, {
-            headers: getAuthHeaders(),
-            cache: "no-store"
-        });
-        
-        if (res.ok) {
-            const json: unknown = await res.json();
-            let list: unknown[] = [];
-            if (json && typeof json === 'object' && 'data' in json && Array.isArray((json as { data: unknown[] }).data)) {
-                list = (json as { data: unknown[] }).data;
-            } else if (Array.isArray(json)) {
-                list = json;
-            }
-            
-            // SỬA: Filter trước, Map sau để tránh any
-            const activeVouchers = (list as ServerVoucherRaw[])
-                .filter(raw => raw.trangthai === "Hoạt động")
-                .map(raw => {
-                    const minVal = parseMinOrderValue(raw.dieukien, raw.mota);
-                    return {
-                        id: raw.id,
-                        code: String(raw.magiamgia ?? raw.code ?? "UNKNOWN"),
-                        giatri: Number(raw.giatri ?? raw.amount ?? 0),
-                        mota: raw.mota ?? raw.description ?? "Mã giảm giá",
-                        min_order_value: minVal
-                    } as Coupon;
-                });
+      const res = await fetch(`${API}/api/ma-giam-gia`, {
+        headers: getAuthHeaders(),
+        cache: "no-store"
+      });
 
-            setAvailableVouchers(activeVouchers);
+      if (res.ok) {
+        const json: unknown = await res.json();
+        let list: unknown[] = [];
+        if (json && typeof json === 'object' && 'data' in json && Array.isArray((json as { data: unknown[] }).data)) {
+          list = (json as { data: unknown[] }).data;
+        } else if (Array.isArray(json)) {
+          list = json;
         }
+
+        // SỬA: Filter trước, Map sau để tránh any
+        const activeVouchers = (list as ServerVoucherRaw[])
+          .filter(raw => raw.trangthai === "Hoạt động")
+          .map(raw => {
+            const minVal = parseMinOrderValue(raw.dieukien, raw.mota);
+            return {
+              id: raw.id,
+              code: String(raw.magiamgia ?? raw.code ?? "UNKNOWN"),
+              giatri: Number(raw.giatri ?? raw.amount ?? 0),
+              mota: raw.mota ?? raw.description ?? "Mã giảm giá",
+              min_order_value: minVal
+            } as Coupon;
+          });
+
+        setAvailableVouchers(activeVouchers);
+      }
     } catch (e) {
-        console.error("Lỗi lấy danh sách voucher:", e);
+      console.error("Lỗi lấy danh sách voucher:", e);
     }
   }, [API, getAuthHeaders]);
 
@@ -439,41 +439,41 @@ export function useCart() {
     if (!code) return;
     setLoading(true);
     try {
-        await fetchVouchers();
-        
-        const res = await fetch(`${API}/api/ma-giam-gia`, { headers: getAuthHeaders() });
-        const json = await res.json();
-        
-        let list: unknown[] = [];
-        if (json && typeof json === 'object' && 'data' in json) {
-             list = (json as { data: unknown[] }).data;
-        } else if (Array.isArray(json)) {
-             list = json;
-        }
+      await fetchVouchers();
 
-        // SỬA: Ép kiểu an toàn
-        const foundRaw = (list as ServerVoucherRaw[]).find((raw) => {
-             return String(raw.magiamgia) === code && raw.trangthai === "Hoạt động";
-        });
+      const res = await fetch(`${API}/api/ma-giam-gia`, { headers: getAuthHeaders() });
+      const json = await res.json();
 
-        if (foundRaw) {
-            const minVal = parseMinOrderValue(foundRaw.dieukien, foundRaw.mota);
-            const coupon: Coupon = {
-                id: foundRaw.id,
-                code: String(foundRaw.magiamgia),
-                giatri: Number(foundRaw.giatri),
-                mota: foundRaw.mota,
-                min_order_value: minVal
-            };
-            applyVoucher(coupon);
-        } else {
-            alert("Mã giảm giá không tồn tại hoặc chưa kích hoạt.");
-        }
+      let list: unknown[] = [];
+      if (json && typeof json === 'object' && 'data' in json) {
+        list = (json as { data: unknown[] }).data;
+      } else if (Array.isArray(json)) {
+        list = json;
+      }
+
+      // SỬA: Ép kiểu an toàn
+      const foundRaw = (list as ServerVoucherRaw[]).find((raw) => {
+        return String(raw.magiamgia) === code && raw.trangthai === "Hoạt động";
+      });
+
+      if (foundRaw) {
+        const minVal = parseMinOrderValue(foundRaw.dieukien, foundRaw.mota);
+        const coupon: Coupon = {
+          id: foundRaw.id,
+          code: String(foundRaw.magiamgia),
+          giatri: Number(foundRaw.giatri),
+          mota: foundRaw.mota,
+          min_order_value: minVal
+        };
+        applyVoucher(coupon);
+      } else {
+        alert("Mã giảm giá không tồn tại hoặc chưa kích hoạt.");
+      }
     } catch (e) {
-        console.error(e);
-        alert("Lỗi khi kiểm tra mã giảm giá.");
+      console.error(e);
+      alert("Lỗi khi kiểm tra mã giảm giá.");
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   }, [API, getAuthHeaders, fetchVouchers, applyVoucher]);
 
@@ -485,14 +485,14 @@ export function useCart() {
 
   return {
     items, loading, addToCart, updateQuantity, removeItem, clearCart, refreshCart: fetchCart,
-    subtotal, 
+    subtotal,
     totalItems,
-    appliedVoucher, 
-    applyVoucher, 
+    appliedVoucher,
+    applyVoucher,
     applyVoucherByCode,
-    removeVoucher, 
-    discountAmount, 
+    removeVoucher,
+    discountAmount,
     total,
-    availableVouchers 
+    availableVouchers
   };
 }
