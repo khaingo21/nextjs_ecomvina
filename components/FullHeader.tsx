@@ -677,7 +677,7 @@ export default function FullHeader({
               <div className="container container-lg">
                 <div className="flex-wrap gap-8 flex-between">
                   <ul className="flex-wrap gap-16 header-top__right flex-align">
-                    <li className="flex-align">
+                    {/* <li className="flex-align">
                       <Link href="#" className="text-sm text-center text-white-6 hover-text-white">
                         <i className="ph-bold ph-storefront text-white-6"></i> Truy cập bán hàng
                       </Link>
@@ -686,7 +686,7 @@ export default function FullHeader({
                       <Link href="#" className="text-sm text-white-6 hover-text-white">
                         <i className="ph-bold ph-handshake text-white-6"></i> Đăng ký đối tác
                       </Link>
-                    </li>
+                    </li> */}
                     <li className="flex-align">
                       <Link href="#" className="text-sm text-white-6 hover-text-white pe-1">
                         <i className="ph-bold ph-info text-white-6"></i> Giới thiệu về Siêu Thị Vina

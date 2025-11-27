@@ -5,13 +5,42 @@ import Cookies from "js-cookie";
 
 const CART_STORAGE_KEY = "marketpro_cart";
 
+// ========================================================================
 // 1. TYPE Definitions
+// ========================================================================
+
 export type Coupon = {
   id: number;
   code: string;
   giatri: number;
   mota?: string;
   min_order_value?: number;
+};
+
+// Interface cho dữ liệu Voucher thô từ Server
+interface ServerVoucherRaw {
+  id: number;
+  magiamgia?: number | string;
+  code?: string;
+  ma?: string;
+  giatri?: number;
+  amount?: number;
+  mota?: string;
+  dieukien?: string;
+  description?: string;
+  min_order_value?: number;
+  don_toi_thieu?: number;
+  trangthai?: string;
+  [key: string]: unknown;
+}
+
+const parseMinOrderValue = (condition?: string, description?: string): number => {
+  const text = (condition || "") + " " + (description || "");
+  const matches = text.match(/(\d{3,})/g);
+  if (matches && matches.length > 0) {
+    return Math.max(...matches.map(Number));
+  }
+  return 0;
 };
 
 export type Gia = { current?: number; before_discount?: number };
@@ -35,7 +64,6 @@ export type CartItem = {
   product?: ProductDisplayInfo;
 };
 
-// Type dữ liệu thô từ Server (Fixed: No any)
 interface ServerCartItemRaw {
   id_giohang?: number | string;
   id_nguoidung?: number | string;
@@ -55,7 +83,6 @@ interface ServerCartItemRaw {
       hinhanh?: string;
     };
   };
-  // SỬA LỖI: Dùng unknown thay vì any
   bienthe_quatang?: unknown;
 }
 
@@ -68,12 +95,19 @@ export type AddToCartInput = {
   [key: string]: unknown;
 };
 
+// ========================================================================
 // 2. HOOK LOGIC
+// ========================================================================
+
 export function useCart() {
   const { isLoggedIn } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  // Voucher State
   const [appliedVoucher, setAppliedVoucher] = useState<Coupon | null>(null);
+  const [availableVouchers, setAvailableVouchers] = useState<Coupon[]>([]);
+
   const hasSyncedRef = useRef(false);
 
   const API = process.env.NEXT_PUBLIC_SERVER_API || "http://148.230.100.215";
@@ -342,8 +376,9 @@ export function useCart() {
     if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count: 0 } }));
   }, [isLoggedIn, clearLocalCart]);
 
-  const applyVoucher = useCallback((voucher: Coupon) => setAppliedVoucher(voucher), []);
-  const removeVoucher = useCallback(() => setAppliedVoucher(null), []);
+  // ========================================================================
+  // 3. VOUCHER LOGIC
+  // ========================================================================
 
   const subtotal = items.reduce((sum, it) => {
     const pPrice = it.product?.gia?.current;
@@ -352,11 +387,112 @@ export function useCart() {
     return sum + price * qty;
   }, 0);
 
+  const applyVoucher = useCallback((voucher: Coupon) => {
+    if (voucher.min_order_value && subtotal < voucher.min_order_value) {
+        alert(`Đơn hàng chưa đạt giá trị tối thiểu ${voucher.min_order_value.toLocaleString("vi-VN")}đ`);
+        return;
+    }
+    setAppliedVoucher(voucher);
+  }, [subtotal]);
+
+  // Lấy danh sách voucher
+  const fetchVouchers = useCallback(async () => {
+    try {
+        const res = await fetch(`${API}/api/ma-giam-gia`, {
+            headers: getAuthHeaders(),
+            cache: "no-store"
+        });
+        
+        if (res.ok) {
+            const json: unknown = await res.json();
+            let list: unknown[] = [];
+            if (json && typeof json === 'object' && 'data' in json && Array.isArray((json as { data: unknown[] }).data)) {
+                list = (json as { data: unknown[] }).data;
+            } else if (Array.isArray(json)) {
+                list = json;
+            }
+            
+            // SỬA: Filter trước, Map sau để tránh any
+            const activeVouchers = (list as ServerVoucherRaw[])
+                .filter(raw => raw.trangthai === "Hoạt động")
+                .map(raw => {
+                    const minVal = parseMinOrderValue(raw.dieukien, raw.mota);
+                    return {
+                        id: raw.id,
+                        code: String(raw.magiamgia ?? raw.code ?? "UNKNOWN"),
+                        giatri: Number(raw.giatri ?? raw.amount ?? 0),
+                        mota: raw.mota ?? raw.description ?? "Mã giảm giá",
+                        min_order_value: minVal
+                    } as Coupon;
+                });
+
+            setAvailableVouchers(activeVouchers);
+        }
+    } catch (e) {
+        console.error("Lỗi lấy danh sách voucher:", e);
+    }
+  }, [API, getAuthHeaders]);
+
+  useEffect(() => { fetchVouchers(); }, [fetchVouchers]);
+
+  const applyVoucherByCode = useCallback(async (code: string) => {
+    if (!code) return;
+    setLoading(true);
+    try {
+        await fetchVouchers();
+        
+        const res = await fetch(`${API}/api/ma-giam-gia`, { headers: getAuthHeaders() });
+        const json = await res.json();
+        
+        let list: unknown[] = [];
+        if (json && typeof json === 'object' && 'data' in json) {
+             list = (json as { data: unknown[] }).data;
+        } else if (Array.isArray(json)) {
+             list = json;
+        }
+
+        // SỬA: Ép kiểu an toàn
+        const foundRaw = (list as ServerVoucherRaw[]).find((raw) => {
+             return String(raw.magiamgia) === code && raw.trangthai === "Hoạt động";
+        });
+
+        if (foundRaw) {
+            const minVal = parseMinOrderValue(foundRaw.dieukien, foundRaw.mota);
+            const coupon: Coupon = {
+                id: foundRaw.id,
+                code: String(foundRaw.magiamgia),
+                giatri: Number(foundRaw.giatri),
+                mota: foundRaw.mota,
+                min_order_value: minVal
+            };
+            applyVoucher(coupon);
+        } else {
+            alert("Mã giảm giá không tồn tại hoặc chưa kích hoạt.");
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Lỗi khi kiểm tra mã giảm giá.");
+    } finally {
+        setLoading(false);
+    }
+  }, [API, getAuthHeaders, fetchVouchers, applyVoucher]);
+
+  const removeVoucher = useCallback(() => setAppliedVoucher(null), []);
+
   const discountAmount = appliedVoucher ? appliedVoucher.giatri : 0;
   const total = Math.max(0, subtotal - discountAmount);
+  const totalItems = items.reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
 
   return {
     items, loading, addToCart, updateQuantity, removeItem, clearCart, refreshCart: fetchCart,
-    subtotal, appliedVoucher, applyVoucher, removeVoucher, discountAmount, total, totalItems: items.reduce((sum, it) => sum + (Number(it.quantity) || 0), 0),
+    subtotal, 
+    totalItems,
+    appliedVoucher, 
+    applyVoucher, 
+    applyVoucherByCode,
+    removeVoucher, 
+    discountAmount, 
+    total,
+    availableVouchers 
   };
 }

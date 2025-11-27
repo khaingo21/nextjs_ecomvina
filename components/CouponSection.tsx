@@ -14,6 +14,8 @@ export default function CouponSection() {
 
     const ITEMS_PER_VIEW = 3;
 
+    
+
     useEffect(() => {
         if (!homeData) return;
 
@@ -102,30 +104,31 @@ export default function CouponSection() {
             currency: "VND",
         }).format(amount);
     };
+    
 
     if (loading) return null;
     if (coupons.length === 0) return null;
 
     return (
-        <section className="coupon-section py-20 overflow-hidden">
+        <section className="py-20 overflow-hidden coupon-section">
             <div className="container container-lg">
-                <div className="section-heading mb-24">
-                    <div className="flex-between flex-wrap gap-8">
-                        <div className="flex-align gap-8">
-                            <i className="ph-bold ph-ticket text-main-600 text-2xl"></i>
+                <div className="mb-24 section-heading">
+                    <div className="flex-wrap gap-8 flex-between">
+                        <div className="gap-8 flex-align">
+                            <i className="text-2xl ph-bold ph-ticket text-main-600"></i>
                             <h6 className="mb-0 text-xl fw-bold">Mã giảm giá mới</h6>
                         </div>
-                        <div className="flex-align gap-12">
+                        <div className="gap-12 flex-align">
                             <a
                                 href="/coupons"
                                 className="text-sm fw-semibold text-main-600 hover-text-main-800 hover-text-decoration-underline"
                             >
                                 Xem tất cả
                             </a>
-                            <div className="flex-align gap-8">
+                            <div className="gap-8 flex-align">
                                 <button
                                     type="button"
-                                    className="flex-center rounded-circle border border-gray-200 hover-border-neutral-600 text-xl hover-bg-neutral-600 hover-text-white transition-1"
+                                    className="text-xl border border-gray-200 flex-center rounded-circle hover-border-neutral-600 hover-bg-neutral-600 hover-text-white transition-1"
                                     style={{ width: "40px", height: "40px" }}
                                     onClick={() => handleNavigate("prev")}
                                     disabled={!canNavigate}
@@ -135,7 +138,7 @@ export default function CouponSection() {
                                 </button>
                                 <button
                                     type="button"
-                                    className="flex-center rounded-circle border border-gray-200 hover-border-neutral-600 text-xl hover-bg-neutral-600 hover-text-white transition-1"
+                                    className="text-xl border border-gray-200 flex-center rounded-circle hover-border-neutral-600 hover-bg-neutral-600 hover-text-white transition-1"
                                     style={{ width: "40px", height: "40px" }}
                                     onClick={() => handleNavigate("next")}
                                     disabled={!canNavigate}
@@ -163,36 +166,36 @@ export default function CouponSection() {
                                 <div className="row g-16">
                                     {slide.map((coupon) => (
                                         <div key={coupon.id} className="col-lg-4 col-md-6">
-                                            <div className="coupon-card border border-gray-200 rounded-12 overflow-hidden hover-shadow-lg transition-2">
+                                            <div className="overflow-hidden border border-gray-200 coupon-card rounded-12 hover-shadow-lg transition-2">
                                                 {/* Header */}
-                                                <div className="coupon-header bg-gradient-main p-16">
+                                                <div className="p-16 coupon-header bg-gradient-main">
                                                     <div className="flex-between">
                                                         <div>
-                                                            <div className="text-white text-xs fw-medium mb-4 opacity-90">
+                                                            <div className="mb-4 text-xs text-white fw-medium opacity-90">
                                                                 Mã giảm giá
                                                             </div>
-                                                            <div className="text-white text-2xl fw-bold">
+                                                            <div className="text-2xl text-white fw-bold">
                                                                 {formatCurrency(coupon.giatri)}
                                                             </div>
                                                         </div>
                                                         <div className="coupon-icon">
-                                                            <i className="ph-fill ph-seal-percent text-white text-5xl opacity-20"></i>
+                                                            <i className="text-5xl text-white ph-fill ph-seal-percent opacity-20"></i>
                                                         </div>
                                                     </div>
                                                 </div>
 
                                                 {/* Body */}
-                                                <div className="coupon-body p-16 bg-white">
-                                                    <h6 className="text-md fw-semibold mb-8 text-line-2">
+                                                <div className="p-16 bg-white coupon-body">
+                                                    <h6 className="mb-8 text-md fw-semibold text-line-2">
                                                         {coupon.mota}
                                                     </h6>
 
                                                     <div className="mb-12">
-                                                        <div className="flex-align gap-4 text-xs text-gray-600 mb-4">
+                                                        <div className="gap-4 mb-4 text-xs text-gray-600 flex-align">
                                                             <i className="ph ph-info"></i>
                                                             <span>Điều kiện: {coupon.dieukien}</span>
                                                         </div>
-                                                        <div className="flex-align gap-4 text-xs text-gray-600">
+                                                        <div className="gap-4 text-xs text-gray-600 flex-align">
                                                             <i className="ph ph-calendar"></i>
                                                             <span>
                                                                 HSD: {formatDate(coupon.ngaybatdau)} -{" "}
@@ -202,9 +205,9 @@ export default function CouponSection() {
                                                     </div>
 
                                                     {/* Coupon Code & Copy Button */}
-                                                    <div className="coupon-code-container flex-between gap-8">
-                                                        <div className="coupon-code flex-grow-1 px-12 py-10 bg-gray-50 rounded-8 border-dashed border border-gray-300">
-                                                            <div className="text-xs text-gray-500 mb-2">Mã code</div>
+                                                    <div className="gap-8 coupon-code-container flex-between">
+                                                        <div className="px-12 py-10 border border-gray-300 border-dashed coupon-code flex-grow-1 bg-gray-50 rounded-8">
+                                                            <div className="mb-2 text-xs text-gray-500">Mã code</div>
                                                             <div className="text-lg fw-bold text-main-600 font-monospace">
                                                                 {coupon.magiamgia}
                                                             </div>

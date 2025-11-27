@@ -75,86 +75,52 @@ export default function AccountShell({
 
           <div className="row g-16">
             <aside className="col-lg-3">
-              <div className="p-12 bg-white border border-gray-100 rounded-12 d-flex flex-column" style={{ minHeight: 420 }}>
-                {/* User card - emphasized */}
-                <div
-                  className="mb-12 d-flex align-items-center"
-                  style={{
-                    padding: 1,
-                    borderRadius: 10,
-                    background: "#f6f9fb",
-                    boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.02)",
-                  }}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={avatarSrc}
-                    // Không cần suppressHydrationWarning nữa vì server/client đã khớp dữ liệu
-                    alt="avatar"
-                    width={72}
-                    height={72}
-                    style={{
-                      borderRadius: 12,
-                      objectFit: "cover",
-                      border: "2px solid rgba(255,255,255,0.9)",
-                      boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
-                      flex: "0 0 72px",
-                    }}
-                  />
-                  <div style={{ minWidth: 0, marginLeft: 12 }}>
-                    <div className="fw-bold" style={{ fontSize: 16, lineHeight: 1 }}>
-                        {displayName}
-                    </div>
-                    <div className="text-sm text-muted" style={{ marginTop: 2 }}>
-                        {displayUsername}
-                    </div>
+              <div className="shop-sidebar">
+                <button type="button" className="w-32 h-32 mt-8 border border-gray-100 shop-sidebar__close d-lg-none d-flex flex-center rounded-circle hover-bg-main-600 position-absolute inset-inline-end-0 me-10 hover-text-white hover-border-main-600">
+                  <i className="ph ph-x" />
+                </button>
+
+                <div className="p-16 pb-0 mb-20 bg-white border border-gray-100 shop-sidebar__box rounded-8">
+                  <div className="pb-16 mb-16 border-gray-100 border-bottom">
+                    <Link href="/thong-tin-ca-nhan" className="gap-12 px-16 py-8 mb-0 bg-gray-50 rounded-8 flex-between d-flex" style={{ justifyContent: "start" }}>
+                      <span className="flex-shrink-0 text-xl bg-white text-main-600 rounded-circle flex-center" style={{ width: 45, height: 45 }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={avatarSrc} alt="avatar" className="w-100 h-100 object-fit-cover rounded-circle" />
+                      </span>
+                      <div className="d-flex flex-column">
+                        <span className="text-xs text-neutral-600"><span className="fw-medium">{displayUsername.replace(/^@/, "")}</span></span>
+                        <span className="text-md text-neutral-600"><span className="fw-semibold">{displayName}</span></span>
+                      </div>
+                    </Link>
                   </div>
+
+                  <ul className="overflow-y-auto max-h-540 scroll-sm" style={{ listStyle: "none", paddingLeft: 0 }}>
+                    {tabs.map((t) => {
+                      const isCurrent = current === t.key;
+                      return (
+                        <li key={t.key} className="mb-6">
+                          <Link
+                            href={t.href}
+                            className={`px-16 py-8 d-flex justify-content-start align-items-center gap-12 mb-0 rounded-8 w-100 ${isCurrent ? "border border-main-600 text-main-600" : "text-neutral-600 hover-bg-main-50 hover-text-main-600"}`}
+                            style={{ display: "flex", justifyContent: "start", alignItems: "center" }}
+                          >
+                            <span className="gap-12 fw-medium text-md d-flex align-items-center">
+                              <i className={t.icon} /> <span>{t.label}</span>
+                            </span>
+                            {t.key === "wishlist" && <span className="px-6 py-4 badge bg-success-600 ms-auto">6</span>}
+                            {t.key === "notifications" && notifications.unread > 0 && <span className="px-6 py-4 badge bg-main-600 ms-auto">!</span>}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
 
-                {/* Tabs list */}
-                <nav className="gap-8 mb-8 d-grid" aria-label="Account navigation">
-                  {tabs.map((t) => {
-                    const isCurrent = current === t.key;
-                    return (
-                      <Link
-                        key={t.key}
-                        href={t.href}
-                        className={`btn w-100 d-flex align-items-center justify-content-between ${isCurrent ? "bg-main-600 text-white" : "bg-main-50 text-main-700"}`}
-                        style={{
-                          borderWidth: 1,
-                          borderStyle: "solid",
-                          borderColor: isCurrent ? "var(--main-600)" : "var(--main-200,#e6e6e6)",
-                          paddingTop: 10,
-                          paddingBottom: 10,
-                        }}
-                      >
-                        <span className="d-flex align-items-center">
-                          <i className={t.icon} style={{ width: 18 }} />
-                          <span className="ms-6" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.label}</span>
-                        </span>
-
-                        <span className="d-flex align-items-center">
-                          {t.key === "notifications" && notifications.unread > 0 && (
-                            <span className="text-white badge bg-danger" style={{ fontSize: 12, minWidth: 22, height: 22, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 12 }}>
-                              {notifications.unread > 9 ? "9+" : notifications.unread}
-                            </span>
-                          )}
-
-                          {isCurrent && <i className="ph ph-caret-right ms-8" />}
-                        </span>
-                      </Link>
-                    );
-                  })}
-                </nav>
-
-                <div style={{ flex: 1 }} />
-              </div>
-              
-              {/* Logout button */}
-              <div>
-                <button type="button" onClick={handleLogout} className="btn w-100 btn-danger">
-                  <i className="ph ph-sign-out" /> <span className="ms-8">Đăng xuất</span>
-                </button>
+                <div className="mb-32 shop-sidebar__box rounded-8 d-flex justify-content-between">
+                  <button type="button" title="Đăng xuất" onClick={handleLogout} className="gap-8 px-32 py-12 btn border-main-600 text-main-600 hover-bg-main-600 hover-border-main-600 hover-text-white rounded-8 w-100 d-flex justify-content-center align-items-center">
+                    <i className="ph ph-sign-out" /> <span>Đăng xuất</span>
+                  </button>
+                </div>
               </div>
             </aside>
             
