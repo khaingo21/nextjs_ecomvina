@@ -139,7 +139,7 @@ export default function Page() {
     );
     try {
       sessionStorage.setItem("checkout_cart", JSON.stringify(toCheckout));
-    } catch {}
+    } catch { }
     router.push("/thanh-toan");
   };
 
