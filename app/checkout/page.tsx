@@ -1,10 +1,36 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import FullHeader from "@/components/FullHeader";
 import BenefitsStrip from "@/components/BenefitsStrip";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Page() {
+  const { isLoggedIn } = useAuth();
+  const router = useRouter();
+
+  // Redirect nếu chưa đăng nhập
+  useEffect(() => {
+    if (!isLoggedIn) {
+      // Lưu URL hiện tại để redirect sau khi đăng nhập
+      const currentPath = window.location.pathname;
+      router.push(`/account?redirect=${encodeURIComponent(currentPath)}`);
+    }
+  }, [isLoggedIn, router]);
+
+  // Hiển thị loading khi đang kiểm tra authentication
+  if (!isLoggedIn) {
+    return (
+      <>
+        <FullHeader showClassicTopBar={true} showTopNav={false} />
+        <div className="container py-20 text-center">
+          <p className="text-lg">Đang kiểm tra đăng nhập...</p>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       {/* Top bar (original checkout style) - Mobile */}

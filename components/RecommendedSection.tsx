@@ -5,7 +5,7 @@ import { Navigation } from "swiper/modules";
 import ProductMiniCard from "@/components/ProductMiniCard";
 
 export default function RecommendedSection({ title = "Có thể bạn quan tâm", perPage = 8 }: { title?: string; perPage?: number }) {
-  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://localhost:4000";
+  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://148.230.100.215";
   const url = `${API}/api/sanphams-selection?selection=recommend&per_page=${perPage}`;
   const [items, setItems] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -14,7 +14,7 @@ export default function RecommendedSection({ title = "Có thể bạn quan tâm"
 
   React.useEffect(() => {
     let alive = true;
-    fetch(url, { headers: { Accept: "application/json" }})
+    fetch(url, { headers: { Accept: "application/json" } })
       .then(r => r.json())
       .then((res) => {
         if (!alive) return;

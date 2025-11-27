@@ -17,6 +17,7 @@ import TopDealsSection from "@/components/TopDealsSection";
 import GiftEventsSection from "@/components/GiftEventsSection";
 import TopCategoriesProducts from "@/components/TopCategoriesProducts";
 import CouponSection from "@/components/CouponSection";
+import BlogSection from "@/components/BlogSection";
 import { HomeDataProvider } from "@/hooks/useHomeData";
 
 // types for jQuery-like object (minimal)
@@ -77,8 +78,8 @@ export default function Home() {
       <SearchOverlay visible={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
       <MobileMenu visible={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
 
-      {/* Chỉ render header template sau thanh top đỏ */}
-      <FullHeader showClassicTopBar={true} showTopNav={false} showCategoriesBar={false} />
+      {/* Header với thanh đỏ và header chính */}
+      <FullHeader showClassicTopBar={false} showTopNav={true} showCategoriesBar={false} />
 
       <main id="main-content" role="main" className="home-two">
 
@@ -191,6 +192,9 @@ export default function Home() {
 
         {/* Được quan tâm nhiều nhất */}
         <MostInterestedSection />
+
+        {/* Bài viết khám phá */}
+        <BlogSection />
       </main>
     </HomeDataProvider>
   );

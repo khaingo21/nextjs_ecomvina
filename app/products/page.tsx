@@ -20,7 +20,7 @@ export default function ProductsPage() {
   const sp = useSearchParams();
   const source = (sp.get("source") || "hot_sales").toLowerCase();
   const perPage = Number(sp.get("per_page") || 20);
-  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://localhost:4000";
+  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://148.230.100.215";
 
   const [loading, setLoading] = React.useState(true);
   const [items, setItems] = React.useState<ProductListItem[]>([]);
@@ -65,14 +65,14 @@ export default function ProductsPage() {
       typeof p.selling_price === "number"
         ? p.selling_price
         : typeof p.gia?.current === "number"
-        ? p.gia.current!
-        : 0;
+          ? p.gia.current!
+          : 0;
     const oldPrice =
       typeof p.original_price === "number"
         ? p.original_price
         : typeof p.gia?.before_discount === "number"
-        ? p.gia.before_discount!
-        : undefined;
+          ? p.gia.before_discount!
+          : undefined;
 
     const idNum = Number(p.id);
     const variantId = Number.isFinite(idNum) ? idNum : undefined;

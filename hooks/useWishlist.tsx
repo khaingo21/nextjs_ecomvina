@@ -15,72 +15,82 @@ type Ctx = {
 const WishlistContext = createContext<Ctx | null>(null);
 
 function useWishlistCore(): Ctx {
-  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://localhost:4000";
+  const API = process.env.NEXT_PUBLIC_SERVER_API || "http://148.230.100.215";
   const [ids, setIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
 
   // load lần đầu
   useEffect(() => {
-  let alive = true;
+    let alive = true;
 
-  (async () => {
-    try {
-      const res = await fetch(`${API}/api/yeuthichs`, {
-        headers: { Accept: "application/json" },
-        credentials: "include",
-      });
+    (async () => {
+      try {
+        const res = await fetch(`${API}/api/yeuthichs`, {
+          headers: { Accept: "application/json" },
+          credentials: "include",
+        });
 
-      if (res.status === 401) {
-        // guest mode (localStorage)
+        if (res.status === 401) {
+          // guest mode (localStorage)
+          const raw = localStorage.getItem("guest_wishlist") || "[]";
+          const arr = JSON.parse(raw) as number[];
+          if (alive) setIds(new Set(arr));
+          return;
+        }
+
+        const json = await res.json();
+
+        // ----- parse data không dùng any -----
+        const raw = Array.isArray(json?.data) ? json.data : json?.data?.data || [];
+
+        const hasId = (v: unknown): v is { id: unknown } =>
+          typeof v === "object" && v !== null && "id" in v;
+
+        const hasProduct = (v: unknown): v is { product: unknown } =>
+          typeof v === "object" && v !== null && "product" in v;
+
+        const toNumber = (x: unknown): number | null => {
+          const n = typeof x === "number" ? x : typeof x === "string" ? parseFloat(x) : NaN;
+          return Number.isFinite(n) ? n : null;
+        };
+
+        const toId = (row: unknown): number | null => {
+          // 1) { product: { id } }
+          if (hasProduct(row) && hasId((row as { product: unknown }).product)) {
+            return toNumber((row as { product: { id: unknown } }).product.id);
+          }
+          // 2) { product_id }
+          if (typeof row === "object" && row !== null && "product_id" in (row as Record<string, unknown>)) {
+            return toNumber((row as { product_id: unknown }).product_id);
+          }
+          // 3) { id } – fallback
+          if (hasId(row)) return toNumber((row as { id: unknown }).id);
+          return null;
+        };
+
+        const arr = Array.isArray(raw) ? raw : [];
+        const idList = arr.map(toId).filter((n): n is number => n !== null);
+
+        if (alive) setIds(new Set(idList));
+      } catch (error) {
+        // API không khả dụng - sử dụng guest mode từ localStorage
+        console.warn("Wishlist API không khả dụng, sử dụng localStorage:", error);
         const raw = localStorage.getItem("guest_wishlist") || "[]";
-        const arr = JSON.parse(raw) as number[];
-        if (alive) setIds(new Set(arr));
-        return;
+        try {
+          const arr = JSON.parse(raw) as number[];
+          if (alive) setIds(new Set(arr));
+        } catch {
+          if (alive) setIds(new Set());
+        }
+      } finally {
+        if (alive) setLoading(false);
       }
+    })();
 
-      const json = await res.json();
-
-      // ----- parse data không dùng any -----
-      const raw = Array.isArray(json?.data) ? json.data : json?.data?.data || [];
-
-      const hasId = (v: unknown): v is { id: unknown } =>
-        typeof v === "object" && v !== null && "id" in v;
-
-      const hasProduct = (v: unknown): v is { product: unknown } =>
-        typeof v === "object" && v !== null && "product" in v;
-
-      const toNumber = (x: unknown): number | null => {
-        const n = typeof x === "number" ? x : typeof x === "string" ? parseFloat(x) : NaN;
-        return Number.isFinite(n) ? n : null;
-      };
-
-      const toId = (row: unknown): number | null => {
-        // 1) { product: { id } }
-        if (hasProduct(row) && hasId((row as { product: unknown }).product)) {
-          return toNumber((row as { product: { id: unknown } }).product.id);
-        }
-        // 2) { product_id }
-        if (typeof row === "object" && row !== null && "product_id" in (row as Record<string, unknown>)) {
-          return toNumber((row as { product_id: unknown }).product_id);
-        }
-        // 3) { id } – fallback
-        if (hasId(row)) return toNumber((row as { id: unknown }).id);
-        return null;
-      };
-
-      const arr = Array.isArray(raw) ? raw : [];
-      const idList = arr.map(toId).filter((n): n is number => n !== null);
-
-      if (alive) setIds(new Set(idList));
-    } finally {
-      if (alive) setLoading(false);
-    }
-  })();
-
-  return () => {
-    alive = false;
-  };
-}, [API]);
+    return () => {
+      alive = false;
+    };
+  }, [API]);
 
   // persist guest wishlist ids
   const persistGuest = useCallback((next: Set<number>) => {
@@ -96,7 +106,7 @@ function useWishlistCore(): Ctx {
       return next;
     });
     try {
-	  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
       const headers: Record<string, string> = { "Content-Type": "application/json", Accept: "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
       const res = await fetch(`${API}/api/yeuthichs`, {
@@ -121,7 +131,7 @@ function useWishlistCore(): Ctx {
       return next;
     });
     try {
-	  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
       const headers: Record<string, string> = { Accept: "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
       const res = await fetch(`${API}/api/yeuthichs/${id}`, {

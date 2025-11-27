@@ -10,6 +10,7 @@ import FullHeader from "@/components/FullHeader";
 interface Product {
   id: number;
   name: string;
+  slug?: string;
   category?: string;
   brand: string;
   price: number;
@@ -61,8 +62,14 @@ export default function ShopPage() {
   // Sync filters khi categoryParam thay đổi
   useEffect(() => {
     if (categoryParam) {
+      // Khi URL có ?category=... → áp dụng filter danh mục tương ứng
       setFilters(prev => ({ ...prev, danhmuc: categoryParam }));
       setTempFilters(prev => ({ ...prev, danhmuc: categoryParam }));
+    } else {
+      // Khi URL KHÔNG còn ?category=... (ví dụ sau khi click gợi ý search)
+      // → xoá filter danh mục, để search hiển thị đúng kết quả
+      setFilters(prev => ({ ...prev, danhmuc: "" }));
+      setTempFilters(prev => ({ ...prev, danhmuc: "" }));
     }
   }, [categoryParam]);
 
@@ -259,6 +266,7 @@ export default function ShopPage() {
                   const product = {
                     id: item.id,
                     name: item.ten,
+                    slug: (item as any).slug,
                     category: inferCategory(item.ten),
                     brand: item.thuonghieu || "Không rõ",
                     price: currentPrice, // Giá hiện tại đã giảm
@@ -462,6 +470,7 @@ export default function ShopPage() {
               return {
                 id: item.id,
                 name: item.ten,
+                slug: item.slug,
                 category: item.categoryFromAPI || "", // Dùng category từ API
                 brand: item.thuonghieu || "Không rõ",
                 price: currentPrice,
@@ -551,7 +560,7 @@ export default function ShopPage() {
   return (
     <>
       {/* Sử dụng FullHeader giống trang chủ */}
-      <FullHeader showClassicTopBar={true} showTopNav={false} />
+      <FullHeader showClassicTopBar={false} showTopNav={true} showCategoriesBar={false} />
 
       <div className="breadcrumb mb-0 pt-40 bg-main-two-60">
         <div className="container container-lg">
@@ -746,7 +755,11 @@ export default function ShopPage() {
                         return currentProducts.map((p) => (
                           <div key={p.id} className="col-xxl-3 col-xl-3 col-lg-4 col-xs-6">
                             <div className="product-card h-100 border border-gray-100 hover-border-main-600 rounded-6 position-relative transition-2">
-                              <Link href={`/san-pham/${p.id}`} className="flex-center rounded-8 bg-gray-50 position-relative" style={{ minHeight: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Link
+                                href={p.slug ? `/product-details/${p.slug}` : `/product-details/${p.id}`}
+                                className="flex-center rounded-8 bg-gray-50 position-relative"
+                                style={{ minHeight: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              >
                                 <img src={p.image} alt={p.name} className="w-100 rounded-top-2" style={{ objectFit: 'cover', maxHeight: '250px' }} />
                               </Link>
                               <div className="product-card__content w-100 h-100 align-items-stretch flex-column justify-content-between d-flex mt-10 px-10 pb-8">
@@ -760,7 +773,11 @@ export default function ShopPage() {
                                     </div>
                                   </div>
                                   <h6 className="title text-lg fw-semibold mt-2 mb-2">
-                                    <Link href={`/san-pham/${p.id}`} className="link text-line-2" tabIndex={0}>
+                                    <Link
+                                      href={p.slug ? `/product-details/${p.slug}` : `/product-details/${p.id}`}
+                                      className="link text-line-2"
+                                      tabIndex={0}
+                                    >
                                       {p.name}
                                     </Link>
                                   </h6>
